@@ -17,7 +17,7 @@ use craft\helpers\ProjectConfig as ProjectConfigHelper;
 use yii\base\Component;
 
 /**
- * Reads the project config into the plain data the viewer renders.
+ * Reads the project config into the plain data the viewer renders and the JSON export writes.
  */
 class ContentModel extends Component
 {
@@ -41,25 +41,30 @@ class ContentModel extends Component
 
     private const SCHEMA_ACTIONS = ['read', 'create', 'save', 'delete'];
 
-    public function getData(): array
+    public function getData(bool $resolved = false): array
     {
-        return $this->fromConfig(Craft::$app->getProjectConfig()->get());
+        return $this->fromConfig(Craft::$app->getProjectConfig()->get(), $resolved);
     }
 
     /**
      * The content model of a project config, given as `ProjectConfig::get()` returns it.
+     *
+     * By default it's what the JSON export writes: raw config values, with references like `$PRIMARY_SITE_URL` or
+     * `@web` as written, and field type labels in English, so it stays the same across runs and machines as long as
+     * the content model does. `$resolved` gives what the viewer shows: those references resolved, labels in the app's
+     * language, and when the config last changed.
      */
-    public function fromConfig(array $config): array
+    public function fromConfig(array $config, bool $resolved = false): array
     {
         $config = ProjectConfigHelper::unpackAssociativeArrays($config);
+        $data = $resolved ? ['dateModified' => $config['dateModified'] ?? null] : [];
 
-        return [
-            'dateModified' => $config['dateModified'] ?? null,
-            'siteGroups' => $this->siteGroups($config['siteGroups'] ?? []),
-            'sites' => $this->sites($config['sites'] ?? []),
+        return $data + [
+            'siteGroups' => $this->siteGroups($config['siteGroups'] ?? [], $resolved),
+            'sites' => $this->sites($config['sites'] ?? [], $resolved),
             'sections' => $this->sections($config['sections'] ?? []),
             'entryTypes' => $this->entryTypes($config['entryTypes'] ?? []),
-            'fields' => $this->fields($config['fields'] ?? []),
+            'fields' => $this->fields($config['fields'] ?? [], $resolved),
             'userGroups' => $this->userGroups($config['users']['groups'] ?? [], array_keys($config['sites'] ?? [])),
             'gqlSchemas' => $this->gqlSchemas($config['graphql']['schemas'] ?? []),
         ];
@@ -137,30 +142,30 @@ class ContentModel extends Component
         return $this->sortBy($data, 'name');
     }
 
-    private function siteGroups(array $siteGroups): array
+    private function siteGroups(array $siteGroups, bool $resolved): array
     {
         $data = [];
         foreach ($siteGroups as $uid => $group) {
             $data[] = [
                 'uid' => $uid,
-                'name' => App::parseEnv($group['name'] ?? ''),
+                'name' => $this->value($group['name'] ?? '', $resolved),
             ];
         }
 
         return $this->sortBy($data, 'name');
     }
 
-    private function sites(array $sites): array
+    private function sites(array $sites, bool $resolved): array
     {
         $data = [];
         foreach ($sites as $uid => $site) {
             $data[] = [
                 'uid' => $uid,
-                'name' => App::parseEnv($site['name'] ?? ''),
+                'name' => $this->value($site['name'] ?? '', $resolved),
                 'handle' => $site['handle'] ?? '',
                 'group' => $site['siteGroup'] ?? null,
-                'baseUrl' => App::parseEnv($site['baseUrl'] ?? null),
-                'language' => App::parseEnv($site['language'] ?? ''),
+                'baseUrl' => $this->value($site['baseUrl'] ?? null, $resolved),
+                'language' => $this->value($site['language'] ?? '', $resolved),
                 'primary' => (bool)($site['primary'] ?? false),
                 'sortOrder' => (int)($site['sortOrder'] ?? 0),
             ];
@@ -217,7 +222,7 @@ class ContentModel extends Component
         return $this->sortBy($data, 'handle');
     }
 
-    private function fields(array $fields): array
+    private function fields(array $fields, bool $resolved): array
     {
         $data = [];
         foreach ($fields as $uid => $field) {
@@ -229,7 +234,7 @@ class ContentModel extends Component
                 'handle' => $field['handle'] ?? '',
                 'type' => $this->shortName($type),
                 'typeClass' => $type,
-                'typeLabel' => $this->typeLabel($type),
+                'typeLabel' => $this->typeLabel($type, $resolved),
                 'instructions' => $this->filled($field, 'instructions'),
             ];
 
@@ -336,9 +341,35 @@ class ContentModel extends Component
         return $data;
     }
 
-    private function typeLabel(string $type): string
+    /**
+     * A setting that may refer to an environment variable or alias, as written or resolved.
+     */
+    private function value(?string $value, bool $resolved): bool|string|null
     {
-        return is_subclass_of($type, FieldInterface::class) ? $type::displayName() : $this->shortName($type);
+        return $resolved ? App::parseEnv($value) : $value;
+    }
+
+    /**
+     * Field types name themselves in the app's language. Raw, they're asked in Craft's source language, English, so
+     * the JSON export reads the same whoever runs it.
+     */
+    private function typeLabel(string $type, bool $resolved): string
+    {
+        if (!is_subclass_of($type, FieldInterface::class)) {
+            return $this->shortName($type);
+        }
+
+        if ($resolved) {
+            return $type::displayName();
+        }
+
+        $language = Craft::$app->language;
+        Craft::$app->language = Craft::$app->sourceLanguage;
+        try {
+            return $type::displayName();
+        } finally {
+            Craft::$app->language = $language;
+        }
     }
 
     private function shortName(string $class): string
