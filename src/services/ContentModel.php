@@ -76,14 +76,16 @@ class ContentModel extends Component
     private function userGroups(array $groups, array $siteUids): array
     {
         $order = array_values(array_unique(self::ENTRY_PERMISSIONS));
+        // Single-site installs have no site permissions: every group with control panel access edits the site.
+        $singleSite = count($siteUids) === 1;
         $data = [];
         foreach ($groups as $uid => $group) {
-            // Single-site installs have no site permissions: every group with control panel access edits the site.
-            $sites = count($siteUids) > 1 ? [] : $siteUids;
+            $permissions = $group['permissions'] ?? [];
+            $sites = $singleSite && in_array('accesscp', $permissions, true) ? $siteUids : [];
             $sections = [];
-            foreach ($group['permissions'] ?? [] as $permission) {
+            foreach ($permissions as $permission) {
                 [$name, $target] = array_pad(explode(':', $permission, 2), 2, null);
-                if ($name === 'editsite' && $target) {
+                if ($name === 'editsite' && $target && !$singleSite) {
                     $sites[] = $target;
                 } elseif ($target && isset(self::ENTRY_PERMISSIONS[$name])) {
                     $sections[$target][] = self::ENTRY_PERMISSIONS[$name];
