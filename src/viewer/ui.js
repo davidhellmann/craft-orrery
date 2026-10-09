@@ -145,7 +145,7 @@ function detailHTML(n, { title = true } = {}) {
   const o = n.obj;
   let h = '';
   if (title) {
-    h += `<div style="display:flex;gap:8px;align-items:center;margin-bottom:6px;flex-wrap:wrap">${kindLabel(n.kind)}${isField(n.kind) ? typeTag(o) : ''}${prefixTag(o)}${o.public ? `<span class="tag outline">${t('public')}</span>` : ''}</div>`;
+    h += `<div style="display:flex;gap:8px;align-items:center;margin-bottom:6px;flex-wrap:wrap">${kindLabel(n.kind)}${isField(n.kind) ? typeTag(o) : ''}${prefixTag(o)}${o.public ? `<span class="tag outline">${t('Public')}</span>` : ''}</div>`;
     h += `<h2>${esc(o.name)}</h2>`;
     if (o.handle) h += `<div class="mono faint" style="margin-top:3px">${esc(o.handle)}${o.gql ? ` · ${esc(o.gql)}` : ''}</div>`;
     if (o.instructions || o.description) h += `<p class="muted" style="margin:8px 0 0">${esc(o.instructions || o.description)}</p>`;

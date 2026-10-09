@@ -24,9 +24,10 @@ const KIND = {
   volume: { label: t('Volume'), plural: t('Volumes'), index: 'volume', layoutOwners: model.volumes },
   categorygroup: { label: t('Category Group'), plural: t('Category Groups'), index: 'categorygroup', layoutOwners: model.categoryGroups },
   taggroup: { label: t('Tag Group'), plural: t('Tag Groups'), index: 'taggroup', layoutOwners: model.tagGroups },
+  // Users' and addresses' field layouts belong to their element type itself; `fieldlayout` stays the key in links.
   fieldlayout: {
-    label: t('Field Layout'),
-    plural: t('Field Layouts'),
+    label: t('Element Type'),
+    plural: t('Element Types'),
     index: 'fieldlayout',
     layoutOwners: [Object.assign(model.users, { uid: 'users', name: t('Users') }), Object.assign(model.addresses, { uid: 'addresses', name: t('Addresses') })],
   },

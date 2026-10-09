@@ -10,7 +10,7 @@ registerView((() => {
   };
   const rightTags = rights => rights.map(r => RIGHTS[r] || r);
   // How a Matrix field shows its entries.
-  const VIEW_MODES = { cards: t('cards'), blocks: t('blocks'), index: t('index') };
+  const VIEW_MODES = { cards: t('Cards'), blocks: t('Blocks'), index: t('Index') };
   function item(key, tags = [], id = key) {
     const n = nodeOf(key);
     return n ? { id, key, name: n.obj.name, tags: tags.filter(Boolean) } : null;
@@ -35,14 +35,14 @@ registerView((() => {
   const kindsOf = type => Object.keys(KIND).filter(k => KIND[k].index === type.index);
   const listOf = type => kindsOf(type).flatMap(ofKind);
   const TYPES = [
-    { id: 'site', label: t('Sites'), pick: t('pick a site'), compare: t('Compare two sites'), index: 'site', describe: (o, key) => ({
-      props: [['handle', t('Handle'), o.handle], ['group', t('Site group'), (byUid.group[o.group] || {}).name], ['language', t('Language'), o.language], ['baseUrl', t('Base URL'), o.baseUrl], ['primary', t('Primary'), yes(o.primary)]],
+    { id: 'site', label: KIND.site.plural, pick: t('pick a site'), compare: t('Compare two sites'), index: 'site', describe: (o, key) => ({
+      props: [['handle', t('Handle'), o.handle], ['group', KIND.group.label, (byUid.group[o.group] || {}).name], ['language', t('Language'), o.language], ['baseUrl', t('Base URL'), o.baseUrl], ['primary', t('Primary'), yes(o.primary)]],
       groups: [
         { key: 'sections', title: t('Sections'), items: o.sections.map(s => { const ss = s.sites.find(x => x.site === o.uid); return item(keyOf('section', s.uid), [sectionType(s), ss && ss.hasUrls ? ss.uriFormat : t('no URLs')]); }) },
         ...accessGroups(key),
       ],
     }) },
-    { id: 'section', label: t('Sections'), pick: t('pick a section'), compare: t('Compare two sections'), index: 'section', describe: (o, key) => ({
+    { id: 'section', label: KIND.section.plural, pick: t('pick a section'), compare: t('Compare two sections'), index: 'section', describe: (o, key) => ({
       props: [['handle', t('Handle'), o.handle], ['type', t('Type'), sectionType(o)]],
       groups: [
         { key: 'sites', title: t('Sites'), items: o.sites.map(ss => item(keyOf('site', ss.site), [ss.hasUrls ? ss.uriFormat : t('no URLs')])) },
@@ -75,11 +75,11 @@ registerView((() => {
       groups.push({ key: 'usedIn', title: t('Used in'), items: o.usedIn.map(u => item(useKey(u), [u.el.label && quoted(u.el.label), u.el.required && t('required'), u.el.conditional && t('conditional')])) });
       return { props, groups: [...groups, ...accessGroups(key)] };
     } },
-    { id: 'usergroup', label: t('User groups'), pick: t('pick a user group'), compare: t('Compare two user groups'), index: 'usergroup', describe: o => ({
+    { id: 'usergroup', label: KIND.usergroup.plural, pick: t('pick a user group'), compare: t('Compare two user groups'), index: 'usergroup', describe: o => ({
       props: [['handle', t('Handle'), o.handle], ['description', t('Description'), o.description]],
       groups: reachGroups(o, 'usergroup'),
     }) },
-    { id: 'schema', label: t('GraphQL schemas'), pick: t('pick a GraphQL schema'), compare: t('Compare two GraphQL schemas'), index: 'schema', describe: o => ({
+    { id: 'schema', label: KIND.schema.plural, pick: t('pick a GraphQL schema'), compare: t('Compare two GraphQL schemas'), index: 'schema', describe: o => ({
       props: [['public', t('Public'), yes(o.public)], ['elements', t('Also queries'), o.elements.map(e => ELEMENT_SCOPES[e] || e).join(', ')]],
       groups: [...reachGroups(o, 'schema'), { key: 'builders', title: t('Builders'), items: model.fields.filter(f => o.fields[f.uid]).map(f => item(fieldKey(f), rightTags(o.fields[f.uid]))) }],
     }) },

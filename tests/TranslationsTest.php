@@ -39,6 +39,16 @@ class TranslationsTest extends TestCase
         $this->assertSame(array_keys($english), array_values($english));
     }
 
+    /**
+     * One message per meaning: “User groups” and “User Groups” are one thing, worded one way.
+     */
+    public function testNoTwoMessagesDifferOnlyInCase(): void
+    {
+        $english = array_keys($this->messages('en'));
+
+        $this->assertSame([], array_values(array_diff_key($english, array_unique(array_map('mb_strtolower', $english)))));
+    }
+
     public function testGermanHasEveryMessageEnglishHas(): void
     {
         $this->assertSame([], array_values(array_diff(array_keys($this->messages('en')), array_keys($this->messages('de')))));

@@ -10,7 +10,7 @@ test('two sites compare property by property', () => {
 
   assert.deepEqual(props.map(p => [p.label, p.x, p.y, p.status]), [
     ['Handle', 'en', 'de', 'changed'],
-    ['Site group', 'Museum', 'Museum', 'same'],
+    ['Site Group', 'Museum', 'Museum', 'same'],
     ['Language', 'en-GB', 'de-DE', 'changed'],
     ['Base URL', 'https://museum.test/', 'https://museum.test/de/', 'changed'],
     ['Primary', 'Yes', 'No', 'changed'],
@@ -21,7 +21,7 @@ test('two sites compare property by property', () => {
 test('properties stay apart when the language words them alike', () => {
   const { props } = compare(loadViewer({ language: 'de', messages: { Handle: 'Kennung', Language: 'Kennung' } }), 'site:site-en', 'site:site-de');
 
-  assert.deepEqual(props.slice(0, 3).map(p => [p.label, p.x, p.y]), [['Kennung', 'en', 'de'], ['Site group', 'Museum', 'Museum'], ['Kennung', 'en-GB', 'de-DE']]);
+  assert.deepEqual(props.slice(0, 3).map(p => [p.label, p.x, p.y]), [['Kennung', 'en', 'de'], ['Site Group', 'Museum', 'Museum'], ['Kennung', 'en-GB', 'de-DE']]);
 });
 
 test('groups stay apart when the language words them alike', () => {

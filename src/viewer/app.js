@@ -81,7 +81,7 @@ const App = (() => {
 
   // access pickers: switch user groups and GraphQL schemas on as a layer, remembered per browser
   const accessEl = document.getElementById('access');
-  const PICKER = { usergroup: { label: t('User groups'), all: t('All user groups') }, schema: { label: 'GraphQL', all: t('All GraphQL schemas') } };
+  const PICKER = { usergroup: { label: KIND.usergroup.plural, all: t('All user groups') }, schema: { label: 'GraphQL', all: t('All GraphQL schemas') } };
   try {
     const saved = JSON.parse(localStorage.getItem('orrery-access') || '{}');
     ACCESS.forEach(kind => (saved[kind] || []).forEach(uid => nodeOf(keyOf(kind, uid)) && shownAccess[kind].add(uid)));

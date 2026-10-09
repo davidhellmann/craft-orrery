@@ -65,7 +65,7 @@ registerView((() => {
   }
   function filters() {
     const f = el.querySelector('[data-filters]');
-    const groups = `<select data-f="group" aria-label="${t('Site group')}"><option value="">${t('All site groups')}</option>${model.siteGroups.map(g => `<option value="${g.uid}" ${g.uid === state.group ? 'selected' : ''}>${esc(g.name)}</option>`).join('')}</select>`;
+    const groups = `<select data-f="group" aria-label="${KIND.group.label}"><option value="">${t('All site groups')}</option>${model.siteGroups.map(g => `<option value="${g.uid}" ${g.uid === state.group ? 'selected' : ''}>${esc(g.name)}</option>`).join('')}</select>`;
     f.innerHTML = state.mode === 'fields'
       ? `<select data-f="type" aria-label="${t('Field type')}"><option value="">${t('All types')}</option>${fieldTypes.map(type => `<option ${type === state.type ? 'selected' : ''}>${esc(type)}</option>`).join('')}</select>
          ${groups}
