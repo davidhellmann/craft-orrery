@@ -51,9 +51,9 @@ class ContentModelTest extends TestCase
         $this->assertSame($this->data, (new ContentModel())->fromConfig($config));
     }
 
-    public function testResolvedDataSaysWhenTheConfigLastChanged(): void
+    public function testDataForTheViewerSaysWhenTheConfigLastChanged(): void
     {
-        $this->assertSame(1767225600, (new ContentModel())->fromConfig($this->config, resolved: true)['dateModified']);
+        $this->assertSame(1767225600, (new ContentModel())->fromConfig($this->config, forViewer: true)['dateModified']);
     }
 
     public function testSiteGroupsWithRawConfigValues(): void
@@ -100,9 +100,9 @@ class ContentModelTest extends TestCase
         ], $this->data['sites']);
     }
 
-    public function testResolvedSiteGroupsAndSites(): void
+    public function testSiteGroupsAndSitesForTheViewerAreResolved(): void
     {
-        $data = (new ContentModel())->fromConfig($this->config, resolved: true);
+        $data = (new ContentModel())->fromConfig($this->config, forViewer: true);
 
         $this->assertSame(['Museum', 'Shop'], array_column($data['siteGroups'], 'name'));
         $this->assertSame([
@@ -346,10 +346,10 @@ class ContentModelTest extends TestCase
         ], array_column($data['fields'], 'typeLabel', 'handle'));
     }
 
-    public function testResolvedFieldTypeLabelsInTheAppLanguage(): void
+    public function testFieldTypeLabelsForTheViewerInTheAppLanguage(): void
     {
         Craft::$app->language = 'de';
-        $data = (new ContentModel())->fromConfig($this->config, resolved: true);
+        $data = (new ContentModel())->fromConfig($this->config, forViewer: true);
         $labels = array_column($data['fields'], 'typeLabel', 'handle');
 
         $this->assertSame(['Reiner Text', 'Einträge', 'Inhaltsblock'], [$labels['body'], $labels['relatedNews'], $labels['seo']]);
@@ -574,13 +574,13 @@ class ContentModelTest extends TestCase
     }
 
     /**
-     * The viewer tests run on the data of this fixture, so it's kept as the viewer gets it: resolved. After a change
-     * to the fixture or the data, `UPDATE_FIXTURES=1 composer test` writes it again.
+     * The viewer tests run on the data of this fixture, so it's kept as the viewer gets it. After a change to the
+     * fixture or the data, `UPDATE_FIXTURES=1 composer test` writes it again.
      */
     public function testViewerFixtureIsTheDataOfTheProjectFixture(): void
     {
         $file = __DIR__ . '/fixtures/content-model.json';
-        $data = (new ContentModel())->fromConfig($this->config, resolved: true);
+        $data = (new ContentModel())->fromConfig($this->config, forViewer: true);
         $json = Json::encode($data, JSON_PRETTY_PRINT | JSON_UNESCAPED_SLASHES | JSON_UNESCAPED_UNICODE) . "\n";
         if (getenv('UPDATE_FIXTURES')) {
             file_put_contents($file, $json);
