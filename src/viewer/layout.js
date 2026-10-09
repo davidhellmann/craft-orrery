@@ -92,9 +92,9 @@ registerView((() => {
       if (e.kind === 'HorizontalRule') { h += '<div class="fbox rule"></div>'; return; }
       if (e.kind === 'Heading') { h += `<div class="fbox heading">${esc(e.text)}</div>`; return; }
       if (e.kind === 'Tip') { h += `<div class="fbox tip">${esc(e.text)}</div>`; return; }
-      if (e.kind === 'Title') { h += `<div class="fbox ${w}"><div class="lbl">${esc(nativeName(e, o))}${reqTag(e)}</div><div class="h">title</div><div class="ctl">${t('Text')}</div></div>`; return; }
-      if (e.kind in NATIVE_FIELDS) { h += `<div class="fbox ${w}"><div class="lbl">${esc(nativeName(e, o))}</div><div class="ctl">${t('Native field')}</div></div>`; return; }
-      if (e.kind !== 'CustomField') { h += `<div class="fbox ${w}"><div class="lbl faint">${esc(e.kind)}</div></div>`; return; }
+      if (e.kind === 'Title') { h += `<div class="fbox ${w}"><div class="lbl">${esc(elementName(e, o))}${reqTag(e)}${condTag(e)}</div><div class="h">title</div><div class="ctl">${t('Text')}</div></div>`; return; }
+      if (e.kind in NATIVE_FIELDS) { h += `<div class="fbox ${w}"><div class="lbl">${esc(elementName(e, o))}${reqTag(e)}${condTag(e)}</div><div class="ctl">${t('Native field')}</div></div>`; return; }
+      if (e.kind !== 'CustomField') { h += `<div class="fbox ${w}"><div class="lbl faint">${esc(elementName(e, o))}</div></div>`; return; }
       const f = byUid.field[e.field];
       if (!f) return;
       h += `<div class="fbox ${w} link" data-go="${fieldKey(f)}"><div class="lbl">${esc(e.label || f.name)}${reqTag(e)}${condTag(e)}</div><div class="h">${esc(e.handle || f.handle)}${e.handle || e.label ? ` · ${esc(f.name)}` : ''}</div>${control(f)}</div>`;

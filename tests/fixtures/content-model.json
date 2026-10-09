@@ -281,7 +281,8 @@
                         {
                             "kind": "Title",
                             "width": 100,
-                            "required": true
+                            "required": true,
+                            "conditional": false
                         },
                         {
                             "kind": "CustomField",
@@ -330,7 +331,8 @@
                         {
                             "kind": "Title",
                             "width": 100,
-                            "required": true
+                            "required": true,
+                            "conditional": false
                         },
                         {
                             "kind": "CustomField",
@@ -366,7 +368,8 @@
                             "kind": "Title",
                             "width": 100,
                             "label": "Headline",
-                            "required": true
+                            "required": true,
+                            "conditional": false
                         },
                         {
                             "kind": "CustomField",
@@ -455,7 +458,8 @@
                             "kind": "Title",
                             "width": 100,
                             "label": "Name",
-                            "required": true
+                            "required": true,
+                            "conditional": false
                         },
                         {
                             "kind": "CustomField",
@@ -484,7 +488,8 @@
                         {
                             "kind": "Title",
                             "width": 100,
-                            "required": true
+                            "required": true,
+                            "conditional": false
                         },
                         {
                             "kind": "CustomField",
@@ -541,7 +546,8 @@
                         {
                             "kind": "Title",
                             "width": 100,
-                            "required": true
+                            "required": true,
+                            "conditional": false
                         },
                         {
                             "kind": "CustomField",
@@ -864,11 +870,14 @@
                         {
                             "kind": "Title",
                             "width": 100,
-                            "required": true
+                            "required": true,
+                            "conditional": false
                         },
                         {
                             "kind": "AltField",
-                            "width": 100
+                            "width": 100,
+                            "required": false,
+                            "conditional": false
                         },
                         {
                             "kind": "CustomField",
@@ -896,7 +905,8 @@
                         {
                             "kind": "Title",
                             "width": 100,
-                            "required": true
+                            "required": true,
+                            "conditional": false
                         },
                         {
                             "kind": "CustomField",
@@ -924,13 +934,27 @@
                         {
                             "kind": "Title",
                             "width": 100,
-                            "required": true
+                            "required": true,
+                            "conditional": false
                         },
                         {
                             "kind": "CustomField",
                             "width": 100,
                             "field": "field-notes",
                             "required": false,
+                            "conditional": false
+                        },
+                        {
+                            "kind": "TextField",
+                            "width": 50,
+                            "required": false,
+                            "conditional": false
+                        },
+                        {
+                            "kind": "TextareaField",
+                            "width": 50,
+                            "label": "How to use it",
+                            "required": true,
                             "conditional": false
                         }
                     ]
@@ -946,18 +970,41 @@
                 "elements": [
                     {
                         "kind": "UsernameField",
-                        "width": 100
+                        "width": 100,
+                        "required": false,
+                        "conditional": false
                     },
                     {
                         "kind": "FullNameField",
-                        "width": 100
+                        "width": 100,
+                        "required": false,
+                        "conditional": false
                     },
                     {
                         "kind": "PhotoField",
-                        "width": 100
+                        "width": 50,
+                        "label": "Portrait",
+                        "required": false,
+                        "conditional": false
                     },
                     {
                         "kind": "EmailField",
+                        "width": 50,
+                        "required": true,
+                        "conditional": false
+                    },
+                    {
+                        "kind": "AffiliatedSiteField",
+                        "width": 100,
+                        "required": false,
+                        "conditional": true
+                    },
+                    {
+                        "kind": "Markdown",
+                        "width": 100
+                    },
+                    {
+                        "kind": "LineBreak",
                         "width": 100
                     },
                     {
@@ -981,14 +1028,48 @@
                     {
                         "kind": "Title",
                         "width": 100,
-                        "required": false
+                        "required": false,
+                        "conditional": false
                     },
                     {
                         "kind": "CountryCodeField",
-                        "width": 100
+                        "width": 100,
+                        "required": false,
+                        "conditional": false
                     },
                     {
                         "kind": "AddressField",
+                        "width": 100,
+                        "required": false,
+                        "conditional": false
+                    },
+                    {
+                        "kind": "FullNameField",
+                        "width": 100,
+                        "required": false,
+                        "conditional": false
+                    },
+                    {
+                        "kind": "OrganizationField",
+                        "width": 50,
+                        "label": "Company",
+                        "required": false,
+                        "conditional": true
+                    },
+                    {
+                        "kind": "OrganizationTaxIdField",
+                        "width": 50,
+                        "required": false,
+                        "conditional": false
+                    },
+                    {
+                        "kind": "LatLongField",
+                        "width": 100,
+                        "required": false,
+                        "conditional": false
+                    },
+                    {
+                        "kind": "Template",
                         "width": 100
                     },
                     {

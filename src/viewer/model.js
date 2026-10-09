@@ -107,14 +107,20 @@ Object.entries(LAYOUT_OWNERS).forEach(([kind, list]) => list.forEach(o => {
 }));
 const isLayoutOwner = kind => kind in LAYOUT_OWNERS;
 
-// Craft's own fields in a field layout, by the name Craft gives them. Other elements go by their class name.
+// Craft's own fields in a field layout, and the UI elements between them, by the names Craft gives them. TextField and
+// TextareaField are the plain text fields Craft's own build on. An element a plugin adds goes by its class name.
 const NATIVE_FIELDS = {
   UsernameField: t('Username'), FullNameField: t('Full Name'), PhotoField: t('Photo'), EmailField: t('Email'), AffiliatedSiteField: t('Affiliated Site'),
   AltField: t('Alternative Text'), OrganizationField: t('Organization'), OrganizationTaxIdField: t('Organization Tax ID'), CountryCodeField: t('Country'),
-  AddressField: t('Address'), LatLongField: t('Latitude/Longitude'),
+  AddressField: t('Address'), LatLongField: t('Latitude/Longitude'), TextField: t('Text'), TextareaField: t('Text'),
 };
-// The address Label field is built on the title field, so it arrives as one.
-const nativeName = (el, owner) => el.label || (el.kind === 'Title' ? (owner === byUid.fieldlayout.addresses ? t('Label') : t('Title')) : NATIVE_FIELDS[el.kind] || el.kind);
+const UI_ELEMENTS = {
+  Heading: t('Heading'), Tip: t('Tip'), HorizontalRule: t('Horizontal Rule'), LineBreak: t('Line Break'), Markdown: t('Markdown'), Template: t('Template'),
+  Html: t('HTML'),
+};
+// The label a layout gives an element, or else its name. The address Label field is built on the title field, so it
+// arrives as one.
+const elementName = (el, owner) => el.label || (el.kind === 'Title' ? (owner === byUid.fieldlayout.addresses ? t('Label') : t('Title')) : NATIVE_FIELDS[el.kind] || UI_ELEMENTS[el.kind] || el.kind);
 
 // Node keys are "<kind>:<uid>".
 const keyOf = (kind, uid) => `${kind}:${uid}`;

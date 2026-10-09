@@ -1352,6 +1352,23 @@ tagGroups:
                 uid: el-keywords-notes
                 userCondition: null
                 width: 100
+              # Craft's generic text fields, as a plugin may place them for attributes of its own.
+              - attribute: synonyms
+                elementCondition: null
+                label: null
+                required: false
+                type: craft\fieldlayoutelements\TextField
+                uid: el-keywords-synonyms
+                userCondition: null
+                width: 50
+              - attribute: usage
+                elementCondition: null
+                label: 'How to use it'
+                required: true
+                type: craft\fieldlayoutelements\TextareaField
+                uid: el-keywords-usage
+                userCondition: null
+                width: 50
             name: Content
             uid: tab-keywords-content
             userCondition: null
@@ -1376,15 +1393,34 @@ users:
               userCondition: null
               width: 100
             - elementCondition: null
+              label: Portrait
+              required: false
               type: craft\fieldlayoutelements\users\PhotoField
               uid: el-users-photo
               userCondition: null
-              width: 100
+              width: 50
             - elementCondition: null
+              required: true
               type: craft\fieldlayoutelements\users\EmailField
               uid: el-users-email
               userCondition: null
+              width: 50
+            - elementCondition: null
+              type: craft\fieldlayoutelements\users\AffiliatedSiteField
+              uid: el-users-affiliated-site
+              userCondition:
+                class: craft\elements\conditions\users\UserCondition
               width: 100
+            - content: 'Shown on the team page.'
+              displayInPane: true
+              elementCondition: null
+              type: craft\fieldlayoutelements\Markdown
+              uid: el-users-markdown
+              userCondition: null
+            - elementCondition: null
+              type: craft\fieldlayoutelements\LineBreak
+              uid: el-users-line-break
+              userCondition: null
             - elementCondition: null
               fieldUid: field-notes
               handle: null
@@ -1464,6 +1500,39 @@ addresses:
               uid: el-addresses-address
               userCondition: null
               width: 100
+            - elementCondition: null
+              label: null
+              required: false
+              type: craft\fieldlayoutelements\FullNameField
+              uid: el-addresses-full-name
+              userCondition: null
+              width: 100
+            - elementCondition:
+                class: craft\elements\conditions\addresses\AddressCondition
+              label: Company
+              required: false
+              type: craft\fieldlayoutelements\addresses\OrganizationField
+              uid: el-addresses-organization
+              userCondition: null
+              width: 50
+            - elementCondition: null
+              label: null
+              required: false
+              type: craft\fieldlayoutelements\addresses\OrganizationTaxIdField
+              uid: el-addresses-tax-id
+              userCondition: null
+              width: 50
+            - elementCondition: null
+              type: craft\fieldlayoutelements\addresses\LatLongField
+              uid: el-addresses-lat-long
+              userCondition: null
+              width: 100
+            - elementCondition: null
+              template: _addresses/map
+              templateMode: site
+              type: craft\fieldlayoutelements\Template
+              uid: el-addresses-template
+              userCondition: null
             - elementCondition: null
               fieldUid: field-notes
               handle: null

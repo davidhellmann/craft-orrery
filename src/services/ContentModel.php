@@ -4,6 +4,7 @@ namespace davidhellmann\orrery\services;
 
 use Craft;
 use craft\base\FieldInterface;
+use craft\fieldlayoutelements\BaseField;
 use craft\fieldlayoutelements\CustomField;
 use craft\fieldlayoutelements\Heading;
 use craft\fieldlayoutelements\Tip;
@@ -337,12 +338,17 @@ class ContentModel extends Component
             ]);
         }
 
-        if (is_a($type, TitleField::class, true)) {
+        // Craft's own fields, like an entry's title or a user's email, by their class name. Title fields, the address
+        // Label field among them, all count as the title, which is required unless the layout says otherwise.
+        if (is_a($type, BaseField::class, true)) {
+            $isTitle = is_a($type, TitleField::class, true);
+
             return $this->withoutNulls([
                 ...$base,
-                'kind' => 'Title',
+                'kind' => $isTitle ? 'Title' : $base['kind'],
                 'label' => $this->nullIfEmpty($element, 'label'),
-                'required' => ($element['required'] ?? true) !== false,
+                'required' => (bool)($element['required'] ?? $isTitle),
+                'conditional' => $this->isConditional($element),
             ]);
         }
 
