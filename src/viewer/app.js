@@ -1,6 +1,6 @@
-// Routing between views (#<view>/<kind>:<uid>), header and theme.
+// Routing between the views their scripts registered (#<view>/<kind>:<uid>), header and theme. The first view is the
+// one to start with.
 const App = (() => {
-  const VIEWS = [GraphView, TableView, LayoutView, DiffView];
   const main = document.getElementById('main');
   const nav = document.getElementById('views');
   let active = null;
@@ -17,7 +17,7 @@ const App = (() => {
 
   const parse = (hash = location.hash) => {
     const [view, ...rest] = hash.replace(/^#/, '').split('/');
-    return { view: VIEWS.find(v => v.id === view) ? view : 'graph', key: rest.join('/') || null };
+    return { view: VIEWS.find(v => v.id === view) ? view : VIEWS[0].id, key: rest.join('/') || null };
   };
   // In-page links (#view/key) go through the viewer's own history.
   document.addEventListener('click', ev => {
@@ -76,7 +76,7 @@ const App = (() => {
   document.addEventListener('keydown', ev => {
     if (ev.key !== 'Escape') return;
     if (closePickers()) return;
-    if (active && !(ev.target.closest && ev.target.closest('input, select, textarea'))) active.escape();
+    if (active && active.escape && !(ev.target.closest && ev.target.closest('input, select, textarea'))) active.escape();
   });
 
   // access pickers: switch user groups and GraphQL schemas on as a layer, remembered per browser
@@ -107,7 +107,7 @@ const App = (() => {
   function accessChanged() {
     try { localStorage.setItem('orrery-access', JSON.stringify(Object.fromEntries(ACCESS.map(k => [k, [...shownAccess[k]]])))); } catch (e) {}
     accessEl.querySelectorAll('.picker').forEach(syncPicker);
-    VIEWS.forEach(v => mounted.has(v.id) && v.refresh());
+    VIEWS.forEach(v => mounted.has(v.id) && v.refresh && v.refresh());
   }
   function closePickers() {
     const open = accessEl.querySelectorAll('.pop:not([hidden])');
@@ -130,7 +130,7 @@ const App = (() => {
       ofKind(kind).forEach(a => (ev.target.checked ? shownAccess[kind].add(a.uid) : shownAccess[kind].delete(a.uid)));
       accessChanged();
     });
-    bindGo(pop, key => { closePickers(); go(active ? active.id : 'graph', key); });
+    bindGo(pop, key => { closePickers(); go(active ? active.id : VIEWS[0].id, key); });
     syncPicker(p);
   });
   document.addEventListener('pointerdown', ev => { if (!(ev.target.closest && ev.target.closest('.picker'))) closePickers(); });
@@ -138,7 +138,7 @@ const App = (() => {
   // header
   const STATS = ['group', 'site', 'section', 'page', 'block', 'matrix', 'field'];
   document.getElementById('stats').innerHTML = STATS.map(k => `<span class="stat">${glyph(k)}<b>${ofKind(k).length}</b>${KIND[k].plural}</span>`).join('');
-  if (M.dateModified) document.getElementById('meta').textContent = `Config updated ${new Date(M.dateModified * 1000).toLocaleString()}`;
+  if (model.dateModified) document.getElementById('meta').textContent = `Config updated ${new Date(model.dateModified * 1000).toLocaleString()}`;
 
   // theme: light or dark, starts from the system's and is remembered per browser once switched
   const themeBtn = document.getElementById('theme');

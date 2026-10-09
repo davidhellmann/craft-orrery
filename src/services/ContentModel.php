@@ -104,7 +104,7 @@ class ContentModel extends Component
                 'uid' => $uid,
                 'name' => $group['name'] ?? '',
                 'handle' => $group['handle'] ?? '',
-                'description' => $this->filled($group, 'description'),
+                'description' => $this->nullIfEmpty($group, 'description'),
                 'sites' => array_values(array_unique($sites)),
                 'sections' => array_map(fn(array $rights) => array_values(array_intersect($order, $rights)), $sections),
             ]);
@@ -194,7 +194,7 @@ class ContentModel extends Component
                 $sites[] = [
                     'site' => $siteUid,
                     'hasUrls' => (bool)($settings['hasUrls'] ?? false),
-                    'uriFormat' => $this->filled($settings, 'uriFormat'),
+                    'uriFormat' => $this->nullIfEmpty($settings, 'uriFormat'),
                 ];
             }
 
@@ -221,7 +221,7 @@ class ContentModel extends Component
                 'uid' => $uid,
                 'name' => $entryType['name'] ?? '',
                 'handle' => $entryType['handle'] ?? '',
-                'icon' => $this->filled($entryType, 'icon'),
+                'icon' => $this->nullIfEmpty($entryType, 'icon'),
                 'hasTitleField' => ($entryType['hasTitleField'] ?? true) !== false,
                 'tabs' => $this->tabs($entryType['fieldLayouts'] ?? []),
             ]);
@@ -244,7 +244,7 @@ class ContentModel extends Component
                 'typeClass' => $type,
                 'typeLabel' => $this->typeLabel($type, $resolved),
                 'role' => $this->role($type),
-                'instructions' => $this->filled($field, 'instructions'),
+                'instructions' => $this->nullIfEmpty($field, 'instructions'),
             ];
 
             if (is_a($type, Matrix::class, true)) {
@@ -328,9 +328,9 @@ class ContentModel extends Component
                 ...$base,
                 'kind' => 'CustomField',
                 'field' => $element['fieldUid'] ?? null,
-                'handle' => $this->filled($element, 'handle'),
-                'label' => $this->filled($element, 'label'),
-                'instructions' => $this->filled($element, 'instructions'),
+                'handle' => $this->nullIfEmpty($element, 'handle'),
+                'label' => $this->nullIfEmpty($element, 'label'),
+                'instructions' => $this->nullIfEmpty($element, 'instructions'),
                 'required' => (bool)($element['required'] ?? false),
                 'conditional' => $this->isConditional($element),
             ]);
@@ -340,7 +340,7 @@ class ContentModel extends Component
             return $this->withoutNulls([
                 ...$base,
                 'kind' => 'Title',
-                'label' => $this->filled($element, 'label'),
+                'label' => $this->nullIfEmpty($element, 'label'),
                 'required' => ($element['required'] ?? true) !== false,
             ]);
         }
@@ -422,7 +422,7 @@ class ContentModel extends Component
         return !empty($config['elementCondition']) || !empty($config['userCondition']);
     }
 
-    private function filled(array $config, string $key): mixed
+    private function nullIfEmpty(array $config, string $key): mixed
     {
         return ($config[$key] ?? null) ?: null;
     }

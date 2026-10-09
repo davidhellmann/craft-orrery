@@ -6,18 +6,18 @@ const { loadViewer } = require('./load');
 const handles = list => list.map(item => item.handle);
 
 test('entry types attached to a section are Pages, to a Matrix field Blocks, and to neither unused', () => {
-  const { M } = loadViewer();
+  const { model } = loadViewer();
 
-  assert.deepEqual(handles(M.entryTypes.filter(e => e.kind === 'page')), ['exhibition', 'page_article', 'page_link', 'page_person', 'page_product', 'single_home']);
-  assert.deepEqual(handles(M.entryTypes.filter(e => e.kind === 'block')), ['block_columns', 'block_image', 'block_teaser', 'block_text', 'quote']);
-  assert.deepEqual(handles(M.entryTypes.filter(e => e.kind === 'unused')), ['oldPromo']);
+  assert.deepEqual(handles(model.entryTypes.filter(e => e.kind === 'page')), ['exhibition', 'page_article', 'page_link', 'page_person', 'page_product', 'single_home']);
+  assert.deepEqual(handles(model.entryTypes.filter(e => e.kind === 'block')), ['block_columns', 'block_image', 'block_teaser', 'block_text', 'quote']);
+  assert.deepEqual(handles(model.entryTypes.filter(e => e.kind === 'unused')), ['oldPromo']);
 });
 
 test('an entry type attached to a section and to a Builder is a Page', () => {
-  const { by } = loadViewer();
+  const { byUid } = loadViewer();
 
-  assert.equal(by.et['et-link'].kind, 'page');
-  assert.deepEqual(by.et['et-link'].builders.map(b => b.field.handle), ['pageBuilder']);
+  assert.equal(byUid.et['et-link'].kind, 'page');
+  assert.deepEqual(byUid.et['et-link'].builders.map(b => b.field.handle), ['pageBuilder']);
 });
 
 test('keys find every kind of node, and nothing for unknown ones', () => {
@@ -62,37 +62,37 @@ test('Pages, Blocks and unused entry types are entry types, Builders and Fields 
 });
 
 test('site groups hold their sites, sites the sections on them', () => {
-  const { by } = loadViewer();
+  const { byUid } = loadViewer();
 
-  assert.deepEqual(handles(by.group['group-museum'].sites), ['en', 'de']);
-  assert.deepEqual(handles(by.site['site-en'].sections), ['exhibitions', 'home', 'news', 'people']);
-  assert.deepEqual(handles(by.site['site-shop'].sections), ['products']);
-  assert.deepEqual(by.section['section-news'].groups, ['group-museum']);
-  assert.equal(by.section['section-people'].hasUrls, false);
+  assert.deepEqual(handles(byUid.group['group-museum'].sites), ['en', 'de']);
+  assert.deepEqual(handles(byUid.site['site-en'].sections), ['exhibitions', 'home', 'news', 'people']);
+  assert.deepEqual(handles(byUid.site['site-shop'].sections), ['products']);
+  assert.deepEqual(byUid.section['section-news'].groups, ['group-museum']);
+  assert.equal(byUid.section['section-people'].hasUrls, false);
 });
 
 test('Matrix and ContentBlock fields are Builders, and so are field types built on them', () => {
-  const { M } = loadViewer();
+  const { model } = loadViewer();
 
-  assert.deepEqual(handles(M.fields.filter(f => f.kind === 'matrix')), ['columns', 'credits', 'gallery', 'pageBuilder', 'seo']);
+  assert.deepEqual(handles(model.fields.filter(f => f.kind === 'matrix')), ['columns', 'credits', 'gallery', 'pageBuilder', 'seo']);
 });
 
 test('a field type built on Matrix is a Builder with its Blocks', () => {
-  const { by, fieldKey } = loadViewer();
+  const { byUid, fieldKey } = loadViewer();
 
-  assert.equal(fieldKey(by.field['field-gallery']), 'matrix:field-gallery');
-  assert.deepEqual(by.et['et-image'].builders.map(b => b.field.handle), ['gallery', 'pageBuilder']);
+  assert.equal(fieldKey(byUid.field['field-gallery']), 'matrix:field-gallery');
+  assert.deepEqual(byUid.et['et-image'].builders.map(b => b.field.handle), ['gallery', 'pageBuilder']);
 });
 
 test('the fields in a field type built on ContentBlock are used there', () => {
-  const { by } = loadViewer();
+  const { byUid } = loadViewer();
 
-  assert.deepEqual(by.field['field-photographer'].usedIn.map(u => [u.ownerKind, u.owner.handle]), [['matrix', 'credits']]);
+  assert.deepEqual(byUid.field['field-photographer'].usedIn.map(u => [u.ownerKind, u.owner.handle]), [['matrix', 'credits']]);
 });
 
 test('a Block knows the Builders it is in, with its name and group there', () => {
-  const { by } = loadViewer();
-  const builders = uid => by.et[uid].builders.map(b => [b.field.handle, b.context, b.group]);
+  const { byUid } = loadViewer();
+  const builders = uid => byUid.et[uid].builders.map(b => [b.field.handle, b.context, b.group]);
 
   assert.deepEqual(builders('et-quote'), [['pageBuilder', 'Pull quote', 'Text']]);
   assert.deepEqual(builders('et-text'), [['columns', undefined, undefined], ['pageBuilder', undefined, 'Text']]);
@@ -100,13 +100,13 @@ test('a Block knows the Builders it is in, with its name and group there', () =>
 });
 
 test('a field lists each layout it sits in, including ContentBlocks', () => {
-  const { by } = loadViewer();
-  const usedIn = uid => by.field[uid].usedIn.map(u => [u.ownerKind, u.owner.handle]);
+  const { byUid } = loadViewer();
+  const usedIn = uid => byUid.field[uid].usedIn.map(u => [u.ownerKind, u.owner.handle]);
 
   assert.deepEqual(usedIn('field-body'), [['block', 'block_text'], ['page', 'exhibition'], ['page', 'page_article'], ['page', 'page_link'], ['page', 'page_product'], ['block', 'quote']]);
   assert.deepEqual(usedIn('field-summary'), [['matrix', 'seo']]);
   assert.deepEqual(usedIn('field-image'), [['block', 'block_image'], ['unused', 'oldPromo'], ['page', 'page_person'], ['page', 'page_product'], ['matrix', 'seo']]);
-  assert.equal(by.field['field-body'].usedIn.find(u => u.owner.handle === 'page_article').el.label, 'Introduction');
+  assert.equal(byUid.field['field-body'].usedIn.find(u => u.owner.handle === 'page_article').el.label, 'Introduction');
 });
 
 test('unused entry types are listed apart, and Pages and Blocks are counted without them', () => {
@@ -118,15 +118,15 @@ test('unused entry types are listed apart, and Pages and Blocks are counted with
 });
 
 test('a field that only sits in a global set is used there, with the label it gets there', () => {
-  const { by } = loadViewer();
+  const { byUid } = loadViewer();
 
-  assert.deepEqual(by.field['field-copyright'].usedIn.map(u => [u.ownerKind, u.owner.handle, u.el.label]), [['globalset', 'footer', 'Copyright line']]);
+  assert.deepEqual(byUid.field['field-copyright'].usedIn.map(u => [u.ownerKind, u.owner.handle, u.el.label]), [['globalset', 'footer', 'Copyright line']]);
 });
 
 test('volumes, category and tag groups, users and addresses list the fields in them, with the label they get there', () => {
-  const { by } = loadViewer();
+  const { byUid } = loadViewer();
 
-  assert.deepEqual(by.field['field-notes'].usedIn.map(u => [u.ownerKind, u.owner.name, u.el.label]), [
+  assert.deepEqual(byUid.field['field-notes'].usedIn.map(u => [u.ownerKind, u.owner.name, u.el.label]), [
     ['volume', 'Images', 'Caption'],
     ['categorygroup', 'Topics', 'Description'],
     ['taggroup', 'Keywords', undefined],
@@ -155,19 +155,19 @@ test('a search in those field layouts leaves out the kinds with nothing that mat
 });
 
 test('Craft’s own fields in a field layout go by the names Craft gives them, the address title field as Label', () => {
-  const { by, nativeName } = loadViewer();
+  const { byUid, nativeName } = loadViewer();
   const names = o => o.tabs.flatMap(t => t.elements).filter(el => el.kind !== 'CustomField').map(el => nativeName(el, o));
 
-  assert.deepEqual(names(by.fieldlayout.users), ['Username', 'Full Name', 'Photo', 'Email']);
-  assert.deepEqual(names(by.volume['volume-images']), ['Title', 'Alternative Text']);
-  assert.deepEqual(names(by.fieldlayout.addresses), ['Label', 'Country', 'Address']);
+  assert.deepEqual(names(byUid.fieldlayout.users), ['Username', 'Full Name', 'Photo', 'Email']);
+  assert.deepEqual(names(byUid.volume['volume-images']), ['Title', 'Alternative Text']);
+  assert.deepEqual(names(byUid.fieldlayout.addresses), ['Label', 'Country', 'Address']);
 });
 
 test('a title the layout renames goes by that name, and an element Craft doesn’t name by its class', () => {
-  const { by, nativeName } = loadViewer();
+  const { byUid, nativeName } = loadViewer();
 
-  assert.equal(nativeName(by.et['et-person'].tabs[0].elements[0], by.et['et-person']), 'Name');
-  assert.equal(nativeName({ kind: 'Markdown', width: 100 }, by.et['et-person']), 'Markdown');
+  assert.equal(nativeName(byUid.et['et-person'].tabs[0].elements[0], byUid.et['et-person']), 'Name');
+  assert.equal(nativeName({ kind: 'Markdown', width: 100 }, byUid.et['et-person']), 'Markdown');
 });
 
 test('fields that no field layout holds are unused', () => {
@@ -177,32 +177,32 @@ test('fields that no field layout holds are unused', () => {
 });
 
 test('an Entries field targets the sections it pulls from that still exist', () => {
-  const { by } = loadViewer();
+  const { byUid } = loadViewer();
 
-  assert.deepEqual(handles(by.field['field-related-news'].targets), ['news']);
-  assert.deepEqual(handles(by.field['field-curators'].targets), ['people']);
-  assert.deepEqual(handles(by.section['section-news'].referencedBy), ['relatedNews']);
-  assert.deepEqual(handles(by.section['section-people'].referencedBy), ['curators']);
+  assert.deepEqual(handles(byUid.field['field-related-news'].targets), ['news']);
+  assert.deepEqual(handles(byUid.field['field-curators'].targets), ['people']);
+  assert.deepEqual(handles(byUid.section['section-news'].referencedBy), ['relatedNews']);
+  assert.deepEqual(handles(byUid.section['section-people'].referencedBy), ['curators']);
 });
 
 test('an Entries field open to every section targets none in particular', () => {
-  const { by } = loadViewer();
+  const { byUid } = loadViewer();
 
-  assert.equal(by.field['field-featured'].allSources, true);
-  assert.deepEqual(by.field['field-featured'].targets, []);
-  assert.equal(by.field['field-related-news'].allSources, false);
+  assert.equal(byUid.field['field-featured'].allSources, true);
+  assert.deepEqual(byUid.field['field-featured'].targets, []);
+  assert.equal(byUid.field['field-related-news'].allSources, false);
 });
 
 test('only Entries fields have relation targets', () => {
-  const { by } = loadViewer();
+  const { byUid } = loadViewer();
 
-  assert.deepEqual(by.field['field-image'].targets, []);
-  assert.equal(by.field['field-image'].allSources, undefined);
+  assert.deepEqual(byUid.field['field-image'].targets, []);
+  assert.equal(byUid.field['field-image'].allSources, undefined);
 });
 
 test('a Block pulls content from the sections its fields target, through nested Builders too', () => {
-  const { by, pullsFrom } = loadViewer();
-  const pulls = uid => handles([...pullsFrom(by.et[uid])]);
+  const { byUid, pullsFrom } = loadViewer();
+  const pulls = uid => handles([...pullsFrom(byUid.et[uid])]);
 
   assert.deepEqual(pulls('et-teaser'), ['news']);
   assert.deepEqual(pulls('et-columns'), ['news']);
@@ -210,8 +210,8 @@ test('a Block pulls content from the sections its fields target, through nested 
 });
 
 test('an entry type ends up on the sites of its sections, or of the Pages that hold its Builder', () => {
-  const { by, sitesOfEt } = loadViewer();
-  const sites = uid => [...sitesOfEt(by.et[uid])];
+  const { byUid, sitesOfEt } = loadViewer();
+  const sites = uid => [...sitesOfEt(byUid.et[uid])];
 
   assert.deepEqual(sites('et-product'), ['site-shop']);
   assert.deepEqual(sites('et-article'), ['site-en', 'site-de']);
@@ -220,8 +220,8 @@ test('an entry type ends up on the sites of its sections, or of the Pages that h
 });
 
 test('a field ends up in the site groups of the Pages and Blocks that hold it, through Builders too', () => {
-  const { by, groupsOfField } = loadViewer();
-  const groups = uid => [...groupsOfField(by.field[uid])].sort();
+  const { byUid, groupsOfField } = loadViewer();
+  const groups = uid => [...groupsOfField(byUid.field[uid])].sort();
 
   assert.deepEqual(groups('field-body'), ['group-museum', 'group-shop']);
   assert.deepEqual(groups('field-related-news'), ['group-museum']);
@@ -231,34 +231,34 @@ test('a field ends up in the site groups of the Pages and Blocks that hold it, t
 });
 
 test('a field that only sits in field layouts outside entry types ends up in no site group', () => {
-  const { by, groupsOfField } = loadViewer();
+  const { byUid, groupsOfField } = loadViewer();
 
-  assert.deepEqual([...groupsOfField(by.field['field-copyright'])], []);
+  assert.deepEqual([...groupsOfField(byUid.field['field-copyright'])], []);
 });
 
 test('a site group has the fields of its Pages and of the Blocks that end up there', () => {
-  const { M, groupsOfField } = loadViewer();
-  const fieldsIn = group => handles(M.fields.filter(f => groupsOfField(f).has(group)));
+  const { model, groupsOfField } = loadViewer();
+  const fieldsIn = group => handles(model.fields.filter(f => groupsOfField(f).has(group)));
 
   assert.deepEqual(fieldsIn('group-shop'), ['body', 'image']);
   assert.deepEqual(fieldsIn('group-museum'), ['body', 'columns', 'credits', 'curators', 'featured', 'gallery', 'image', 'layoutStyle', 'pageBuilder', 'photographer', 'relatedNews', 'seo', 'summary']);
 });
 
 test('a handle passes if it starts with any of the prefixes for its kind', () => {
-  const { by, checksHandles, unprefixedEntryTypes } = loadViewer({ prefixes: { page: ['page_', 'single_'], block: ['block_'] } });
+  const { byUid, checksHandles, unprefixedEntryTypes } = loadViewer({ prefixes: { page: ['page_', 'single_'], block: ['block_'] } });
 
   assert.equal(checksHandles, true);
   assert.deepEqual(handles(unprefixedEntryTypes), ['exhibition', 'quote']);
-  assert.equal(by.et['et-home'].conventionOk, true);
-  assert.equal(by.et['et-exhibition'].prefix, 'page_ / single_');
-  assert.equal(by.et['et-quote'].prefix, 'block_');
+  assert.equal(byUid.et['et-home'].conventionOk, true);
+  assert.equal(byUid.et['et-exhibition'].prefix, 'page_ / single_');
+  assert.equal(byUid.et['et-quote'].prefix, 'block_');
 });
 
 test('an unused entry type is checked against neither the page nor the block prefixes', () => {
-  const { by, unprefixedEntryTypes } = loadViewer({ prefixes: { page: ['page_'], block: ['block_'] } });
+  const { byUid, unprefixedEntryTypes } = loadViewer({ prefixes: { page: ['page_'], block: ['block_'] } });
 
-  assert.equal(by.et['et-promo'].conventionOk, true);
-  assert.equal(by.et['et-promo'].prefix, '');
+  assert.equal(byUid.et['et-promo'].conventionOk, true);
+  assert.equal(byUid.et['et-promo'].prefix, '');
   assert.equal(unprefixedEntryTypes.some(e => e.handle === 'oldPromo'), false);
 });
 
@@ -276,8 +276,8 @@ test('without prefixes, no handle is checked', () => {
 });
 
 test('a user group may edit its sites and has its rights on the sections of a Page', () => {
-  const { by, rightsOn } = loadViewer();
-  const editors = by.usergroup['ug-editors'];
+  const { byUid, rightsOn } = loadViewer();
+  const editors = byUid.usergroup['ug-editors'];
 
   assert.deepEqual(rightsOn(editors, 'usergroup', 'site:site-en'), ['edit']);
   assert.equal(rightsOn(editors, 'usergroup', 'site:site-shop'), null);
@@ -287,8 +287,8 @@ test('a user group may edit its sites and has its rights on the sections of a Pa
 });
 
 test('user group rights stop at Pages', () => {
-  const { by, rightsOn } = loadViewer();
-  const editors = by.usergroup['ug-editors'];
+  const { byUid, rightsOn } = loadViewer();
+  const editors = byUid.usergroup['ug-editors'];
 
   assert.equal(rightsOn(editors, 'usergroup', 'matrix:field-page-builder'), null);
   assert.equal(rightsOn(editors, 'usergroup', 'block:et-text'), null);
@@ -296,8 +296,8 @@ test('user group rights stop at Pages', () => {
 });
 
 test('a schema reads its sites and has its rights on the sections of a Page', () => {
-  const { by, rightsOn } = loadViewer();
-  const app = by.schema['gql-app'];
+  const { byUid, rightsOn } = loadViewer();
+  const app = byUid.schema['gql-app'];
 
   assert.deepEqual(rightsOn(app, 'schema', 'site:site-shop'), ['read']);
   assert.equal(rightsOn(app, 'schema', 'site:site-en'), null);
@@ -306,8 +306,8 @@ test('a schema reads its sites and has its rights on the sections of a Page', ()
 });
 
 test('a schema has its rights on a Builder and on the Blocks in it', () => {
-  const { by, rightsOn } = loadViewer();
-  const app = by.schema['gql-app'], pub = by.schema['gql-public'];
+  const { byUid, rightsOn } = loadViewer();
+  const app = byUid.schema['gql-app'], pub = byUid.schema['gql-public'];
 
   assert.deepEqual(rightsOn(app, 'schema', 'matrix:field-page-builder'), ['read', 'save']);
   assert.deepEqual(rightsOn(app, 'schema', 'block:et-quote'), ['read', 'save']);
@@ -317,8 +317,16 @@ test('a schema has its rights on a Builder and on the Blocks in it', () => {
 });
 
 test('a Block in several Builders gets the rights of all of them', () => {
-  const { by, rightsOn } = loadViewer();
+  const { byUid, rightsOn } = loadViewer();
 
-  assert.deepEqual(rightsOn(by.schema['gql-app'], 'schema', 'block:et-text'), ['read', 'save']);
-  assert.deepEqual(rightsOn(by.schema['gql-public'], 'schema', 'block:et-text'), ['read']);
+  assert.deepEqual(rightsOn(byUid.schema['gql-app'], 'schema', 'block:et-text'), ['read', 'save']);
+  assert.deepEqual(rightsOn(byUid.schema['gql-public'], 'schema', 'block:et-text'), ['read']);
+});
+
+test('a Builder’s Blocks come by their group, in the order the field has them', () => {
+  const { byUid, blockGroups } = loadViewer();
+  const groups = uid => blockGroups(byUid.field[uid]).map(([group, blocks]) => [group, blocks.map(b => b.entryType)]);
+
+  assert.deepEqual(groups('field-page-builder'), [['Text', ['et-text', 'et-quote']], ['Media', ['et-image', 'et-link']], ['', ['et-teaser']], ['Layout', ['et-columns']]]);
+  assert.deepEqual(groups('field-columns'), [['', ['et-text', 'et-teaser']]]);
 });
