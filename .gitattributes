@@ -9,8 +9,11 @@ docs/ export-ignore
 README.md export-ignore
 composer.lock export-ignore
 ecs.php export-ignore
+package.json export-ignore
 phpstan.neon export-ignore
+phpunit.xml.dist export-ignore
 resources/ export-ignore
+tests/ export-ignore
 
 # Auto-detect text files and perform LF normalization
 * text=auto

@@ -1,0 +1,811 @@
+{
+    "dateModified": 1767225600,
+    "siteGroups": [
+        {
+            "uid": "group-museum",
+            "name": "Museum"
+        },
+        {
+            "uid": "group-shop",
+            "name": "Shop"
+        }
+    ],
+    "sites": [
+        {
+            "uid": "site-en",
+            "name": "English",
+            "handle": "en",
+            "group": "group-museum",
+            "baseUrl": "https://museum.test/",
+            "language": "en-GB",
+            "primary": true,
+            "sortOrder": 1
+        },
+        {
+            "uid": "site-de",
+            "name": "Deutsch",
+            "handle": "de",
+            "group": "group-museum",
+            "baseUrl": "https://museum.test/de/",
+            "language": "de-DE",
+            "primary": false,
+            "sortOrder": 2
+        },
+        {
+            "uid": "site-shop",
+            "name": "Shop",
+            "handle": "shop",
+            "group": "group-shop",
+            "baseUrl": "https://shop.museum.test/",
+            "language": "en-GB",
+            "primary": false,
+            "sortOrder": 3
+        }
+    ],
+    "sections": [
+        {
+            "uid": "section-exhibitions",
+            "name": "Exhibitions",
+            "handle": "exhibitions",
+            "type": "structure",
+            "entryTypes": [
+                "et-exhibition",
+                "et-article"
+            ],
+            "contexts": [],
+            "sites": [
+                {
+                    "site": "site-en",
+                    "hasUrls": true,
+                    "uriFormat": "exhibitions/{slug}"
+                },
+                {
+                    "site": "site-de",
+                    "hasUrls": true,
+                    "uriFormat": "ausstellungen/{slug}"
+                }
+            ],
+            "previewTargets": []
+        },
+        {
+            "uid": "section-home",
+            "name": "Home",
+            "handle": "home",
+            "type": "single",
+            "entryTypes": [
+                "et-home"
+            ],
+            "contexts": [],
+            "sites": [
+                {
+                    "site": "site-en",
+                    "hasUrls": true,
+                    "uriFormat": "__home__"
+                },
+                {
+                    "site": "site-de",
+                    "hasUrls": true,
+                    "uriFormat": "__home__"
+                }
+            ],
+            "previewTargets": [
+                "Primary entry page"
+            ]
+        },
+        {
+            "uid": "section-news",
+            "name": "News",
+            "handle": "news",
+            "type": "channel",
+            "entryTypes": [
+                "et-article",
+                "et-link"
+            ],
+            "contexts": {
+                "et-article": "News article"
+            },
+            "sites": [
+                {
+                    "site": "site-en",
+                    "hasUrls": true,
+                    "uriFormat": "news/{slug}"
+                },
+                {
+                    "site": "site-de",
+                    "hasUrls": true,
+                    "uriFormat": "aktuelles/{slug}"
+                }
+            ],
+            "previewTargets": [
+                "Primary entry page"
+            ]
+        },
+        {
+            "uid": "section-people",
+            "name": "People",
+            "handle": "people",
+            "type": "channel",
+            "entryTypes": [
+                "et-person"
+            ],
+            "contexts": [],
+            "sites": [
+                {
+                    "site": "site-en",
+                    "hasUrls": false,
+                    "uriFormat": null
+                }
+            ],
+            "previewTargets": []
+        },
+        {
+            "uid": "section-products",
+            "name": "Products",
+            "handle": "products",
+            "type": "channel",
+            "entryTypes": [
+                "et-product"
+            ],
+            "contexts": [],
+            "sites": [
+                {
+                    "site": "site-shop",
+                    "hasUrls": true,
+                    "uriFormat": "products/{slug}"
+                }
+            ],
+            "previewTargets": []
+        }
+    ],
+    "entryTypes": [
+        {
+            "uid": "et-columns",
+            "name": "Columns",
+            "handle": "block_columns",
+            "icon": "table-columns",
+            "hasTitleField": false,
+            "tabs": [
+                {
+                    "name": "Content",
+                    "conditional": false,
+                    "elements": [
+                        {
+                            "kind": "CustomField",
+                            "width": 100,
+                            "field": "field-columns",
+                            "required": true,
+                            "conditional": false
+                        }
+                    ]
+                }
+            ]
+        },
+        {
+            "uid": "et-image",
+            "name": "Image",
+            "handle": "block_image",
+            "icon": "image",
+            "hasTitleField": false,
+            "tabs": [
+                {
+                    "name": "Content",
+                    "conditional": false,
+                    "elements": [
+                        {
+                            "kind": "CustomField",
+                            "width": 100,
+                            "field": "field-image",
+                            "required": true,
+                            "conditional": false
+                        },
+                        {
+                            "kind": "CustomField",
+                            "width": 50,
+                            "field": "field-layout-style",
+                            "required": false,
+                            "conditional": false
+                        }
+                    ]
+                }
+            ]
+        },
+        {
+            "uid": "et-teaser",
+            "name": "Teaser",
+            "handle": "block_teaser",
+            "icon": "rectangle-list",
+            "hasTitleField": false,
+            "tabs": [
+                {
+                    "name": "Content",
+                    "conditional": false,
+                    "elements": [
+                        {
+                            "kind": "CustomField",
+                            "width": 100,
+                            "field": "field-related-news",
+                            "required": true,
+                            "conditional": false
+                        }
+                    ]
+                }
+            ]
+        },
+        {
+            "uid": "et-text",
+            "name": "Text",
+            "handle": "block_text",
+            "icon": "paragraph",
+            "hasTitleField": false,
+            "tabs": [
+                {
+                    "name": "Content",
+                    "conditional": false,
+                    "elements": [
+                        {
+                            "kind": "CustomField",
+                            "width": 100,
+                            "field": "field-body",
+                            "required": true,
+                            "conditional": false
+                        },
+                        {
+                            "kind": "CustomField",
+                            "width": 50,
+                            "field": "field-layout-style",
+                            "required": false,
+                            "conditional": false
+                        }
+                    ]
+                }
+            ]
+        },
+        {
+            "uid": "et-exhibition",
+            "name": "Exhibition",
+            "handle": "exhibition",
+            "icon": "building-columns",
+            "hasTitleField": true,
+            "tabs": [
+                {
+                    "name": "Content",
+                    "conditional": false,
+                    "elements": [
+                        {
+                            "kind": "Title",
+                            "width": 100,
+                            "required": true
+                        },
+                        {
+                            "kind": "CustomField",
+                            "width": 50,
+                            "field": "field-curators",
+                            "required": false,
+                            "conditional": false
+                        },
+                        {
+                            "kind": "CustomField",
+                            "width": 100,
+                            "field": "field-body",
+                            "label": "Description",
+                            "required": false,
+                            "conditional": true
+                        },
+                        {
+                            "kind": "CustomField",
+                            "width": 100,
+                            "field": "field-seo",
+                            "required": false,
+                            "conditional": false
+                        }
+                    ]
+                }
+            ]
+        },
+        {
+            "uid": "et-article",
+            "name": "Article",
+            "handle": "page_article",
+            "icon": "newspaper",
+            "hasTitleField": true,
+            "tabs": [
+                {
+                    "name": "Content",
+                    "conditional": false,
+                    "elements": [
+                        {
+                            "kind": "Title",
+                            "width": 100,
+                            "label": "Headline",
+                            "required": true
+                        },
+                        {
+                            "kind": "CustomField",
+                            "width": 50,
+                            "field": "field-body",
+                            "handle": "intro",
+                            "label": "Introduction",
+                            "instructions": "Two sentences at most.",
+                            "required": true,
+                            "conditional": false
+                        },
+                        {
+                            "kind": "Heading",
+                            "width": 100,
+                            "text": "Story"
+                        },
+                        {
+                            "kind": "CustomField",
+                            "width": 100,
+                            "field": "field-page-builder",
+                            "required": false,
+                            "conditional": false
+                        }
+                    ]
+                },
+                {
+                    "name": "SEO",
+                    "conditional": true,
+                    "elements": [
+                        {
+                            "kind": "Tip",
+                            "width": 100,
+                            "text": "Search engines show the summary under the title.",
+                            "style": "warning"
+                        },
+                        {
+                            "kind": "CustomField",
+                            "width": 100,
+                            "field": "field-seo",
+                            "required": false,
+                            "conditional": false
+                        },
+                        {
+                            "kind": "HorizontalRule",
+                            "width": 100
+                        }
+                    ]
+                }
+            ]
+        },
+        {
+            "uid": "et-link",
+            "name": "Link",
+            "handle": "page_link",
+            "icon": "link",
+            "hasTitleField": false,
+            "tabs": [
+                {
+                    "name": "Content",
+                    "conditional": false,
+                    "elements": [
+                        {
+                            "kind": "CustomField",
+                            "width": 100,
+                            "field": "field-body",
+                            "label": "Note",
+                            "required": false,
+                            "conditional": false
+                        }
+                    ]
+                }
+            ]
+        },
+        {
+            "uid": "et-person",
+            "name": "Person",
+            "handle": "page_person",
+            "icon": "user",
+            "hasTitleField": true,
+            "tabs": [
+                {
+                    "name": "Content",
+                    "conditional": false,
+                    "elements": [
+                        {
+                            "kind": "Title",
+                            "width": 100,
+                            "label": "Name",
+                            "required": true
+                        },
+                        {
+                            "kind": "CustomField",
+                            "width": 50,
+                            "field": "field-image",
+                            "handle": "portrait",
+                            "label": "Portrait",
+                            "required": false,
+                            "conditional": false
+                        }
+                    ]
+                }
+            ]
+        },
+        {
+            "uid": "et-product",
+            "name": "Product",
+            "handle": "page_product",
+            "icon": "bag-shopping",
+            "hasTitleField": true,
+            "tabs": [
+                {
+                    "name": "Content",
+                    "conditional": false,
+                    "elements": [
+                        {
+                            "kind": "Title",
+                            "width": 100,
+                            "required": true
+                        },
+                        {
+                            "kind": "CustomField",
+                            "width": 50,
+                            "field": "field-image",
+                            "required": false,
+                            "conditional": false
+                        },
+                        {
+                            "kind": "CustomField",
+                            "width": 50,
+                            "field": "field-body",
+                            "required": false,
+                            "conditional": false
+                        }
+                    ]
+                }
+            ]
+        },
+        {
+            "uid": "et-quote",
+            "name": "Quote",
+            "handle": "quote",
+            "icon": "quote-left",
+            "hasTitleField": false,
+            "tabs": [
+                {
+                    "name": "Content",
+                    "conditional": false,
+                    "elements": [
+                        {
+                            "kind": "CustomField",
+                            "width": 100,
+                            "field": "field-body",
+                            "label": "Quote",
+                            "required": true,
+                            "conditional": false
+                        }
+                    ]
+                }
+            ]
+        },
+        {
+            "uid": "et-home",
+            "name": "Home",
+            "handle": "single_home",
+            "icon": "house",
+            "hasTitleField": true,
+            "tabs": [
+                {
+                    "name": "Content",
+                    "conditional": false,
+                    "elements": [
+                        {
+                            "kind": "Title",
+                            "width": 100,
+                            "required": true
+                        },
+                        {
+                            "kind": "CustomField",
+                            "width": 100,
+                            "field": "field-featured",
+                            "required": false,
+                            "conditional": false
+                        },
+                        {
+                            "kind": "CustomField",
+                            "width": 100,
+                            "field": "field-page-builder",
+                            "required": false,
+                            "conditional": false
+                        }
+                    ]
+                }
+            ]
+        }
+    ],
+    "fields": [
+        {
+            "uid": "field-body",
+            "name": "Body",
+            "handle": "body",
+            "type": "PlainText",
+            "typeClass": "craft\\fields\\PlainText",
+            "typeLabel": "Plain Text",
+            "instructions": "Plain text, no formatting."
+        },
+        {
+            "uid": "field-columns",
+            "name": "Columns",
+            "handle": "columns",
+            "type": "Matrix",
+            "typeClass": "craft\\fields\\Matrix",
+            "typeLabel": "Matrix",
+            "blocks": [
+                {
+                    "entryType": "et-text"
+                },
+                {
+                    "entryType": "et-teaser"
+                }
+            ],
+            "viewMode": "cards",
+            "max": 3
+        },
+        {
+            "uid": "field-curators",
+            "name": "Curators",
+            "handle": "curators",
+            "type": "Entries",
+            "typeClass": "craft\\fields\\Entries",
+            "typeLabel": "Entries",
+            "sources": [
+                "section:section-people",
+                "section:section-archive"
+            ]
+        },
+        {
+            "uid": "field-featured",
+            "name": "Featured",
+            "handle": "featured",
+            "type": "Entries",
+            "typeClass": "craft\\fields\\Entries",
+            "typeLabel": "Entries",
+            "sources": [
+                "*"
+            ],
+            "max": 1
+        },
+        {
+            "uid": "field-image",
+            "name": "Image",
+            "handle": "image",
+            "type": "Assets",
+            "typeClass": "craft\\fields\\Assets",
+            "typeLabel": "Assets",
+            "sources": [
+                "volume:volume-images"
+            ],
+            "max": 1
+        },
+        {
+            "uid": "field-layout-style",
+            "name": "Layout",
+            "handle": "layoutStyle",
+            "type": "Dropdown",
+            "typeClass": "craft\\fields\\Dropdown",
+            "typeLabel": "Dropdown",
+            "options": [
+                {
+                    "label": "Wide",
+                    "value": "wide",
+                    "default": true
+                },
+                {
+                    "label": "Narrow",
+                    "value": "narrow",
+                    "default": false
+                }
+            ]
+        },
+        {
+            "uid": "field-old-teaser",
+            "name": "Old teaser",
+            "handle": "oldTeaser",
+            "type": "PlainText",
+            "typeClass": "craft\\fields\\PlainText",
+            "typeLabel": "Plain Text"
+        },
+        {
+            "uid": "field-page-builder",
+            "name": "Page builder",
+            "handle": "pageBuilder",
+            "type": "Matrix",
+            "typeClass": "craft\\fields\\Matrix",
+            "typeLabel": "Matrix",
+            "blocks": [
+                {
+                    "entryType": "et-text",
+                    "group": "Text"
+                },
+                {
+                    "entryType": "et-quote",
+                    "context": "Pull quote",
+                    "group": "Text"
+                },
+                {
+                    "entryType": "et-image",
+                    "group": "Media"
+                },
+                {
+                    "entryType": "et-link",
+                    "group": "Media"
+                },
+                {
+                    "entryType": "et-teaser"
+                },
+                {
+                    "entryType": "et-columns",
+                    "group": "Layout"
+                }
+            ],
+            "viewMode": "blocks",
+            "min": 1,
+            "max": 20
+        },
+        {
+            "uid": "field-related-news",
+            "name": "Related news",
+            "handle": "relatedNews",
+            "type": "Entries",
+            "typeClass": "craft\\fields\\Entries",
+            "typeLabel": "Entries",
+            "sources": [
+                "section:section-news"
+            ],
+            "max": 3
+        },
+        {
+            "uid": "field-seo",
+            "name": "SEO",
+            "handle": "seo",
+            "type": "ContentBlock",
+            "typeClass": "craft\\fields\\ContentBlock",
+            "typeLabel": "Content Block",
+            "tabs": [
+                {
+                    "name": "Content",
+                    "conditional": false,
+                    "elements": [
+                        {
+                            "kind": "CustomField",
+                            "width": 100,
+                            "field": "field-summary",
+                            "label": "Meta description",
+                            "required": true,
+                            "conditional": false
+                        },
+                        {
+                            "kind": "CustomField",
+                            "width": 50,
+                            "field": "field-image",
+                            "handle": "shareImage",
+                            "label": "Share image",
+                            "required": false,
+                            "conditional": false
+                        }
+                    ]
+                }
+            ]
+        },
+        {
+            "uid": "field-summary",
+            "name": "Summary",
+            "handle": "summary",
+            "type": "PlainText",
+            "typeClass": "craft\\fields\\PlainText",
+            "typeLabel": "Plain Text"
+        }
+    ],
+    "userGroups": [
+        {
+            "uid": "ug-editors",
+            "name": "Editors",
+            "handle": "editors",
+            "description": "Look after the museum sites.",
+            "sites": [
+                "site-de",
+                "site-en"
+            ],
+            "sections": {
+                "section-exhibitions": [
+                    "view",
+                    "create",
+                    "save"
+                ],
+                "section-news": [
+                    "view",
+                    "create",
+                    "save",
+                    "delete",
+                    "viewPeer",
+                    "savePeer",
+                    "viewPeerDrafts",
+                    "deletePeerDrafts"
+                ],
+                "section-home": [
+                    "view",
+                    "save"
+                ]
+            }
+        },
+        {
+            "uid": "ug-members",
+            "name": "Members",
+            "handle": "members",
+            "description": "Signed-up visitors, without control panel access.",
+            "sites": [],
+            "sections": []
+        },
+        {
+            "uid": "ug-shop",
+            "name": "Shop staff",
+            "handle": "shopStaff",
+            "sites": [
+                "site-shop"
+            ],
+            "sections": {
+                "section-products": [
+                    "view",
+                    "create",
+                    "save"
+                ]
+            }
+        }
+    ],
+    "gqlSchemas": [
+        {
+            "uid": "gql-app",
+            "name": "App",
+            "public": false,
+            "sites": [
+                "site-shop"
+            ],
+            "sections": {
+                "section-products": [
+                    "read",
+                    "create",
+                    "save",
+                    "delete"
+                ]
+            },
+            "fields": {
+                "field-columns": [
+                    "read"
+                ],
+                "field-page-builder": [
+                    "read",
+                    "save"
+                ]
+            },
+            "elements": [
+                "drafts",
+                "revisions"
+            ]
+        },
+        {
+            "uid": "gql-public",
+            "name": "Public Schema",
+            "public": true,
+            "sites": [
+                "site-de",
+                "site-en"
+            ],
+            "sections": {
+                "section-home": [
+                    "read"
+                ],
+                "section-news": [
+                    "read"
+                ]
+            },
+            "fields": {
+                "field-page-builder": [
+                    "read"
+                ]
+            },
+            "elements": [
+                "inactive"
+            ]
+        }
+    ]
+}
