@@ -119,7 +119,7 @@ h3 { font-size: 11.5px; text-transform: uppercase; letter-spacing: .08em; color:
 .row { display: flex; align-items: center; gap: 8px; padding: 5px 8px; border-radius: 6px; background: var(--surface-2); min-width: 0; }
 .row.link { cursor: pointer; }
 .row.link:hover { background: var(--surface-3); }
-.row .grow { flex: 1; min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.row .grow { flex: 1; min-width: 3.5em; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
 .row .note { font-size: 11.5px; color: var(--faint); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; max-width: 45%; }
 .chips { display: flex; gap: 5px; flex-wrap: wrap; }
 .btn { background: var(--surface); border: 1px solid var(--line-strong); border-radius: 6px; padding: 4px 10px; cursor: pointer; font-size: 13px; white-space: nowrap; }

@@ -16,7 +16,7 @@ registerView((() => {
       const secs = model.sections.filter(s => s.groups.includes(g.uid) && (matchQ(s) || s.entryTypes.some(u => byUid.et[u] && matchQ(byUid.et[u]))));
       if (!secs.length) return;
       h += `<details class="tgroup" ${state.q || g === model.siteGroups[0] ? 'open' : ''}><summary>${glyph('group')}<span>${esc(g.name)}</span><span class="c">${secs.length}</span></summary><div class="kids">`;
-      [['structure', 'Structures'], ['single', 'Singles'], ['channel', 'Channels']].forEach(([type, label]) => {
+      [['structure', t('Structures')], ['single', t('Singles')], ['channel', t('Channels')]].forEach(([type, label]) => {
         const list = secs.filter(s => s.type === type).sort(byName);
         if (!list.length) return;
         h += `<div class="sub-label">${label}</div>`;
@@ -48,13 +48,13 @@ registerView((() => {
   }
   // Unused entry types and the field layouts of global sets, volumes, category and tag groups, users and addresses.
   const otherTree = () => otherLayouts(matchQ).map(([kind, list]) => `<details class="tgroup" ${state.q ? 'open' : ''}><summary>${glyph(kind)}<span>${esc(KIND[kind].plural)}</span><span class="c">${list.length}</span></summary><div class="kids">${list.map(o => item(keyOf(kind, o.uid))).join('')}</div></details>`).join('');
-  const TREES = { pages: { label: 'Pages', draw: pagesTree }, blocks: { label: 'Blocks', draw: blocksTree }, other: { label: 'Other', draw: otherTree } };
+  const TREES = { pages: { label: t('Pages'), draw: pagesTree }, blocks: { label: t('Blocks'), draw: blocksTree }, other: { label: t('Other'), draw: otherTree } };
 
   function drawTree() {
     const h = TREES[state.tab].draw();
     // A search that finds nothing in this tab points to the tabs where it does.
     const elsewhere = !h && state.q ? Object.keys(TREES).filter(tab => tab !== state.tab && TREES[tab].draw()) : [];
-    const none = !state.q ? 'Nothing here yet.' : elsewhere.length ? 'Nothing matches here, only under' : 'Nothing matches.';
+    const none = !state.q ? t('Nothing here yet.') : elsewhere.length ? t('Nothing matches here, only under') : t('Nothing matches.');
     treeEl.innerHTML = h || `<p class="muted" style="padding:10px">${none}${elsewhere.map(tab => ` <button class="btn" data-ttab="${tab}">${TREES[tab].label}</button>`).join('')}</p>`;
     treeEl.querySelectorAll('[data-ttab]').forEach(b => b.addEventListener('click', () => setTab(b.dataset.ttab)));
     bindGo(treeEl, k => App.go('layout', k));
@@ -76,24 +76,24 @@ registerView((() => {
       }).join('')}`).join('')}</div>`;
     }
     if (f.tabs) return `<div class="ctl">${customElements(f.tabs).map(({ f: inner }) => chip(fieldKey(inner))).join('')}</div>`;
-    if (f.role === 'relation') return `<div class="ctl">→ ${f.allSources ? 'any section' : f.targets.map(s => chip(keyOf('section', s.uid))).join(' ')}${f.max ? ` <span>max ${f.max}</span>` : ''}</div>`;
+    if (f.role === 'relation') return `<div class="ctl">→ ${f.allSources ? t('any section') : f.targets.map(s => chip(keyOf('section', s.uid))).join(' ')}${f.max ? ` <span>${t('max {n}', { n: f.max })}</span>` : ''}</div>`;
     if (f.options) return `<div class="ctl">${f.options.map(o => `<span>${esc(o.label)}${o.default ? ' ●' : ''}</span>`).join('<span>·</span>')}</div>`;
     return `<div class="ctl">${esc(fieldTypeLabel(f))}</div>`;
   }
   // The form of whatever has a field layout: an entry type, a ContentBlock, a global set, …
   function formHTML(o) {
     const tabs = o.tabs;
-    if (!tabs.length) return '<p class="muted">No field layout.</p>';
+    if (!tabs.length) return `<p class="muted">${t('No field layout.')}</p>`;
     const ti = Math.min(state.formTab, tabs.length - 1);
-    let h = tabs.length > 1 ? `<div class="form-tabs">${tabs.map((t, i) => `<button data-tab="${i}" class="${i === ti ? 'on' : ''}">${esc(t.name)}${t.conditional ? ' <span class="tag outline">if</span>' : ''}</button>`).join('')}</div>` : '';
+    let h = tabs.length > 1 ? `<div class="form-tabs">${tabs.map((tab, i) => `<button data-tab="${i}" class="${i === ti ? 'on' : ''}">${esc(tab.name)}${tab.conditional ? ` ${condTag(tab)}` : ''}</button>`).join('')}</div>` : '';
     h += '<div class="form">';
     tabs[ti].elements.forEach(e => {
       const w = `w${nearestWidth(e.width)}`;
       if (e.kind === 'HorizontalRule') { h += '<div class="fbox rule"></div>'; return; }
       if (e.kind === 'Heading') { h += `<div class="fbox heading">${esc(e.text)}</div>`; return; }
       if (e.kind === 'Tip') { h += `<div class="fbox tip">${esc(e.text)}</div>`; return; }
-      if (e.kind === 'Title') { h += `<div class="fbox ${w}"><div class="lbl">${esc(nativeName(e, o))}${reqTag(e)}</div><div class="h">title</div><div class="ctl">Text</div></div>`; return; }
-      if (e.kind in NATIVE_FIELDS) { h += `<div class="fbox ${w}"><div class="lbl">${esc(nativeName(e, o))}</div><div class="ctl">Native field</div></div>`; return; }
+      if (e.kind === 'Title') { h += `<div class="fbox ${w}"><div class="lbl">${esc(nativeName(e, o))}${reqTag(e)}</div><div class="h">title</div><div class="ctl">${t('Text')}</div></div>`; return; }
+      if (e.kind in NATIVE_FIELDS) { h += `<div class="fbox ${w}"><div class="lbl">${esc(nativeName(e, o))}</div><div class="ctl">${t('Native field')}</div></div>`; return; }
       if (e.kind !== 'CustomField') { h += `<div class="fbox ${w}"><div class="lbl faint">${esc(e.kind)}</div></div>`; return; }
       const f = byUid.field[e.field];
       if (!f) return;
@@ -104,7 +104,7 @@ registerView((() => {
 
   // ---- page mode: the layout drawn as a wireframe
   function wfItem(e, f, depth) {
-    const label = e.label || (f ? f.name : e.kind === 'Title' ? 'Title' : '');
+    const label = e.label || (f ? f.name : e.kind === 'Title' ? t('Title') : '');
     const cap = `<div class="cap"><b>${esc(label)}</b>${reqTag(e)}${condTag(e)}</div>`;
     const span = `style="grid-column: span ${Math.round(nearestWidth(e.width) / 25)}"`;
     if (e.kind === 'HorizontalRule') return '<div style="grid-column:1/-1;border-top:1px dashed var(--line-strong)"></div>';
@@ -113,10 +113,10 @@ registerView((() => {
     if (!f) return '';
     const name = `${f.name} ${e.handle || ''}`.toLowerCase();
     if (f.blocks) return `<div class="wfi" style="grid-column:1/-1">${cap}${lane(f, depth + 1)}</div>`;
-    if (f.tabs) return `<div class="wfi" style="grid-column:1/-1">${cap}<div class="wf" style="border-left:2px dashed var(--line-strong);padding-left:12px">${(f.tabs || []).flatMap(t => t.elements).map(x => wfItem(x, byUid.field[x.field], depth + 1)).join('')}</div></div>`;
+    if (f.tabs) return `<div class="wfi" style="grid-column:1/-1">${cap}<div class="wf" style="border-left:2px dashed var(--line-strong);padding-left:12px">${(f.tabs || []).flatMap(tab => tab.elements).map(x => wfItem(x, byUid.field[x.field], depth + 1)).join('')}</div></div>`;
     let body;
     if (f.type === 'Assets' || /image|logo|svg/.test(name)) body = `<div class="wf-img">${esc(fieldTypeLabel(f))}</div>`;
-    else if (f.role === 'relation') body = `<div class="wf-ref" data-go="${f.targets[0] ? keyOf('section', f.targets[0].uid) : ''}">→ ${f.allSources ? 'any section' : f.targets.map(s => esc(s.name)).join(', ') || 'entries'} · ${f.max === 1 ? 'one' : 'many'}</div>`;
+    else if (f.role === 'relation') body = `<div class="wf-ref" data-go="${f.targets[0] ? keyOf('section', f.targets[0].uid) : ''}">→ ${f.allSources ? t('any section') : f.targets.map(s => esc(s.name)).join(', ') || t('entries')} · ${f.max === 1 ? t('one') : t('many')}</div>`;
     else if (f.options) body = `<div class="wf-pills">${f.options.map(o => `<span class="${o.default ? 'def' : ''}">${esc(o.label)}</span>`).join('')}</div>`;
     else if (f.type === 'HyperField' || f.type === 'Link') body = `<div class="wf-btns"><span></span>${f.max !== 1 ? '<span></span>' : ''}</div>`;
     else if (f.type === 'Lightswitch') body = '<div class="wf-switch"></div>';
@@ -134,9 +134,9 @@ registerView((() => {
         const e = byUid.et[b.entryType];
         if (!e) return;
         const pulls = [...pullsFrom(e)];
-        const inner = e.tabs.flatMap(t => t.elements).map(x => wfItem(x, byUid.field[x.field], depth)).join('');
+        const inner = e.tabs.flatMap(tab => tab.elements).map(x => wfItem(x, byUid.field[x.field], depth)).join('');
         const name = perUseName(e, b.context);
-        h += `<div class="blk"><div class="bh"><span class="caret"></span>${glyph('block')}<div><div class="bn">${esc(name || e.name)}</div><div class="bs">${name ? `${esc(e.name)} · ` : ''}${customElements(e.tabs).length} fields</div></div><span class="sp"></span>${pulls.map(s => `<span class="chip link" data-go="${keyOf('section', s.uid)}">from ${esc(s.name)}</span>`).join('')}<span class="chip link" data-go="${etKey(e)}">open</span></div><div class="bb"><div class="wf" style="margin-top:12px">${inner}</div></div></div>`;
+        h += `<div class="blk"><div class="bh"><span class="caret"></span>${glyph('block')}<div><div class="bn">${esc(name || e.name)}</div><div class="bs">${name ? `${esc(e.name)} · ` : ''}${tn(customElements(e.tabs).length, '{n} field', '{n} fields')}</div></div><span class="sp"></span>${pulls.map(s => `<span class="chip link" data-go="${keyOf('section', s.uid)}">${t('from {section}', { section: esc(s.name) })}</span>`).join('')}<span class="chip link" data-go="${etKey(e)}">${t('open')}</span></div><div class="bb"><div class="wf" style="margin-top:12px">${inner}</div></div></div>`;
       });
     });
     return h + '</div>';
@@ -144,13 +144,13 @@ registerView((() => {
   function pageHTML(e) {
     const urls = e.sections.flatMap(s => s.sites.filter(x => byUid.site[x.site]).map(x => (x.hasUrls
       ? `<span class="url">${esc(siteUrl(byUid.site[x.site], x.uriFormat))}</span>`
-      : `<span class="url none">${esc(byUid.site[x.site].name)} · no URL</span>`)));
-    const where = e.kind === 'block' ? e.builders.map(b => `<span class="url none">inside ${esc(b.field.name)}${perUseName(e, b.context) ? ` ${esc(perUseNote(e, b.context))}` : ''}</span>`) : [];
-    const zones = e.tabs.map(t => {
-      const hasBuilder = t.elements.some(x => x.kind === 'CustomField' && byUid.field[x.field] && byUid.field[x.field].blocks);
-      return `<div class="zone"><span class="zl">${esc(t.name)}${hasBuilder ? ' · content builder' : ''}</span><div class="wf">${t.elements.map(x => wfItem(x, byUid.field[x.field], 0)).join('')}</div></div>`;
+      : `<span class="url none">${esc(byUid.site[x.site].name)} · ${t('no URL')}</span>`)));
+    const where = e.kind === 'block' ? e.builders.map(b => `<span class="url none">${t('inside {builder}', { builder: esc(b.field.name) })}${perUseName(e, b.context) ? ` ${esc(perUseNote(e, b.context))}` : ''}</span>`) : [];
+    const zones = e.tabs.map(tab => {
+      const hasBuilder = tab.elements.some(x => x.kind === 'CustomField' && byUid.field[x.field] && byUid.field[x.field].blocks);
+      return `<div class="zone"><span class="zl">${esc(tab.name)}${hasBuilder ? ` · ${t('content builder')}` : ''}</span><div class="wf">${tab.elements.map(x => wfItem(x, byUid.field[x.field], 0)).join('')}</div></div>`;
     }).join('');
-    return `<div class="browser"><div class="chrome"><div class="lights"><i></i><i></i><i></i></div><div class="urls">${[...urls, ...where].join('')}</div></div><div class="pagebody">${zones || '<p class="muted">No field layout.</p>'}</div></div>`;
+    return `<div class="browser"><div class="chrome"><div class="lights"><i></i><i></i><i></i></div><div class="urls">${[...urls, ...where].join('')}</div></div><div class="pagebody">${zones || `<p class="muted">${t('No field layout.')}</p>`}</div></div>`;
   }
 
   // ---- canvas
@@ -162,7 +162,7 @@ registerView((() => {
     parts.push(n.key);
     const trail = parts.map((k, i) => { const p = nodeOf(k); return i === parts.length - 1 ? `<span class="here">${esc(p.obj.name)}</span>` : `<a data-go="${k}">${esc(p.obj.name)}</a><span class="faint">/</span>`; }).join(' ');
     const isEt = isEntryType(n.kind);
-    return `<button class="btn only-small" data-tree>Browse</button>${trail}${isEt ? `<span class="end seg"><button data-mode="form" class="${state.mode === 'form' ? 'on' : ''}">Form</button><button data-mode="page" class="${state.mode === 'page' ? 'on' : ''}">Page</button></span>` : ''}`;
+    return `<button class="btn only-small" data-tree>${t('Browse')}</button>${trail}${isEt ? `<span class="end seg"><button data-mode="form" class="${state.mode === 'form' ? 'on' : ''}">${t('Form')}</button><button data-mode="page" class="${state.mode === 'page' ? 'on' : ''}">${t('Page')}</button></span>` : ''}`;
   }
   function canvasHTML(n) {
     const o = n.obj;
@@ -171,13 +171,13 @@ registerView((() => {
     // Only entry types make up pages, so other field layouts always show as a form.
     if (isLayoutOwner(n.kind)) return h + formHTML(o);
     if (n.kind === 'section') {
-      return h + `<h3>Entry types</h3>${sectionEntryTypes(o)}`;
+      return h + `<h3>${t('Entry types')}</h3>${sectionEntryTypes(o)}`;
     }
     if (isField(n.kind)) {
       if (o.tabs) h += formHTML(o);
       else if (o.blocks) h += `<div class="form"><div class="fbox w100"><div class="lbl">${esc(o.name)}</div><div class="h">${esc(o.handle)}</div>${control(o)}</div></div>`;
-      else h += fieldDetail(o) || `<p class="muted">${esc(fieldTypeLabel(o))} field, no settings worth showing.</p>`;
-      return h + `<h3>Placed in ${o.usedIn.length} layouts</h3>${o.usedIn.length ? `<div class="list">${o.usedIn.map(u => row(useKey(u), `${note(u.el.label ? `“${esc(u.el.label)}”` : '')}${reqTag(u.el)}${condTag(u.el)}`)).join('')}</div>` : '<p class="muted">Not used anywhere.</p>'}`;
+      else h += fieldDetail(o) || `<p class="muted">${t('{type} field, no settings worth showing.', { type: esc(fieldTypeLabel(o)) })}</p>`;
+      return h + `<h3>${tn(o.usedIn.length, 'Placed in {n} layout', 'Placed in {n} layouts')}</h3>${o.usedIn.length ? `<div class="list">${o.usedIn.map(u => row(useKey(u), `${note(u.el.label ? quoted(esc(u.el.label)) : '')}${reqTag(u.el)}${condTag(u.el)}`)).join('')}</div>` : `<p class="muted">${t('Not used anywhere.')}</p>`}`;
     }
     return h + detailHTML(n, { title: false });
   }
@@ -186,7 +186,7 @@ registerView((() => {
     if (!n) {
       const start = model.sections.flatMap(s => s.entryTypes).map(u => byUid.et[u]).find(Boolean) || model.entryTypes[0];
       if (!start) {
-        canvas.innerHTML = '<p class="muted">No entry types yet. Once a section or Matrix field has one, its layout shows up here.</p>';
+        canvas.innerHTML = `<p class="muted">${t('No entry types yet. Once a section or Matrix field has one, its layout shows up here.')}</p>`;
         drawTree();
         return;
       }
@@ -198,7 +198,7 @@ registerView((() => {
     crumbsEl.innerHTML = crumbs(n);
     canvas.innerHTML = canvasHTML(n);
     canvas.scrollTop = 0;
-    context.innerHTML = KIND[n.kind].layer ? crossLinks(n.key, 'layout') : `<h3 style="margin-top:0">Context</h3>${detailHTML(n, { title: false })}${crossLinks(n.key, 'layout')}`;
+    context.innerHTML = KIND[n.kind].layer ? crossLinks(n.key, 'layout') : `<h3 style="margin-top:0">${t('Context')}</h3>${detailHTML(n, { title: false })}${crossLinks(n.key, 'layout')}`;
     canvas.querySelectorAll('[data-tab]').forEach(b => b.addEventListener('click', () => { state.formTab = +b.dataset.tab; open(n.key); }));
     canvas.querySelectorAll('.blk > .bh').forEach(h => h.addEventListener('click', () => h.parentElement.classList.toggle('open')));
     crumbsEl.querySelectorAll('[data-mode]').forEach(b => b.addEventListener('click', () => { state.mode = b.dataset.mode; open(n.key); }));
@@ -216,14 +216,14 @@ registerView((() => {
     if (redraw) drawTree();
   }
 
-  const info = () => '<h2>Field layouts</h2><p>Pick a page or block on the left to see its field layout. <b>Other</b> has the rest: global sets, volumes, category and tag groups, users, addresses, and entry types not used anywhere.</p><p><b>Form</b> shows the tabs and fields as an editor sees them, at their widths. <b>Page</b> draws an entry type as a wireframe, with the blocks of each builder to fold open.</p><p>The context on the right says where it lives and what it’s made of.</p>';
+  const info = () => `<h2>${t('Field layouts')}</h2><p>${t('Pick a page or block on the left to see its field layout. <b>Other</b> has the rest: global sets, volumes, category and tag groups, users, addresses, and entry types not used anywhere.')}</p><p>${t('<b>Form</b> shows the tabs and fields as an editor sees them, at their widths. <b>Page</b> draws an entry type as a wireframe, with the blocks of each builder to fold open.')}</p><p>${t('The context on the right says where it lives and what it’s made of.')}</p>`;
 
   function mount(root) {
     el = root;
     el.innerHTML = `
       <aside class="tree">
         <div class="head">
-          <input type="search" placeholder="Search layouts" aria-label="Search layouts">
+          <input type="search" placeholder="${t('Search layouts')}" aria-label="${t('Search layouts')}">
           <div class="seg">${Object.keys(TREES).map(tab => `<button data-ttab="${tab}" class="${tab === state.tab ? 'on' : ''}">${TREES[tab].label}</button>`).join('')}</div>
         </div>
         <div class="body scroll"></div>
@@ -249,8 +249,8 @@ registerView((() => {
 
   return {
     id: 'layout',
-    label: 'Layout',
-    crossLink: 'Open layout',
+    label: t('Layout'),
+    crossLink: t('Open layout'),
     // Whatever has a field layout, the fields in them, and sections, which open their entry types.
     kinds: Object.keys(KIND).filter(k => k === 'section' || isField(k) || isEntryType(k) || isLayoutOwner(k)),
     info,
