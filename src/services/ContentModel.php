@@ -43,7 +43,15 @@ class ContentModel extends Component
 
     public function getData(): array
     {
-        $config = ProjectConfigHelper::unpackAssociativeArrays(Craft::$app->getProjectConfig()->get());
+        return $this->fromConfig(Craft::$app->getProjectConfig()->get());
+    }
+
+    /**
+     * The content model of a project config, given as `ProjectConfig::get()` returns it.
+     */
+    public function fromConfig(array $config): array
+    {
+        $config = ProjectConfigHelper::unpackAssociativeArrays($config);
 
         return [
             'dateModified' => $config['dateModified'] ?? null,

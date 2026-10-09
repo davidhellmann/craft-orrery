@@ -1,0 +1,1078 @@
+# A made-up project config in the shape `ProjectConfig::get()` returns, for a museum with two languages and a shop.
+# UIDs are readable stand-ins for the UUIDs Craft generates. Items are deliberately out of order.
+dateModified: 1767225600
+siteGroups:
+  group-shop:
+    name: Shop
+  group-museum:
+    name: Museum
+sites:
+  site-de:
+    baseUrl: 'https://museum.test/de/'
+    enabled: true
+    handle: de
+    hasUrls: true
+    language: de-DE
+    name: Deutsch
+    primary: false
+    siteGroup: group-museum
+    sortOrder: 2
+  site-shop:
+    baseUrl: 'https://shop.museum.test/'
+    enabled: true
+    handle: shop
+    hasUrls: true
+    language: en-GB
+    name: Shop
+    primary: false
+    siteGroup: group-shop
+    sortOrder: 3
+  site-en:
+    baseUrl: $FIXTURE_PRIMARY_SITE_URL
+    enabled: true
+    handle: en
+    hasUrls: true
+    language: en-GB
+    name: English
+    primary: true
+    siteGroup: group-museum
+    sortOrder: 1
+sections:
+  section-products:
+    defaultPlacement: end
+    enableVersioning: true
+    entryTypes:
+      - uid: et-product
+    handle: products
+    maxAuthors: 1
+    name: Products
+    previewTargets: []
+    propagationMethod: all
+    siteSettings:
+      site-shop:
+        enabledByDefault: true
+        hasUrls: true
+        template: shop/_product
+        uriFormat: 'products/{slug}'
+    type: channel
+  section-news:
+    defaultPlacement: end
+    enableVersioning: true
+    entryTypes:
+      - name: 'News article'
+        uid: et-article
+      - uid: et-link
+    handle: news
+    maxAuthors: 1
+    name: News
+    previewTargets:
+      - label: 'Primary entry page'
+        refresh: true
+        urlFormat: '{url}'
+    propagationMethod: all
+    siteSettings:
+      site-en:
+        enabledByDefault: true
+        hasUrls: true
+        template: news/_entry
+        uriFormat: 'news/{slug}'
+      site-de:
+        enabledByDefault: true
+        hasUrls: true
+        template: news/_entry
+        uriFormat: 'aktuelles/{slug}'
+    type: channel
+  section-home:
+    defaultPlacement: end
+    enableVersioning: true
+    entryTypes:
+      - uid: et-home
+    handle: home
+    maxAuthors: 1
+    name: Home
+    previewTargets:
+      - label: 'Primary entry page'
+        refresh: true
+        urlFormat: '{url}'
+    propagationMethod: all
+    siteSettings:
+      site-en:
+        enabledByDefault: true
+        hasUrls: true
+        template: index
+        uriFormat: __home__
+      site-de:
+        enabledByDefault: true
+        hasUrls: true
+        template: index
+        uriFormat: __home__
+    type: single
+  section-exhibitions:
+    defaultPlacement: end
+    enableVersioning: true
+    # Before entry types could be renamed per section, they were listed as plain UIDs.
+    entryTypes:
+      - et-exhibition
+      - et-article
+    handle: exhibitions
+    maxAuthors: 1
+    name: Exhibitions
+    previewTargets: []
+    propagationMethod: all
+    siteSettings:
+      site-en:
+        enabledByDefault: true
+        hasUrls: true
+        template: exhibitions/_entry
+        uriFormat: 'exhibitions/{slug}'
+      site-de:
+        enabledByDefault: true
+        hasUrls: true
+        template: exhibitions/_entry
+        uriFormat: 'ausstellungen/{slug}'
+    structure:
+      maxLevels: 2
+      uid: structure-exhibitions
+    type: structure
+  section-people:
+    defaultPlacement: end
+    enableVersioning: false
+    entryTypes:
+      - uid: et-person
+    handle: people
+    maxAuthors: 1
+    name: People
+    previewTargets: []
+    propagationMethod: all
+    siteSettings:
+      site-en:
+        enabledByDefault: true
+        hasUrls: false
+        template: null
+        uriFormat: null
+    type: channel
+entryTypes:
+  et-text:
+    color: null
+    fieldLayouts:
+      layout-text:
+        tabs:
+          - elementCondition: null
+            elements:
+              - elementCondition: null
+                fieldUid: field-body
+                handle: null
+                instructions: null
+                label: null
+                required: true
+                type: craft\fieldlayoutelements\CustomField
+                uid: el-text-body
+                userCondition: null
+                width: 100
+              - elementCondition: null
+                fieldUid: field-layout-style
+                handle: null
+                instructions: null
+                label: null
+                required: false
+                type: craft\fieldlayoutelements\CustomField
+                uid: el-text-layout-style
+                userCondition: null
+                width: 50
+            name: Content
+            uid: tab-text-content
+            userCondition: null
+    handle: block_text
+    hasTitleField: false
+    icon: paragraph
+    name: Text
+    showSlugField: false
+    showStatusField: true
+    titleFormat: '{body|striptags|truncate(40)}'
+  et-article:
+    color: blue
+    fieldLayouts:
+      layout-article:
+        tabs:
+          - elementCondition: null
+            elements:
+              - elementCondition: null
+                label: Headline
+                required: true
+                type: craft\fieldlayoutelements\entries\EntryTitleField
+                uid: el-article-title
+                userCondition: null
+                width: 100
+              - elementCondition: null
+                fieldUid: field-body
+                handle: intro
+                instructions: 'Two sentences at most.'
+                label: Introduction
+                required: true
+                type: craft\fieldlayoutelements\CustomField
+                uid: el-article-intro
+                userCondition: null
+                width: 50
+              - elementCondition: null
+                heading: Story
+                type: craft\fieldlayoutelements\Heading
+                uid: el-article-heading
+                userCondition: null
+              - elementCondition: null
+                fieldUid: field-page-builder
+                handle: null
+                instructions: null
+                label: null
+                required: false
+                type: craft\fieldlayoutelements\CustomField
+                uid: el-article-builder
+                userCondition: null
+                width: 100
+            name: Content
+            uid: tab-article-content
+            userCondition: null
+          - elementCondition: null
+            elements:
+              - elementCondition: null
+                style: warning
+                tip: 'Search engines show the summary under the title.'
+                type: craft\fieldlayoutelements\Tip
+                uid: el-article-tip
+                userCondition: null
+              - elementCondition: null
+                fieldUid: field-seo
+                handle: null
+                instructions: null
+                label: null
+                required: false
+                type: craft\fieldlayoutelements\CustomField
+                uid: el-article-seo
+                userCondition: null
+                width: 100
+              - elementCondition: null
+                type: craft\fieldlayoutelements\HorizontalRule
+                uid: el-article-rule
+                userCondition: null
+            name: SEO
+            uid: tab-article-seo
+            userCondition:
+              class: craft\elements\conditions\users\UserCondition
+              conditionRules:
+                - class: craft\elements\conditions\users\GroupConditionRule
+                  operator: in
+                  uid: rule-article-seo-group
+                  values:
+                    - ug-editors
+              elementType: craft\elements\User
+              fieldContext: global
+    handle: page_article
+    hasTitleField: true
+    icon: newspaper
+    name: Article
+    showSlugField: true
+    showStatusField: true
+    titleFormat: null
+  et-quote:
+    color: null
+    fieldLayouts:
+      layout-quote:
+        tabs:
+          - elementCondition: null
+            elements:
+              - elementCondition: null
+                fieldUid: field-body
+                handle: null
+                instructions: null
+                label: Quote
+                required: true
+                type: craft\fieldlayoutelements\CustomField
+                uid: el-quote-body
+                userCondition: null
+                width: 100
+            name: Content
+            uid: tab-quote-content
+            userCondition: null
+    handle: quote
+    hasTitleField: false
+    icon: quote-left
+    name: Quote
+    showSlugField: false
+    showStatusField: true
+    titleFormat: '{body|truncate(40)}'
+  et-home:
+    color: null
+    fieldLayouts:
+      layout-home:
+        tabs:
+          - elementCondition: null
+            elements:
+              - elementCondition: null
+                label: null
+                required: true
+                type: craft\fieldlayoutelements\entries\EntryTitleField
+                uid: el-home-title
+                userCondition: null
+                width: 100
+              - elementCondition: null
+                fieldUid: field-featured
+                handle: null
+                instructions: null
+                label: null
+                required: false
+                type: craft\fieldlayoutelements\CustomField
+                uid: el-home-featured
+                userCondition: null
+                width: 100
+              - elementCondition: null
+                fieldUid: field-page-builder
+                handle: null
+                instructions: null
+                label: null
+                required: false
+                type: craft\fieldlayoutelements\CustomField
+                uid: el-home-builder
+                userCondition: null
+                width: 100
+            name: Content
+            uid: tab-home-content
+            userCondition: null
+    handle: single_home
+    hasTitleField: true
+    icon: house
+    name: Home
+    showSlugField: false
+    showStatusField: false
+    titleFormat: null
+  et-image:
+    color: null
+    fieldLayouts:
+      layout-image:
+        tabs:
+          - elementCondition: null
+            elements:
+              - elementCondition: null
+                fieldUid: field-image
+                handle: null
+                instructions: null
+                label: null
+                required: true
+                type: craft\fieldlayoutelements\CustomField
+                uid: el-image-image
+                userCondition: null
+                width: 100
+              - elementCondition: null
+                fieldUid: field-layout-style
+                handle: null
+                instructions: null
+                label: null
+                required: false
+                type: craft\fieldlayoutelements\CustomField
+                uid: el-image-layout-style
+                userCondition: null
+                width: 50
+            name: Content
+            uid: tab-image-content
+            userCondition: null
+    handle: block_image
+    hasTitleField: false
+    icon: image
+    name: Image
+    showSlugField: false
+    showStatusField: true
+    titleFormat: null
+  et-exhibition:
+    color: null
+    fieldLayouts:
+      layout-exhibition:
+        tabs:
+          - elementCondition: null
+            elements:
+              - elementCondition: null
+                label: null
+                required: true
+                type: craft\fieldlayoutelements\entries\EntryTitleField
+                uid: el-exhibition-title
+                userCondition: null
+                width: 100
+              - elementCondition: null
+                fieldUid: field-curators
+                handle: null
+                instructions: null
+                label: null
+                required: false
+                type: craft\fieldlayoutelements\CustomField
+                uid: el-exhibition-curators
+                userCondition: null
+                width: 50
+              - elementCondition:
+                  class: craft\elements\conditions\entries\EntryCondition
+                  conditionRules:
+                    - class: craft\fields\conditions\RelationalFieldConditionRule
+                      fieldUid: field-curators
+                      operator: notempty
+                      uid: rule-exhibition-body
+                  elementType: craft\elements\Entry
+                  fieldContext: global
+                fieldUid: field-body
+                handle: null
+                instructions: null
+                label: Description
+                required: false
+                type: craft\fieldlayoutelements\CustomField
+                uid: el-exhibition-body
+                userCondition: null
+                width: 100
+              - elementCondition: null
+                fieldUid: field-seo
+                handle: null
+                instructions: null
+                label: null
+                required: false
+                type: craft\fieldlayoutelements\CustomField
+                uid: el-exhibition-seo
+                userCondition: null
+                width: 100
+            name: Content
+            uid: tab-exhibition-content
+            userCondition: null
+    handle: exhibition
+    hasTitleField: true
+    icon: building-columns
+    name: Exhibition
+    showSlugField: true
+    showStatusField: true
+    titleFormat: null
+  et-link:
+    color: null
+    fieldLayouts:
+      layout-link:
+        tabs:
+          - elementCondition: null
+            elements:
+              - elementCondition: null
+                fieldUid: field-body
+                handle: null
+                instructions: null
+                label: Note
+                required: false
+                type: craft\fieldlayoutelements\CustomField
+                uid: el-link-body
+                userCondition: null
+                width: 100
+            name: Content
+            uid: tab-link-content
+            userCondition: null
+    handle: page_link
+    hasTitleField: false
+    icon: link
+    name: Link
+    showSlugField: false
+    showStatusField: true
+    titleFormat: '{body}'
+  et-teaser:
+    color: null
+    fieldLayouts:
+      layout-teaser:
+        tabs:
+          - elementCondition: null
+            elements:
+              - elementCondition: null
+                fieldUid: field-related-news
+                handle: null
+                instructions: null
+                label: null
+                required: true
+                type: craft\fieldlayoutelements\CustomField
+                uid: el-teaser-related
+                userCondition: null
+                width: 100
+            name: Content
+            uid: tab-teaser-content
+            userCondition: null
+    handle: block_teaser
+    hasTitleField: false
+    icon: rectangle-list
+    name: Teaser
+    showSlugField: false
+    showStatusField: true
+    titleFormat: null
+  et-product:
+    color: null
+    fieldLayouts:
+      layout-product:
+        tabs:
+          - elementCondition: null
+            elements:
+              - elementCondition: null
+                label: null
+                required: true
+                type: craft\fieldlayoutelements\entries\EntryTitleField
+                uid: el-product-title
+                userCondition: null
+                width: 100
+              - elementCondition: null
+                fieldUid: field-image
+                handle: null
+                instructions: null
+                label: null
+                required: false
+                type: craft\fieldlayoutelements\CustomField
+                uid: el-product-image
+                userCondition: null
+                width: 50
+              - elementCondition: null
+                fieldUid: field-body
+                handle: null
+                instructions: null
+                label: null
+                required: false
+                type: craft\fieldlayoutelements\CustomField
+                uid: el-product-body
+                userCondition: null
+                width: 50
+            name: Content
+            uid: tab-product-content
+            userCondition: null
+    handle: page_product
+    hasTitleField: true
+    icon: bag-shopping
+    name: Product
+    showSlugField: true
+    showStatusField: true
+    titleFormat: null
+  et-columns:
+    color: null
+    fieldLayouts:
+      layout-columns:
+        tabs:
+          - elementCondition: null
+            elements:
+              - elementCondition: null
+                fieldUid: field-columns
+                handle: null
+                instructions: null
+                label: null
+                required: true
+                type: craft\fieldlayoutelements\CustomField
+                uid: el-columns-columns
+                userCondition: null
+                width: 100
+            name: Content
+            uid: tab-columns-content
+            userCondition: null
+    handle: block_columns
+    hasTitleField: false
+    icon: table-columns
+    name: Columns
+    showSlugField: false
+    showStatusField: true
+    titleFormat: null
+  et-person:
+    color: null
+    fieldLayouts:
+      layout-person:
+        tabs:
+          - elementCondition: null
+            elements:
+              - elementCondition: null
+                label: Name
+                required: true
+                type: craft\fieldlayoutelements\entries\EntryTitleField
+                uid: el-person-title
+                userCondition: null
+                width: 100
+              - elementCondition: null
+                fieldUid: field-image
+                handle: portrait
+                instructions: null
+                label: Portrait
+                required: false
+                type: craft\fieldlayoutelements\CustomField
+                uid: el-person-image
+                userCondition: null
+                width: 50
+            name: Content
+            uid: tab-person-content
+            userCondition: null
+    handle: page_person
+    hasTitleField: true
+    icon: user
+    name: Person
+    showSlugField: true
+    showStatusField: true
+    titleFormat: null
+# Craft packs associative arrays in field settings into `__assoc__` lists of key-value pairs, to keep their order.
+fields:
+  field-seo:
+    columnSuffix: null
+    handle: seo
+    instructions: null
+    name: SEO
+    searchable: false
+    settings:
+      fieldLayouts:
+        __assoc__:
+          -
+            - layout-seo
+            -
+              __assoc__:
+                -
+                  - tabs
+                  -
+                    -
+                      __assoc__:
+                        -
+                          - elementCondition
+                          - null
+                        -
+                          - elements
+                          -
+                            -
+                              __assoc__:
+                                -
+                                  - elementCondition
+                                  - null
+                                -
+                                  - fieldUid
+                                  - field-summary
+                                -
+                                  - handle
+                                  - null
+                                -
+                                  - instructions
+                                  - null
+                                -
+                                  - label
+                                  - 'Meta description'
+                                -
+                                  - required
+                                  - true
+                                -
+                                  - type
+                                  - craft\fieldlayoutelements\CustomField
+                                -
+                                  - uid
+                                  - el-seo-summary
+                                -
+                                  - userCondition
+                                  - null
+                                -
+                                  - width
+                                  - 100
+                            -
+                              __assoc__:
+                                -
+                                  - elementCondition
+                                  - null
+                                -
+                                  - fieldUid
+                                  - field-image
+                                -
+                                  - handle
+                                  - shareImage
+                                -
+                                  - instructions
+                                  - null
+                                -
+                                  - label
+                                  - 'Share image'
+                                -
+                                  - required
+                                  - false
+                                -
+                                  - type
+                                  - craft\fieldlayoutelements\CustomField
+                                -
+                                  - uid
+                                  - el-seo-image
+                                -
+                                  - userCondition
+                                  - null
+                                -
+                                  - width
+                                  - 50
+                        -
+                          - name
+                          - Content
+                        -
+                          - uid
+                          - tab-seo-content
+                        -
+                          - userCondition
+                          - null
+      viewMode: grouped
+    translationKeyFormat: null
+    translationMethod: none
+    type: craft\fields\ContentBlock
+  field-body:
+    columnSuffix: null
+    handle: body
+    instructions: 'Plain text, no formatting.'
+    name: Body
+    searchable: true
+    settings:
+      byteLimit: null
+      charLimit: null
+      code: false
+      initialRows: 4
+      multiline: true
+      placeholder: null
+      uiMode: normal
+    translationKeyFormat: null
+    translationMethod: none
+    type: craft\fields\PlainText
+  field-page-builder:
+    columnSuffix: null
+    handle: pageBuilder
+    instructions: null
+    name: 'Page builder'
+    searchable: false
+    settings:
+      createButtonLabel: 'Add a block'
+      defaultIndexViewMode: cards
+      enableVersioning: false
+      entryTypes:
+        -
+          __assoc__:
+            -
+              - group
+              - Text
+            -
+              - uid
+              - et-text
+        -
+          __assoc__:
+            -
+              - group
+              - Text
+            -
+              - name
+              - 'Pull quote'
+            -
+              - uid
+              - et-quote
+        -
+          __assoc__:
+            -
+              - group
+              - Media
+            -
+              - uid
+              - et-image
+        -
+          __assoc__:
+            -
+              - group
+              - Media
+            -
+              - uid
+              - et-link
+        -
+          __assoc__:
+            -
+              - uid
+              - et-teaser
+        -
+          __assoc__:
+            -
+              - group
+              - Layout
+            -
+              - uid
+              - et-columns
+      includeTableView: false
+      maxEntries: 20
+      minEntries: 1
+      pageSize: null
+      propagationKeyFormat: null
+      propagationMethod: all
+      showCardsInGrid: false
+      viewMode: blocks
+    translationKeyFormat: null
+    translationMethod: site
+    type: craft\fields\Matrix
+  field-columns:
+    columnSuffix: null
+    handle: columns
+    instructions: null
+    name: Columns
+    searchable: false
+    settings:
+      createButtonLabel: null
+      defaultIndexViewMode: cards
+      enableVersioning: false
+      entryTypes:
+        -
+          __assoc__:
+            -
+              - uid
+              - et-text
+        -
+          __assoc__:
+            -
+              - uid
+              - et-teaser
+      includeTableView: false
+      maxEntries: 3
+      minEntries: null
+      pageSize: null
+      propagationKeyFormat: null
+      propagationMethod: all
+      showCardsInGrid: false
+      viewMode: cards
+    translationKeyFormat: null
+    translationMethod: site
+    type: craft\fields\Matrix
+  field-layout-style:
+    columnSuffix: null
+    handle: layoutStyle
+    instructions: null
+    name: Layout
+    searchable: false
+    settings:
+      customOptions: false
+      options:
+        -
+          __assoc__:
+            -
+              - optgroup
+              - 'Full width'
+        -
+          __assoc__:
+            -
+              - default
+              - '1'
+            -
+              - label
+              - Wide
+            -
+              - value
+              - wide
+        -
+          __assoc__:
+            -
+              - optgroup
+              - Column
+        -
+          __assoc__:
+            -
+              - default
+              - ''
+            -
+              - label
+              - Narrow
+            -
+              - value
+              - narrow
+    translationKeyFormat: null
+    translationMethod: none
+    type: craft\fields\Dropdown
+  field-related-news:
+    columnSuffix: null
+    handle: relatedNews
+    instructions: null
+    name: 'Related news'
+    searchable: false
+    settings:
+      allowSelfRelations: false
+      branchLimit: null
+      maintainHierarchy: false
+      maxRelations: 3
+      minRelations: null
+      selectionLabel: null
+      showCardsInGrid: false
+      showSiteMenu: false
+      sources:
+        - 'section:section-news'
+      targetSiteId: null
+      validateRelatedElements: false
+      viewMode: list
+    translationKeyFormat: null
+    translationMethod: none
+    type: craft\fields\Entries
+  field-curators:
+    columnSuffix: null
+    handle: curators
+    instructions: null
+    name: Curators
+    searchable: false
+    settings:
+      allowSelfRelations: false
+      branchLimit: null
+      maintainHierarchy: false
+      maxRelations: null
+      minRelations: null
+      selectionLabel: null
+      showCardsInGrid: false
+      showSiteMenu: false
+      sources:
+        - 'section:section-people'
+        # A section deleted since.
+        - 'section:section-archive'
+      targetSiteId: null
+      validateRelatedElements: false
+      viewMode: list
+    translationKeyFormat: null
+    translationMethod: none
+    type: craft\fields\Entries
+  field-featured:
+    columnSuffix: null
+    handle: featured
+    instructions: null
+    name: Featured
+    searchable: false
+    settings:
+      allowSelfRelations: false
+      branchLimit: null
+      maintainHierarchy: false
+      maxRelations: 1
+      minRelations: null
+      selectionLabel: null
+      showCardsInGrid: false
+      showSiteMenu: false
+      sources: '*'
+      targetSiteId: null
+      validateRelatedElements: false
+      viewMode: cards
+    translationKeyFormat: null
+    translationMethod: none
+    type: craft\fields\Entries
+  field-image:
+    columnSuffix: null
+    handle: image
+    instructions: null
+    name: Image
+    searchable: false
+    settings:
+      allowSelfRelations: false
+      allowSubfolders: false
+      allowUploads: true
+      allowedKinds:
+        - image
+      branchLimit: null
+      defaultUploadLocationSource: 'volume:volume-images'
+      maxRelations: 1
+      minRelations: null
+      restrictFiles: true
+      selectionLabel: null
+      showCardsInGrid: false
+      showSiteMenu: false
+      sources:
+        - 'volume:volume-images'
+      targetSiteId: null
+      validateRelatedElements: false
+      viewMode: large
+    translationKeyFormat: null
+    translationMethod: none
+    type: craft\fields\Assets
+  field-summary:
+    columnSuffix: null
+    handle: summary
+    instructions: null
+    name: Summary
+    searchable: true
+    settings:
+      byteLimit: null
+      charLimit: 160
+      code: false
+      initialRows: 2
+      multiline: true
+      placeholder: null
+      uiMode: normal
+    translationKeyFormat: null
+    translationMethod: site
+    type: craft\fields\PlainText
+  field-old-teaser:
+    columnSuffix: null
+    handle: oldTeaser
+    instructions: null
+    name: 'Old teaser'
+    searchable: false
+    settings:
+      byteLimit: null
+      charLimit: null
+      code: false
+      initialRows: 4
+      multiline: false
+      placeholder: null
+      uiMode: normal
+    translationKeyFormat: null
+    translationMethod: none
+    type: craft\fields\PlainText
+users:
+  allowPublicRegistration: true
+  defaultGroup: ug-members
+  groups:
+    ug-shop:
+      description: null
+      handle: shopStaff
+      name: 'Shop staff'
+      permissions:
+        - accesscp
+        - createentries:section-products
+        - editsite:site-shop
+        - saveentries:section-products
+        - utility:queue-manager
+        - viewentries:section-products
+    ug-members:
+      description: 'Signed-up visitors, without control panel access.'
+      handle: members
+      name: Members
+      permissions: []
+    ug-editors:
+      description: 'Look after the museum sites.'
+      handle: editors
+      name: Editors
+      permissions:
+        - accesscp
+        - accessplugin-orrery
+        - createentries:section-exhibitions
+        - createentries:section-news
+        - deleteentries:section-news
+        - deleteentriesforsite:section-news
+        - deletepeerentrydrafts:section-news
+        - editsite:site-de
+        - editsite:site-en
+        - saveentries:section-exhibitions
+        - saveentries:section-home
+        - saveentries:section-news
+        - savepeerentries:section-news
+        - viewentries:section-exhibitions
+        - viewentries:section-home
+        - viewentries:section-news
+        - viewpeerentries:section-news
+        - viewpeerentrydrafts:section-news
+  photoSubpath: null
+  photoVolumeUid: null
+  requireEmailVerification: true
+graphql:
+  publicToken:
+    enabled: true
+    expiryDate: null
+  schemas:
+    gql-public:
+      isPublic: true
+      name: 'Public Schema'
+      scope:
+        - 'elements.inactive:read'
+        - 'nestedentryfields.field-page-builder:read'
+        - 'sections.section-home:read'
+        - 'sections.section-news:read'
+        - 'sites.site-de:read'
+        - 'sites.site-en:read'
+        - 'volumes.volume-images:read'
+    gql-app:
+      isPublic: false
+      name: App
+      scope:
+        - 'elements.drafts:read'
+        - 'elements.revisions:read'
+        - 'nestedentryfields.field-columns:read'
+        - 'nestedentryfields.field-page-builder:read'
+        - 'nestedentryfields.field-page-builder:save'
+        - 'sections.section-products:create'
+        - 'sections.section-products:delete'
+        - 'sections.section-products:read'
+        - 'sections.section-products:save'
+        - 'sites.site-shop:read'
+        - 'usergroups.ug-members:read'

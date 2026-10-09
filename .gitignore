@@ -2,6 +2,7 @@
 *.idea/*
 *.log
 *Thumbs.db
+.phpunit.cache
 .env
 /node_modules
 /vendor
