@@ -64,6 +64,7 @@ main { flex: 1; min-height: 0; position: relative; }
 .g-page { border-radius: 50%; }
 .g-matrix { border-style: dashed; border-radius: 2px; }
 .g-block { border-style: dashed; border-radius: 50%; }
+.g-unused { border-color: var(--faint); border-radius: 50%; }
 .g-field { width: 6px; height: 6px; margin: 0 2px; border: 0; background: var(--faint); border-radius: 50%; }
 .g-globalset, .g-volume, .g-categorygroup, .g-taggroup, .g-fieldlayout { border-radius: 2px; background: linear-gradient(var(--text) 0 0) bottom / 100% 50% no-repeat; }
 

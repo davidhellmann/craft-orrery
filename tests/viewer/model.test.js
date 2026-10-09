@@ -5,11 +5,12 @@ const { loadViewer } = require('./load');
 
 const handles = list => list.map(item => item.handle);
 
-test('entry types attached to a section are Pages, the others Blocks', () => {
+test('entry types attached to a section are Pages, to a Matrix field Blocks, and to neither unused', () => {
   const { M } = loadViewer();
 
   assert.deepEqual(handles(M.entryTypes.filter(e => e.kind === 'page')), ['exhibition', 'page_article', 'page_link', 'page_person', 'page_product', 'single_home']);
   assert.deepEqual(handles(M.entryTypes.filter(e => e.kind === 'block')), ['block_columns', 'block_image', 'block_teaser', 'block_text', 'quote']);
+  assert.deepEqual(handles(M.entryTypes.filter(e => e.kind === 'unused')), ['oldPromo']);
 });
 
 test('an entry type attached to a section and to a Builder is a Page', () => {
@@ -30,6 +31,7 @@ test('keys find every kind of node, and nothing for unknown ones', () => {
   assert.deepEqual(found('block:et-quote'), ['block', 'quote']);
   assert.deepEqual(found('matrix:field-page-builder'), ['matrix', 'pageBuilder']);
   assert.deepEqual(found('field:field-body'), ['field', 'body']);
+  assert.deepEqual(found('unused:et-promo'), ['unused', 'oldPromo']);
   assert.deepEqual(found('usergroup:ug-editors'), ['usergroup', 'editors']);
   assert.deepEqual(found('schema:gql-app'), ['schema', 'App']);
   assert.deepEqual(found('globalset:global-footer'), ['globalset', 'footer']);
@@ -52,10 +54,10 @@ test('each kind lists its own objects, in the order of the data', () => {
   assert.deepEqual(handles(ofKind('usergroup')), ['editors', 'members', 'shopStaff']);
 });
 
-test('Pages and Blocks are entry types, Builders and Fields are fields', () => {
+test('Pages, Blocks and unused entry types are entry types, Builders and Fields are fields', () => {
   const { KIND, isEntryType, isField } = loadViewer();
 
-  assert.deepEqual(Object.keys(KIND).filter(isEntryType), ['page', 'block']);
+  assert.deepEqual(Object.keys(KIND).filter(isEntryType), ['page', 'block', 'unused']);
   assert.deepEqual(Object.keys(KIND).filter(isField), ['matrix', 'field']);
 });
 
@@ -103,8 +105,16 @@ test('a field lists each layout it sits in, including ContentBlocks', () => {
 
   assert.deepEqual(usedIn('field-body'), [['block', 'block_text'], ['page', 'exhibition'], ['page', 'page_article'], ['page', 'page_link'], ['page', 'page_product'], ['block', 'quote']]);
   assert.deepEqual(usedIn('field-summary'), [['matrix', 'seo']]);
-  assert.deepEqual(usedIn('field-image'), [['block', 'block_image'], ['page', 'page_person'], ['page', 'page_product'], ['matrix', 'seo']]);
+  assert.deepEqual(usedIn('field-image'), [['block', 'block_image'], ['unused', 'oldPromo'], ['page', 'page_person'], ['page', 'page_product'], ['matrix', 'seo']]);
   assert.equal(by.field['field-body'].usedIn.find(u => u.owner.handle === 'page_article').el.label, 'Introduction');
+});
+
+test('unused entry types are listed apart, and Pages and Blocks are counted without them', () => {
+  const { ofKind, unusedEntryTypes } = loadViewer();
+
+  assert.deepEqual(handles(unusedEntryTypes), ['oldPromo']);
+  assert.equal(ofKind('page').length, 6);
+  assert.equal(ofKind('block').length, 5);
 });
 
 test('a field that only sits in a global set is used there, with the label it gets there', () => {
@@ -207,6 +217,14 @@ test('a handle passes if it starts with any of the prefixes for its kind', () =>
   assert.equal(by.et['et-home'].conventionOk, true);
   assert.equal(by.et['et-exhibition'].prefix, 'page_ / single_');
   assert.equal(by.et['et-quote'].prefix, 'block_');
+});
+
+test('an unused entry type is checked against neither the page nor the block prefixes', () => {
+  const { by, unprefixedEntryTypes } = loadViewer({ prefixes: { page: ['page_'], block: ['block_'] } });
+
+  assert.equal(by.et['et-promo'].conventionOk, true);
+  assert.equal(by.et['et-promo'].prefix, '');
+  assert.equal(unprefixedEntryTypes.some(e => e.handle === 'oldPromo'), false);
 });
 
 test('a kind without prefixes skips the check', () => {

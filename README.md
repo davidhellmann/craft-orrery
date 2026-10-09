@@ -19,7 +19,7 @@ Two pickers in the header switch on user groups and GraphQL schemas, one by one 
 
 User groups show which sites they may edit and what they may do with the entries of each section. Schemas show the sites, sections and Matrix fields they may query or change.
 
-A *page* is an entry type attached to a section, a *block* one attached to a Matrix field. When a section or Matrix field gives an entry type its own name, Orrery shows that name too.
+A *page* is an entry type attached to a section, a *block* one attached to a Matrix field. When a section or Matrix field gives an entry type its own name, Orrery shows that name too. An entry type attached to neither is *unused*. The graph leaves it out but lists it under *Worth a look* in its info, so you can open it and see what it holds before you delete it. Its handle isn’t checked against the prefixes.
 
 Every view has shareable links, like `#graph/page:<uid>`, `#table/field:<uid>` or `#diff/page:<uid>/page:<uid>`. The arrows next to the logo step back and forward through where you’ve been, across views. Details open on the right when you pick something; the info button at the top right explains the view you’re in.
 

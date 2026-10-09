@@ -517,6 +517,51 @@ entryTypes:
     showSlugField: false
     showStatusField: true
     titleFormat: null
+  # Left over: no section or Matrix field has it any more.
+  et-promo:
+    color: null
+    fieldLayouts:
+      layout-promo:
+        tabs:
+          - elementCondition: null
+            elements:
+              - elementCondition: null
+                label: null
+                required: true
+                type: craft\fieldlayoutelements\entries\EntryTitleField
+                uid: el-promo-title
+                userCondition: null
+                width: 100
+              - elementCondition: null
+                fieldUid: field-image
+                handle: null
+                instructions: null
+                label: Visual
+                required: false
+                type: craft\fieldlayoutelements\CustomField
+                uid: el-promo-image
+                userCondition: null
+                width: 50
+              - elementCondition: null
+                fieldUid: field-featured
+                handle: null
+                instructions: null
+                label: null
+                required: false
+                type: craft\fieldlayoutelements\CustomField
+                uid: el-promo-featured
+                userCondition: null
+                width: 50
+            name: Content
+            uid: tab-promo-content
+            userCondition: null
+    handle: oldPromo
+    hasTitleField: true
+    icon: bullhorn
+    name: 'Old promo'
+    showSlugField: true
+    showStatusField: true
+    titleFormat: null
   et-product:
     color: null
     fieldLayouts:

@@ -1,9 +1,10 @@
 // Indexes the extracted config and derives the relations every view needs.
-// Glossary: a Page is an entry type attached to a Craft section, a Block one attached to a Matrix field.
+// Glossary: a Page is an entry type attached to a Craft section, a Block one attached to a Matrix field. An entry type
+// attached to neither is unused.
 const M = window.CONTENT_MODEL;
 
 // Every kind of node: what it's called, the index in `by` that holds its objects, and the views it has a place in.
-// Pages and Blocks are entry types, Builders and Fields are fields. Each object carries its kind.
+// Pages, Blocks and unused entry types are entry types, Builders and Fields are fields. Each object carries its kind.
 const ALL_VIEWS = ['graph', 'table', 'layout', 'diff'];
 const KIND = {
   group: { label: 'Site Group', plural: 'Site Groups', index: 'group', views: ['graph'] },
@@ -13,6 +14,8 @@ const KIND = {
   matrix: { label: 'Builder', plural: 'Builders', hint: 'Matrix or content block field', index: 'field', views: ALL_VIEWS },
   block: { label: 'Block', plural: 'Blocks', hint: 'Entry type attached to a matrix field', index: 'et', views: ALL_VIEWS },
   field: { label: 'Field', plural: 'Fields', index: 'field', views: ALL_VIEWS },
+  // Entry types attached to no section or Matrix field connect to nothing on the map, so the Graph has no place for them.
+  unused: { label: 'Unused', plural: 'Unused entry types', index: 'et', views: ['table', 'layout', 'diff'] },
   usergroup: { label: 'User Group', plural: 'User Groups', index: 'usergroup', views: ['graph', 'diff'], layer: true },
   schema: { label: 'GraphQL Schema', plural: 'GraphQL Schemas', index: 'schema', views: ['graph', 'diff'], layer: true },
   globalset: { label: 'Global Set', plural: 'Global Sets', index: 'globalset', views: ['table'] },
@@ -64,10 +67,11 @@ const eachCustom = (tabs, fn) => (tabs || []).forEach(t => t.elements.forEach(el
 const customElements = tabs => { const out = []; eachCustom(tabs, el => by.field[el.field] && out.push({ el, f: by.field[el.field] })); return out; };
 
 M.entryTypes.forEach(e => {
-  e.kind = e.sections.length ? 'page' : 'block';
+  e.kind = e.sections.length ? 'page' : e.builders.length ? 'block' : 'unused';
   e.gql = `${e.handle}_Entry`;
-  e.prefix = PREFIX[e.kind].join(' / ');
-  e.conventionOk = !PREFIX[e.kind].length || PREFIX[e.kind].some(p => e.handle.startsWith(p));
+  const prefixes = PREFIX[e.kind] || [];
+  e.prefix = prefixes.join(' / ');
+  e.conventionOk = !prefixes.length || prefixes.some(p => e.handle.startsWith(p));
   eachCustom(e.tabs, el => by.field[el.field] && by.field[el.field].usedIn.push({ owner: e, ownerKind: e.kind, el }));
 });
 // A ContentBlock, or a field type built on it, holds fields in a layout of its own.
@@ -136,6 +140,7 @@ function pullsFrom(e, depth = 0) {
 }
 
 const unusedFields = M.fields.filter(f => !f.usedIn.length);
+const unusedEntryTypes = ofKind('unused');
 const unprefixedEntryTypes = M.entryTypes.filter(e => !e.conventionOk);
 const byName = (a, b) => a.name.localeCompare(b.name);
 
