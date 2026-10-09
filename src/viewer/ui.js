@@ -124,6 +124,7 @@ function detailHTML(n, { title = true } = {}) {
   if (isEntryType(n.kind)) {
     if (o.sections.length) h += `<h3>Lives in</h3><div class="list">${o.sections.map(s => row(keyOf('section', s.uid), note(s.type))).join('')}</div>`;
     if (o.builders.length) h += `<h3>Available in</h3><div class="list">${o.builders.map(b => row(fieldKey(b.field), note(b.context && b.context !== o.name ? `as “${esc(b.context)}”` : esc(b.group || '')))).join('')}</div>`;
+    if (n.kind === 'unused') h += '<h3>Lives in</h3><p class="muted" style="margin:0">No section or Matrix field has it.</p>';
     const sites = [...sitesOfEt(o)].map(u => by.site[u]).filter(Boolean);
     if (sites.length) h += `<h3>Ends up on</h3><div class="chips">${sites.map(s => chip(keyOf('site', s.uid))).join('')}</div>`;
     const pulls = n.kind === 'block' ? [...pullsFrom(o)] : [];
@@ -149,4 +150,4 @@ function crossLinks(key, here) {
   return links.length ? `<div class="actions">${links.join('')}</div>` : '';
 }
 
-const legendHTML = () => Object.keys(KIND).filter(k => !KIND[k].layer).map(k => `<span>${glyph(k)}${KIND[k].plural}</span>`).join('');
+const legendHTML = () => Object.keys(KIND).filter(k => !KIND[k].layer && KIND[k].views.includes('graph')).map(k => `<span>${glyph(k)}${KIND[k].plural}</span>`).join('');
