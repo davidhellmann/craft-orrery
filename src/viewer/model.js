@@ -93,6 +93,9 @@ function sitesOfEt(e, seen = new Set()) {
   e.builders.forEach(b => ownersOfField(b.field).forEach(o => sitesOfEt(o, seen).forEach(x => out.add(x))));
   return out;
 }
+// Site groups of those sites; a field's are those of every page or block that holds it.
+const groupsOfEt = e => new Set([...sitesOfEt(e)].map(s => by.site[s] && by.site[s].group).filter(Boolean));
+const groupsOfField = f => new Set(ownersOfField(f).flatMap(e => [...groupsOfEt(e)]));
 // Sections a block pulls content from through relations, including nested builders.
 function pullsFrom(e, depth = 0) {
   const out = new Set();

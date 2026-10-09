@@ -121,6 +121,25 @@ test('an entry type ends up on the sites of its sections, or of the Pages that h
   assert.deepEqual(sites('et-text'), ['site-en', 'site-de']);
 });
 
+test('a field ends up in the site groups of the Pages and Blocks that hold it, through Builders too', () => {
+  const { by, groupsOfField } = loadViewer();
+  const groups = uid => [...groupsOfField(by.field[uid])].sort();
+
+  assert.deepEqual(groups('field-body'), ['group-museum', 'group-shop']);
+  assert.deepEqual(groups('field-related-news'), ['group-museum']);
+  assert.deepEqual(groups('field-columns'), ['group-museum']);
+  assert.deepEqual(groups('field-summary'), ['group-museum']);
+  assert.deepEqual(groups('field-old-teaser'), []);
+});
+
+test('a site group has the fields of its Pages and of the Blocks that end up there', () => {
+  const { M, groupsOfField } = loadViewer();
+  const fieldsIn = group => handles(M.fields.filter(f => groupsOfField(f).has(group)));
+
+  assert.deepEqual(fieldsIn('group-shop'), ['body', 'image']);
+  assert.deepEqual(fieldsIn('group-museum'), ['body', 'columns', 'curators', 'featured', 'image', 'layoutStyle', 'pageBuilder', 'relatedNews', 'seo', 'summary']);
+});
+
 test('a handle passes if it starts with any of the prefixes for its kind', () => {
   const { by, checksHandles, unprefixedEntryTypes } = loadViewer({ prefixes: { page: ['page_', 'single_'], block: ['block_'] } });
 

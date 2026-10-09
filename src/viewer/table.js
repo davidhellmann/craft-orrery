@@ -8,7 +8,6 @@ const TableView = (() => {
   const matchQ = o => !state.q || o.name.toLowerCase().includes(state.q) || (o.handle || '').toLowerCase().includes(state.q);
   const usedChip = u => chip(useKey(u), u.el.label && u.el.label !== u.owner.name && u.el.label !== (by.field[u.el.field] || {}).name ? ` <em>“${esc(u.el.label)}”</em>` : '');
   const fieldChip = ({ el: e, f }) => chip(fieldKey(f), e.label && e.label !== f.name ? ` <em>“${esc(e.label)}”</em>` : '');
-  const groupsOf = e => new Set([...sitesOfEt(e)].map(s => by.site[s] && by.site[s].group).filter(Boolean));
 
   const COLUMNS = {
     fields: [
@@ -30,9 +29,9 @@ const TableView = (() => {
 
   function rows() {
     if (state.mode === 'fields') {
-      return M.fields.filter(f => matchQ(f) && (!state.type || fieldTypeOf(f) === state.type) && (!state.unused || !f.usedIn.length));
+      return M.fields.filter(f => matchQ(f) && (!state.type || fieldTypeOf(f) === state.type) && (!state.unused || !f.usedIn.length) && (!state.group || groupsOfField(f).has(state.group)));
     }
-    return M.entryTypes.filter(e => matchQ(e) && (!state.kind || e.kind === state.kind) && (!state.unprefixed || !e.conventionOk) && (!state.group || groupsOf(e).has(state.group)));
+    return M.entryTypes.filter(e => matchQ(e) && (!state.kind || e.kind === state.kind) && (!state.unprefixed || !e.conventionOk) && (!state.group || groupsOfEt(e).has(state.group)));
   }
   function cells(o) {
     if (state.mode === 'fields') {
@@ -66,11 +65,13 @@ const TableView = (() => {
   }
   function filters() {
     const f = el.querySelector('[data-filters]');
+    const groups = `<select data-f="group" aria-label="Site group"><option value="">All site groups</option>${M.siteGroups.map(g => `<option value="${g.uid}" ${g.uid === state.group ? 'selected' : ''}>${esc(g.name)}</option>`).join('')}</select>`;
     f.innerHTML = state.mode === 'fields'
       ? `<select data-f="type" aria-label="Field type"><option value="">All types</option>${fieldTypes.map(t => `<option ${t === state.type ? 'selected' : ''}>${esc(t)}</option>`).join('')}</select>
+         ${groups}
          <label class="check"><input type="checkbox" data-f="unused" ${state.unused ? 'checked' : ''}> only unused</label>`
       : `<select data-f="kind" aria-label="Kind"><option value="">Pages and blocks</option><option value="page" ${state.kind === 'page' ? 'selected' : ''}>Pages</option><option value="block" ${state.kind === 'block' ? 'selected' : ''}>Blocks</option></select>
-         <select data-f="group" aria-label="Site group"><option value="">All site groups</option>${M.siteGroups.map(g => `<option value="${g.uid}" ${g.uid === state.group ? 'selected' : ''}>${esc(g.name)}</option>`).join('')}</select>
+         ${groups}
          ${checksHandles ? `<label class="check"><input type="checkbox" data-f="unprefixed" ${state.unprefixed ? 'checked' : ''}> only without prefix</label>` : ''}`;
     f.querySelectorAll('[data-f]').forEach(x => x.addEventListener('change', () => { state[x.dataset.f] = x.type === 'checkbox' ? x.checked : x.value; draw(); }));
   }
