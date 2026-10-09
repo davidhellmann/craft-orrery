@@ -10,39 +10,52 @@ const LayoutView = (() => {
     const n = nodeOf(key);
     return `<div class="titem ${state.current === key ? 'on' : ''}" data-go="${key}">${glyph(n.kind)}<span class="n">${esc(label || n.obj.name)}</span>${accessMarks(key)}${extra}</div>`;
   }
-  function drawTree() {
+  function pagesTree() {
     let h = '';
-    if (state.tab === 'pages') {
-      M.siteGroups.forEach(g => {
-        const secs = M.sections.filter(s => s.groups.includes(g.uid) && (matchQ(s) || s.entryTypes.some(u => by.et[u] && matchQ(by.et[u]))));
-        if (!secs.length) return;
-        h += `<details class="tgroup" ${state.q || g === M.siteGroups[0] ? 'open' : ''}><summary>${glyph('group')}<span>${esc(g.name)}</span><span class="c">${secs.length}</span></summary><div class="kids">`;
-        [['structure', 'Structures'], ['single', 'Singles'], ['channel', 'Channels']].forEach(([type, label]) => {
-          const list = secs.filter(s => s.type === type).sort(byName);
-          if (!list.length) return;
-          h += `<div class="sub-label">${label}</div>`;
-          list.forEach(s => {
-            const ets = s.entryTypes.map(u => by.et[u]).filter(Boolean);
-            if (ets.length === 1) h += item(etKey(ets[0]), s.name, s.hasUrls ? '<span class="c">URL</span>' : '');
-            else h += `<details class="tgroup" ${state.q ? 'open' : ''}><summary style="font-weight:500">${glyph('section')}<span>${esc(s.name)}</span>${accessMarks(keyOf('section', s.uid))}<span class="c">${ets.length}</span></summary><div class="kids">${ets.map(e => item(etKey(e), s.contexts[e.uid])).join('')}</div></details>`;
-          });
+    M.siteGroups.forEach(g => {
+      const secs = M.sections.filter(s => s.groups.includes(g.uid) && (matchQ(s) || s.entryTypes.some(u => by.et[u] && matchQ(by.et[u]))));
+      if (!secs.length) return;
+      h += `<details class="tgroup" ${state.q || g === M.siteGroups[0] ? 'open' : ''}><summary>${glyph('group')}<span>${esc(g.name)}</span><span class="c">${secs.length}</span></summary><div class="kids">`;
+      [['structure', 'Structures'], ['single', 'Singles'], ['channel', 'Channels']].forEach(([type, label]) => {
+        const list = secs.filter(s => s.type === type).sort(byName);
+        if (!list.length) return;
+        h += `<div class="sub-label">${label}</div>`;
+        list.forEach(s => {
+          const ets = s.entryTypes.map(u => by.et[u]).filter(Boolean);
+          if (ets.length === 1) h += item(etKey(ets[0]), s.name, s.hasUrls ? '<span class="c">URL</span>' : '');
+          else h += `<details class="tgroup" ${state.q ? 'open' : ''}><summary style="font-weight:500">${glyph('section')}<span>${esc(s.name)}</span>${accessMarks(keyOf('section', s.uid))}<span class="c">${ets.length}</span></summary><div class="kids">${ets.map(e => item(etKey(e), s.contexts[e.uid])).join('')}</div></details>`;
         });
-        h += `</div></details>`;
       });
-    } else {
-      const groups = new Map();
-      M.fields.filter(f => f.blocks).sort(byName).forEach(f => {
-        const list = (f.blocks || []).map(b => by.et[b.entryType]).filter(e => e && matchQ(e));
-        if (list.length || (state.q && matchQ(f))) groups.set(f, list);
-      });
-      groups.forEach((list, f) => {
-        h += `<details class="tgroup" ${state.q ? 'open' : ''}><summary>${glyph('matrix')}<span>${esc(f.name)}</span><span class="c">${list.length}</span></summary><div class="kids">${list.map(e => {
-          const b = (f.blocks || []).find(x => x.entryType === e.uid);
-          return item(etKey(e), b && b.context ? b.context : e.name, b && b.context && b.context !== e.name ? `<span class="c">${esc(e.name)}</span>` : '');
-        }).join('')}</div></details>`;
-      });
-    }
-    treeEl.innerHTML = h || `<p class="muted" style="padding:10px">${state.q ? 'Nothing matches.' : 'Nothing here yet.'}</p>`;
+      h += `</div></details>`;
+    });
+    return h;
+  }
+  function blocksTree() {
+    let h = '';
+    const groups = new Map();
+    M.fields.filter(f => f.blocks).sort(byName).forEach(f => {
+      const list = (f.blocks || []).map(b => by.et[b.entryType]).filter(e => e && matchQ(e));
+      if (list.length || (state.q && matchQ(f))) groups.set(f, list);
+    });
+    groups.forEach((list, f) => {
+      h += `<details class="tgroup" ${state.q ? 'open' : ''}><summary>${glyph('matrix')}<span>${esc(f.name)}</span><span class="c">${list.length}</span></summary><div class="kids">${list.map(e => {
+        const b = (f.blocks || []).find(x => x.entryType === e.uid);
+        return item(etKey(e), b && b.context ? b.context : e.name, b && b.context && b.context !== e.name ? `<span class="c">${esc(e.name)}</span>` : '');
+      }).join('')}</div></details>`;
+    });
+    return h;
+  }
+  // Unused entry types and the field layouts of global sets, volumes, category and tag groups, users and addresses.
+  const otherTree = () => otherLayouts(matchQ).map(([kind, list]) => `<details class="tgroup" ${state.q ? 'open' : ''}><summary>${glyph(kind)}<span>${esc(KIND[kind].plural)}</span><span class="c">${list.length}</span></summary><div class="kids">${list.map(o => item(keyOf(kind, o.uid))).join('')}</div></details>`).join('');
+  const TREES = { pages: { label: 'Pages', draw: pagesTree }, blocks: { label: 'Blocks', draw: blocksTree }, other: { label: 'Other', draw: otherTree } };
+
+  function drawTree() {
+    const h = TREES[state.tab].draw();
+    // A search that finds nothing in this tab points to the tabs where it does.
+    const elsewhere = !h && state.q ? Object.keys(TREES).filter(tab => tab !== state.tab && TREES[tab].draw()) : [];
+    const none = !state.q ? 'Nothing here yet.' : elsewhere.length ? 'Nothing matches here, only under' : 'Nothing matches.';
+    treeEl.innerHTML = h || `<p class="muted" style="padding:10px">${none}${elsewhere.map(tab => ` <button class="btn" data-ttab="${tab}">${TREES[tab].label}</button>`).join('')}</p>`;
+    treeEl.querySelectorAll('[data-ttab]').forEach(b => b.addEventListener('click', () => setTab(b.dataset.ttab)));
     bindGo(treeEl, k => App.go('layout', k));
     const on = treeEl.querySelector('.titem.on');
     if (on) {
@@ -66,7 +79,9 @@ const LayoutView = (() => {
     if (f.options) return `<div class="ctl">${f.options.map(o => `<span>${esc(o.label)}${o.default ? ' ●' : ''}</span>`).join('<span>·</span>')}</div>`;
     return `<div class="ctl">${esc(fieldTypeLabel(f))}</div>`;
   }
-  function formHTML(tabs) {
+  // The form of whatever has a field layout: an entry type, a ContentBlock, a global set, …
+  function formHTML(o) {
+    const tabs = o.tabs;
     if (!tabs.length) return '<p class="muted">No field layout.</p>';
     const ti = Math.min(state.formTab, tabs.length - 1);
     let h = tabs.length > 1 ? `<div class="form-tabs">${tabs.map((t, i) => `<button data-tab="${i}" class="${i === ti ? 'on' : ''}">${esc(t.name)}${t.conditional ? ' <span class="tag outline">if</span>' : ''}</button>`).join('')}</div>` : '';
@@ -76,7 +91,8 @@ const LayoutView = (() => {
       if (e.kind === 'HorizontalRule') { h += '<div class="fbox rule"></div>'; return; }
       if (e.kind === 'Heading') { h += `<div class="fbox heading">${esc(e.text)}</div>`; return; }
       if (e.kind === 'Tip') { h += `<div class="fbox tip">${esc(e.text)}</div>`; return; }
-      if (e.kind === 'Title') { h += `<div class="fbox ${w}"><div class="lbl">${esc(e.label || 'Title')}${reqTag(e)}</div><div class="h">title</div><div class="ctl">Text</div></div>`; return; }
+      if (e.kind === 'Title') { h += `<div class="fbox ${w}"><div class="lbl">${esc(nativeName(e, o))}${reqTag(e)}</div><div class="h">title</div><div class="ctl">Text</div></div>`; return; }
+      if (e.kind in NATIVE_FIELDS) { h += `<div class="fbox ${w}"><div class="lbl">${esc(nativeName(e, o))}</div><div class="ctl">Native field</div></div>`; return; }
       if (e.kind !== 'CustomField') { h += `<div class="fbox ${w}"><div class="lbl faint">${esc(e.kind)}</div></div>`; return; }
       const f = by.field[e.field];
       if (!f) return;
@@ -151,12 +167,14 @@ const LayoutView = (() => {
   function canvasHTML(n) {
     const o = n.obj;
     let h = `<div class="headline"><div class="big">${glyph(n.kind)}</div><div style="min-width:0">${kindLabel(n.kind)}<h2>${esc(o.name)}</h2><div class="mono faint">${esc(o.handle || '')}${o.gql ? ` · ${esc(o.gql)}` : ''}${o.conventionOk === false ? ` ${prefixTag(o)}` : ''}</div></div></div>`;
-    if (isEntryType(n.kind)) return h + (state.mode === 'page' ? pageHTML(o) : formHTML(o.tabs));
+    if (isEntryType(n.kind)) return h + (state.mode === 'page' ? pageHTML(o) : formHTML(o));
+    // Only entry types make up pages, so other field layouts always show as a form.
+    if (isLayoutOwner(n.kind)) return h + formHTML(o);
     if (n.kind === 'section') {
       return h + `<h3>Entry types</h3>${sectionEntryTypes(o)}`;
     }
     if (isField(n.kind)) {
-      if (o.tabs) h += formHTML(o.tabs);
+      if (o.tabs) h += formHTML(o);
       else if (o.blocks) h += `<div class="form"><div class="fbox w100"><div class="lbl">${esc(o.name)}</div><div class="h">${esc(o.handle)}</div>${control(o)}</div></div>`;
       else h += fieldDetail(o) || `<p class="muted">${esc(fieldTypeLabel(o))} field, no settings worth showing.</p>`;
       return h + `<h3>Placed in ${o.usedIn.length} layouts</h3>${o.usedIn.length ? `<div class="list">${o.usedIn.map(u => row(useKey(u), `${note(u.el.label ? `“${esc(u.el.label)}”` : '')}${reqTag(u.el)}${condTag(u.el)}`)).join('')}</div>` : '<p class="muted">Not used anywhere.</p>'}`;
@@ -187,7 +205,7 @@ const LayoutView = (() => {
     const treeBtn = crumbsEl.querySelector('[data-tree]');
     if (treeBtn) treeBtn.addEventListener('click', () => el.querySelector('.tree').classList.toggle('closed'));
     [crumbsEl, canvas, context].forEach(r => bindGo(r, k => App.go('layout', k)));
-    const tab = n.kind === 'block' || n.kind === 'matrix' ? 'blocks' : n.kind === 'page' || n.kind === 'section' ? 'pages' : state.tab;
+    const tab = n.kind === 'block' || n.kind === 'matrix' ? 'blocks' : n.kind === 'page' || n.kind === 'section' ? 'pages' : OTHER_LAYOUTS.includes(n.kind) ? 'other' : state.tab;
     if (tab !== state.tab) setTab(tab, false);
     drawTree();
     if (matchMedia('(max-width: 760px)').matches) el.querySelector('.tree').classList.add('closed');
@@ -203,8 +221,8 @@ const LayoutView = (() => {
     el.innerHTML = `
       <aside class="tree">
         <div class="head">
-          <input type="search" placeholder="Search pages and blocks" aria-label="Search layouts">
-          <div class="seg"><button data-ttab="pages" class="on">Pages</button><button data-ttab="blocks">Blocks</button></div>
+          <input type="search" placeholder="Search layouts" aria-label="Search layouts">
+          <div class="seg">${Object.keys(TREES).map(tab => `<button data-ttab="${tab}" class="${tab === state.tab ? 'on' : ''}">${TREES[tab].label}</button>`).join('')}</div>
         </div>
         <div class="body scroll"></div>
       </aside>
@@ -213,7 +231,7 @@ const LayoutView = (() => {
         <div class="stage-body">
           <div class="canvas-wrap">
             <div class="canvas scroll dots"></div>
-            ${infoCard(`<h2>Field layouts</h2><p>Pick a page or block on the left to see its field layout.</p><p><b>Form</b> shows the tabs and fields as an editor sees them, at their widths. <b>Page</b> draws the layout as a wireframe, with the blocks of each builder to fold open.</p><p>The context on the right says where it lives and what it’s made of.</p>`)}
+            ${infoCard(`<h2>Field layouts</h2><p>Pick a page or block on the left to see its field layout. <b>Other</b> has the rest: global sets, volumes, category and tag groups, users, addresses, and entry types not used anywhere.</p><p><b>Form</b> shows the tabs and fields as an editor sees them, at their widths. <b>Page</b> draws an entry type as a wireframe, with the blocks of each builder to fold open.</p><p>The context on the right says where it lives and what it’s made of.</p>`)}
           </div>
           <aside class="context scroll"></aside>
         </div>

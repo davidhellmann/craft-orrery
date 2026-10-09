@@ -135,6 +135,41 @@ test('volumes, category and tag groups, users and addresses list the fields in t
   ]);
 });
 
+test('next to Pages and Blocks, the Layout view lists unused entry types and every other field layout, by kind and name', () => {
+  const { otherLayouts } = loadViewer();
+
+  assert.deepEqual(otherLayouts().map(([kind, list]) => [kind, list.map(o => o.name)]), [
+    ['unused', ['Old promo']],
+    ['globalset', ['Contact', 'Footer']],
+    ['volume', ['Images']],
+    ['categorygroup', ['Topics']],
+    ['taggroup', ['Keywords']],
+    ['fieldlayout', ['Addresses', 'Users']],
+  ]);
+});
+
+test('a search in those field layouts leaves out the kinds with nothing that matches', () => {
+  const { otherLayouts } = loadViewer();
+
+  assert.deepEqual(otherLayouts(o => o.handle === 'footer').map(([kind, list]) => [kind, list.map(o => o.name)]), [['globalset', ['Footer']]]);
+});
+
+test('Craft’s own fields in a field layout go by the names Craft gives them, the address title field as Label', () => {
+  const { by, nativeName } = loadViewer();
+  const names = o => o.tabs.flatMap(t => t.elements).filter(el => el.kind !== 'CustomField').map(el => nativeName(el, o));
+
+  assert.deepEqual(names(by.fieldlayout.users), ['Username', 'Full Name', 'Photo', 'Email']);
+  assert.deepEqual(names(by.volume['volume-images']), ['Title', 'Alternative Text']);
+  assert.deepEqual(names(by.fieldlayout.addresses), ['Label', 'Country', 'Address']);
+});
+
+test('a title the layout renames goes by that name, and an element Craft doesn’t name by its class', () => {
+  const { by, nativeName } = loadViewer();
+
+  assert.equal(nativeName(by.et['et-person'].tabs[0].elements[0], by.et['et-person']), 'Name');
+  assert.equal(nativeName({ kind: 'Markdown', width: 100 }, by.et['et-person']), 'Markdown');
+});
+
 test('fields that no field layout holds are unused', () => {
   const { unusedFields } = loadViewer();
 
