@@ -13,6 +13,19 @@ use yii\web\Response;
  */
 class ViewerController extends Controller
 {
+    public function beforeAction($action): bool
+    {
+        if (!parent::beforeAction($action)) {
+            return false;
+        }
+
+        // Craft checks plugin access only for template routes, not for actions reached via `actions/…` or `?action=`.
+        $this->requireCpRequest();
+        $this->requirePermission('accessPlugin-orrery');
+
+        return true;
+    }
+
     public function actionIndex(bool $download = false): Response
     {
         $html = Plugin::getInstance()->viewer->render();
