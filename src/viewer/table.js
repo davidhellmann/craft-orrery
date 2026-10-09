@@ -86,9 +86,7 @@ const TableView = (() => {
     side.classList.toggle('closed', !state.selected);
     const inner = side.querySelector('.scroll');
     const n = nodeOf(state.selected);
-    inner.innerHTML = n
-      ? `<div class="inner"><button class="btn close" data-close>Close</button>${detailHTML(n)}${crossLinks(n.key, 'table')}</div>`
-      : `<div class="inner empty"><h2 style="margin-bottom:12px;color:var(--text)">Fields and where they sit</h2><p>Every field with each layout it’s placed in. A label in quotes is what that layout calls the field.</p><p>Switch to <b style="color:var(--text)">Entry types</b> to read it from the other side: each page or block with its fields.</p><p>Click a row or a chip for details.</p></div>`;
+    inner.innerHTML = n ? `<div class="inner">${closeButton('Close details', 'data-close')}${detailHTML(n)}${crossLinks(n.key, 'table')}</div>` : '';
     bindGo(inner, k => App.go('table', k));
     const close = inner.querySelector('[data-close]');
     if (close) close.addEventListener('click', () => App.go('table', null));
@@ -106,7 +104,10 @@ const TableView = (() => {
             <span class="tbl-count"></span>
           </div>
         </div>
-        <div class="scroll" data-body></div>
+        <div class="tbl-body">
+          <div class="scroll" data-body></div>
+          ${infoCard(`<h2>Fields and where they sit</h2><p>Every field with each layout it’s placed in. A label in quotes is what that layout calls the field.</p><p>Switch to <b>Entry types</b> to read it from the other side: each page or block with its fields.</p><p>Click a row or a chip for details.</p>`)}
+        </div>
       </div>
       <aside class="panel"><div class="scroll" style="flex:1"></div></aside>`;
     body = el.querySelector('[data-body]');

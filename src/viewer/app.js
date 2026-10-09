@@ -160,6 +160,24 @@ const App = (() => {
   });
   setTheme(document.documentElement.dataset.theme);
 
+  // info: what each view is and how to read it, floating over the view; off until asked for, then remembered
+  const infoBtn = document.getElementById('info');
+  function setInfo(open) {
+    document.documentElement.classList.toggle('show-info', open);
+    infoBtn.setAttribute('aria-pressed', String(open));
+    infoBtn.title = open ? 'Hide info' : 'Show info';
+    infoBtn.setAttribute('aria-label', infoBtn.title);
+  }
+  function toggleInfo(open) {
+    try { localStorage.setItem('orrery-info', open ? 'shown' : 'hidden'); } catch (e) {}
+    setInfo(open);
+  }
+  infoBtn.addEventListener('click', () => toggleInfo(!document.documentElement.classList.contains('show-info')));
+  document.addEventListener('click', ev => { if (ev.target.closest && ev.target.closest('[data-info-close]')) toggleInfo(false); });
+  let infoOpen = false;
+  try { infoOpen = localStorage.getItem('orrery-info') === 'shown'; } catch (e) {}
+  setInfo(infoOpen);
+
   return { go, start() { const { view, key } = parse(); activate(view, key, { fromHash: true }); navigated(); } };
 })();
 

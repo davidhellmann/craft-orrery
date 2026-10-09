@@ -132,7 +132,8 @@ const DiffView = (() => {
     const list = state.type.list().slice().sort(byName);
     const grouped = state.type.id === 'entrytype' ? [['Pages', list.filter(e => e.kind === 'page')], ['Blocks', list.filter(e => e.kind === 'block')]]
       : state.type.id === 'field' ? [['Builders', list.filter(f => f.isBuilder)], ['Fields', list.filter(f => !f.isBuilder)]] : null;
-    return `<option value="">${side.toUpperCase()}: pick a ${esc(state.type.one)}</option>${grouped
+    const article = /^[aeiou]/i.test(state.type.one) ? 'an' : 'a';
+    return `<option value="">${side.toUpperCase()}: pick ${article} ${esc(state.type.one)}</option>${grouped
       ? grouped.filter(([, l]) => l.length).map(([label, l]) => `<optgroup label="${label}">${l.map(opt).join('')}</optgroup>`).join('')
       : list.map(opt).join('')}`;
   }
@@ -198,7 +199,7 @@ const DiffView = (() => {
 
   function mount(root) {
     el = root;
-    el.innerHTML = `<div class="tbl-wrap"><div class="tbl-head" data-bar></div><div class="scroll" data-body></div></div>`;
+    el.innerHTML = `<div class="tbl-wrap"><div class="tbl-head" data-bar></div><div class="tbl-body"><div class="scroll" data-body></div>${infoCard(`<h2>Reading a comparison</h2><p>Each row is something A or B has. <b>Only in A</b> and <b>only in B</b> mark what the other one is missing; <b>differs</b> means both have it, set up differently, and the tags in black are the ones the other side lacks.</p><p>Turn on <b>only differences</b> to hide everything they share. Names lead to the graph, and back brings you here again.</p>`)}</div></div>`;
     bar = el.querySelector('[data-bar]');
     body = el.querySelector('[data-body]');
   }

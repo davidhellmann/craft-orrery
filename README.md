@@ -21,7 +21,7 @@ User groups show which sites they may edit and what they may do with the entries
 
 A *page* is an entry type attached to a section, a *block* one attached to a Matrix field. When a section or Matrix field gives an entry type its own name, Orrery shows that name too.
 
-Every view has shareable links, like `#graph/page:<uid>`, `#table/field:<uid>` or `#diff/page:<uid>/page:<uid>`. The arrows next to the logo step back and forward through where you’ve been, across views.
+Every view has shareable links, like `#graph/page:<uid>`, `#table/field:<uid>` or `#diff/page:<uid>/page:<uid>`. The arrows next to the logo step back and forward through where you’ve been, across views. Details open on the right when you pick something; the info button at the top right explains the view you’re in.
 
 ![The layout view drawing a page as a wireframe, in dark mode](resources/screenshot-layout.png)
 

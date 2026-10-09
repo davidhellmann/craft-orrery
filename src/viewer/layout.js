@@ -211,7 +211,10 @@ const LayoutView = (() => {
       <div class="stage">
         <div class="crumbs"></div>
         <div class="stage-body">
-          <div class="canvas scroll dots"></div>
+          <div class="canvas-wrap">
+            <div class="canvas scroll dots"></div>
+            ${infoCard(`<h2>Field layouts</h2><p>Pick a page or block on the left to see its field layout.</p><p><b>Form</b> shows the tabs and fields as an editor sees them, at their widths. <b>Page</b> draws the layout as a wireframe, with the blocks of each builder to fold open.</p><p>The context on the right says where it lives and what it’s made of.</p>`)}
+          </div>
           <aside class="context scroll"></aside>
         </div>
       </div>`;

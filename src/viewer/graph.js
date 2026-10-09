@@ -243,33 +243,39 @@ const GraphView = (() => {
     if (isolate) applyLayout(base);
     panel();
     if (center && selected) setTimeout(() => centerOn(selected), isolate ? 450 : 0);
+    else if (selected) requestAnimationFrame(() => reveal(selected));
+  }
+  // Pans just enough that a node isn't cut off at the edges, like when the details panel opens over it.
+  function reveal(key) {
+    const n = nodes[key];
+    if (!n) return;
+    const r = svg.getBoundingClientRect(), pad = 24;
+    const left = view.x + n.x * view.k, right = left + COL_W * view.k;
+    const dx = right > r.width - pad ? r.width - pad - right : left < pad ? pad - left : 0;
+    if (dx) { view.x += dx; setView(); }
   }
   function panel() {
     side.classList.toggle('closed', !selected);
     const inner = side.querySelector('.scroll');
-    if (!selected) {
-      inner.innerHTML = `<div class="inner empty">
-        <h2 style="margin-bottom:12px;color:var(--text)">Reading the map</h2>
-        <p>Left to right is where content lives: site groups have sites, sites have sections, sections hold pages.</p>
-        <p>Pages are made of fields. Builders (matrix fields) hold blocks, and blocks are made of fields again.</p>
-        <p>Dashed lines are relations, a field that pulls entries from another section.</p>
-        <p>Click anything to light up what it’s connected to. <b style="color:var(--text)">Isolate</b> lays out only that part.</p>
-        <p>Double-click to zoom in, with Shift to zoom out. Scroll or drag the background to move around, drag a node to move it and the others make room.</p>
-        <h3>Worth a look</h3>
-        <div class="list">
-          ${checksHandles ? `<div class="row"><span class="grow">Handles without prefix (${[PREFIX.page, PREFIX.block].filter(Boolean).map(esc).join(' / ')})</span><b>${unprefixedEntryTypes.length}</b></div>` : ''}
-          <div class="row"><span class="grow">Fields not used anywhere</span><b>${unusedFields.length}</b></div>
-        </div>
-        ${unusedFields.length ? `<h3>Unused fields</h3><div class="list">${unusedFields.map(f => row(fieldKey(f), typeTag(f))).join('')}</div>` : ''}
-      </div>`;
-    } else {
-      inner.innerHTML = `<div class="inner"><button class="btn close" data-close>Close</button>${detailHTML(nodeOf(selected))}${crossLinks(selected, 'graph')}</div>`;
-      const close = inner.querySelector('[data-close]');
-      if (close) close.addEventListener('click', () => App.go('graph', null));
-    }
+    inner.innerHTML = selected ? `<div class="inner">${closeButton('Close details', 'data-close')}${detailHTML(nodeOf(selected))}${crossLinks(selected, 'graph')}</div>` : '';
+    const close = inner.querySelector('[data-close]');
+    if (close) close.addEventListener('click', () => App.go('graph', null));
     bindGo(inner, k => App.go('graph', k));
     inner.scrollTop = 0;
   }
+  const info = () => infoCard(`
+    <h2>Reading the map</h2>
+    <div class="legend">${legendHTML()}<span><svg width="22" height="6" aria-hidden="true"><line x1="0" y1="3" x2="22" y2="3" stroke="currentColor" stroke-dasharray="4 3"/></svg>Relation</span></div>
+    <p>Left to right is where content lives: site groups have sites, sites have sections, sections hold pages.</p>
+    <p>Pages are made of fields. Builders (matrix fields) hold blocks, and blocks are made of fields again. Dashed lines are relations, a field that pulls entries from another section.</p>
+    <p>Click anything to light up what it’s connected to. <b>Isolate</b> lays out only that part.</p>
+    <p>Double-click to zoom in, with Shift to zoom out. Scroll or drag the background to move around, drag a node to move it and the others make room.</p>
+    <h3>Worth a look</h3>
+    <div class="list">
+      ${checksHandles ? `<div class="row"><span class="grow">Handles without prefix (${[PREFIX.page, PREFIX.block].filter(Boolean).map(esc).join(' / ')})</span><b>${unprefixedEntryTypes.length}</b></div>` : ''}
+      <div class="row"><span class="grow">Fields not used anywhere</span><b>${unusedFields.length}</b></div>
+    </div>
+    ${unusedFields.length ? `<h3>Unused fields</h3><div class="list">${unusedFields.map(f => row(fieldKey(f), typeTag(f))).join('')}</div>` : ''}`);
 
   function mount(root) {
     el = root;
@@ -283,7 +289,7 @@ const GraphView = (() => {
             <button class="btn" data-reset>Reset</button>
           </div>
         </div>
-        <div class="legend floating">${legendHTML()}<span><svg width="22" height="6" aria-hidden="true"><line x1="0" y1="3" x2="22" y2="3" stroke="currentColor" stroke-dasharray="4 3"/></svg>Relation</span></div>
+        ${info()}
         <div class="zoom"><button class="btn floating" data-zoom="in" aria-label="Zoom in">+</button><button class="btn floating" data-zoom="out" aria-label="Zoom out">−</button><button class="btn floating" data-fit aria-label="Fit to screen" style="font-size:11px">Fit</button></div>
         <svg class="graph-svg"><g class="vp"><g class="cols"></g><g class="edges"></g><g class="nodes"></g></g></svg>
       </div>
@@ -295,6 +301,7 @@ const GraphView = (() => {
     gEdges = el.querySelector('.edges');
     gNodes = el.querySelector('.nodes');
     side = el.querySelector('.panel');
+    bindGo(wrap.querySelector('.info'), k => App.go('graph', k));
     drawNodes();
     drawMarks();
     applyLayout(null, false);
