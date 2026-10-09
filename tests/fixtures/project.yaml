@@ -1,11 +1,12 @@
 # A made-up project config in the shape `ProjectConfig::get()` returns, for a museum with two languages and a shop.
-# UIDs are readable stand-ins for the UUIDs Craft generates. Items are deliberately out of order.
+# UIDs are readable stand-ins for the UUIDs Craft generates. Items are deliberately out of order. Some site settings
+# come from environment variables and the `@web` alias, which the tests set.
 dateModified: 1767225600
 siteGroups:
   group-shop:
     name: Shop
   group-museum:
-    name: Museum
+    name: $FIXTURE_MUSEUM_NAME
 sites:
   site-de:
     baseUrl: 'https://museum.test/de/'
@@ -18,12 +19,12 @@ sites:
     siteGroup: group-museum
     sortOrder: 2
   site-shop:
-    baseUrl: 'https://shop.museum.test/'
+    baseUrl: '@web/'
     enabled: true
     handle: shop
     hasUrls: true
-    language: en-GB
-    name: Shop
+    language: $FIXTURE_SHOP_LANGUAGE
+    name: $FIXTURE_SHOP_NAME
     primary: false
     siteGroup: group-shop
     sortOrder: 3

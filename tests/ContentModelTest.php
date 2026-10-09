@@ -2,6 +2,7 @@
 
 namespace davidhellmann\orrery\tests;
 
+use Craft;
 use craft\helpers\Json;
 use davidhellmann\orrery\services\ContentModel;
 use PHPUnit\Framework\TestCase;
@@ -12,28 +13,58 @@ use Symfony\Component\Yaml\Yaml;
  */
 class ContentModelTest extends TestCase
 {
+    /**
+     * Environment variables the fixture refers to.
+     */
+    private const ENV = [
+        'FIXTURE_MUSEUM_NAME' => 'Museum',
+        'FIXTURE_PRIMARY_SITE_URL' => 'https://museum.test/',
+        'FIXTURE_SHOP_LANGUAGE' => 'en-GB',
+        'FIXTURE_SHOP_NAME' => 'Shop',
+    ];
+
+    private array $config;
     private array $data;
 
     protected function setUp(): void
     {
-        $_SERVER['FIXTURE_PRIMARY_SITE_URL'] = 'https://museum.test/';
-        $this->data = (new ContentModel())->fromConfig(Yaml::parseFile(__DIR__ . '/fixtures/project.yaml'));
+        $_SERVER = self::ENV + $_SERVER;
+        Craft::setAlias('@web', 'https://shop.museum.test');
+        $this->config = Yaml::parseFile(__DIR__ . '/fixtures/project.yaml');
+        $this->data = (new ContentModel())->fromConfig($this->config);
     }
 
     protected function tearDown(): void
     {
-        unset($_SERVER['FIXTURE_PRIMARY_SITE_URL']);
+        $_SERVER = array_diff_key($_SERVER, self::ENV);
+        Craft::setAlias('@web', null);
+        Craft::$app->language = 'en-US';
     }
 
-    public function testSiteGroups(): void
+    public function testUnrelatedConfigChangesLeaveTheDataAsItIs(): void
+    {
+        $config = $this->config;
+        $config['dateModified'] = 1767312000;
+        $config['system']['name'] = 'Museum (staging)';
+        $config['plugins']['orrery']['settings']['pageHandlePrefix'] = 'page_';
+
+        $this->assertSame($this->data, (new ContentModel())->fromConfig($config));
+    }
+
+    public function testResolvedDataSaysWhenTheConfigLastChanged(): void
+    {
+        $this->assertSame(1767225600, (new ContentModel())->fromConfig($this->config, resolved: true)['dateModified']);
+    }
+
+    public function testSiteGroupsWithRawConfigValues(): void
     {
         $this->assertSame([
-            ['uid' => 'group-museum', 'name' => 'Museum'],
+            ['uid' => 'group-museum', 'name' => '$FIXTURE_MUSEUM_NAME'],
             ['uid' => 'group-shop', 'name' => 'Shop'],
         ], $this->data['siteGroups']);
     }
 
-    public function testSitesInTheirOrderWithEnvironmentValuesResolved(): void
+    public function testSitesInTheirOrderWithRawConfigValues(): void
     {
         $this->assertSame([
             [
@@ -41,7 +72,7 @@ class ContentModelTest extends TestCase
                 'name' => 'English',
                 'handle' => 'en',
                 'group' => 'group-museum',
-                'baseUrl' => 'https://museum.test/',
+                'baseUrl' => '$FIXTURE_PRIMARY_SITE_URL',
                 'language' => 'en-GB',
                 'primary' => true,
                 'sortOrder' => 1,
@@ -58,15 +89,27 @@ class ContentModelTest extends TestCase
             ],
             [
                 'uid' => 'site-shop',
-                'name' => 'Shop',
+                'name' => '$FIXTURE_SHOP_NAME',
                 'handle' => 'shop',
                 'group' => 'group-shop',
-                'baseUrl' => 'https://shop.museum.test/',
-                'language' => 'en-GB',
+                'baseUrl' => '@web/',
+                'language' => '$FIXTURE_SHOP_LANGUAGE',
                 'primary' => false,
                 'sortOrder' => 3,
             ],
         ], $this->data['sites']);
+    }
+
+    public function testResolvedSiteGroupsAndSites(): void
+    {
+        $data = (new ContentModel())->fromConfig($this->config, resolved: true);
+
+        $this->assertSame(['Museum', 'Shop'], array_column($data['siteGroups'], 'name'));
+        $this->assertSame([
+            ['English', 'https://museum.test/', 'en-GB'],
+            ['Deutsch', 'https://museum.test/de/', 'de-DE'],
+            ['Shop', 'https://shop.museum.test/', 'en-GB'],
+        ], array_map(fn(array $site) => [$site['name'], $site['baseUrl'], $site['language']], $data['sites']));
     }
 
     public function testSectionWithItsOwnNameForAnEntryType(): void
@@ -278,6 +321,38 @@ class ContentModelTest extends TestCase
         $this->assertSame(['field-photographer'], array_column($credits['tabs'][0]['elements'], 'field'));
     }
 
+    public function testFieldTypeLabelsInEnglishWhateverTheAppLanguage(): void
+    {
+        Craft::$app->language = 'de';
+        $data = (new ContentModel())->fromConfig($this->config);
+
+        $this->assertSame([
+            'body' => 'Plain Text',
+            'columns' => 'Matrix',
+            'credits' => 'Credits',
+            'curators' => 'Entries',
+            'featured' => 'Entries',
+            'gallery' => 'Gallery',
+            'image' => 'Assets',
+            'layoutStyle' => 'Dropdown',
+            'oldTeaser' => 'Plain Text',
+            'pageBuilder' => 'Matrix',
+            'photographer' => 'Plain Text',
+            'relatedNews' => 'Entries',
+            'seo' => 'Content Block',
+            'summary' => 'Plain Text',
+        ], array_column($data['fields'], 'typeLabel', 'handle'));
+    }
+
+    public function testResolvedFieldTypeLabelsInTheAppLanguage(): void
+    {
+        Craft::$app->language = 'de';
+        $data = (new ContentModel())->fromConfig($this->config, resolved: true);
+        $labels = array_column($data['fields'], 'typeLabel', 'handle');
+
+        $this->assertSame(['Reiner Text', 'Einträge', 'Inhaltsblock'], [$labels['body'], $labels['relatedNews'], $labels['seo']]);
+    }
+
     public function testUserGroupRightsOnSitesAndSections(): void
     {
         $this->assertSame([
@@ -304,6 +379,32 @@ class ContentModelTest extends TestCase
             'sites' => [],
             'sections' => [],
         ], $this->item('userGroups', 'ug-members'));
+    }
+
+    /**
+     * Craft has no site permissions with one site, so the shared fixture with its three sites can't show this.
+     */
+    public function testOnASingleSiteOnlyGroupsWithControlPanelAccessEditIt(): void
+    {
+        $data = (new ContentModel())->fromConfig([
+            'sites' => [
+                'site-blog' => ['baseUrl' => 'https://blog.test/', 'handle' => 'blog', 'name' => 'Blog', 'primary' => true, 'sortOrder' => 1],
+            ],
+            'users' => [
+                'groups' => [
+                    'ug-authors' => ['handle' => 'authors', 'name' => 'Authors', 'permissions' => ['accesscp']],
+                    'ug-readers' => ['handle' => 'readers', 'name' => 'Readers', 'permissions' => []],
+                    // Left over from when there were more sites; Craft ignores it now.
+                    'ug-translators' => ['handle' => 'translators', 'name' => 'Translators', 'permissions' => ['editsite:site-blog']],
+                ],
+            ],
+        ]);
+
+        $this->assertSame([
+            'Authors' => ['site-blog'],
+            'Readers' => [],
+            'Translators' => [],
+        ], array_column($data['userGroups'], 'sites', 'name'));
     }
 
     public function testSchemaScopes(): void
@@ -334,7 +435,7 @@ class ContentModelTest extends TestCase
 
     public function testEachKindIsSorted(): void
     {
-        $this->assertSame(['Museum', 'Shop'], array_column($this->data['siteGroups'], 'name'));
+        $this->assertSame(['$FIXTURE_MUSEUM_NAME', 'Shop'], array_column($this->data['siteGroups'], 'name'));
         $this->assertSame(['en', 'de', 'shop'], array_column($this->data['sites'], 'handle'));
         $this->assertSame(['exhibitions', 'home', 'news', 'people', 'products'], array_column($this->data['sections'], 'handle'));
         $this->assertSame([
@@ -371,13 +472,14 @@ class ContentModelTest extends TestCase
     }
 
     /**
-     * The viewer tests run on the data of this fixture, so it's kept as the JSON export would write it. After a change
+     * The viewer tests run on the data of this fixture, so it's kept as the viewer gets it: resolved. After a change
      * to the fixture or the data, `UPDATE_FIXTURES=1 composer test` writes it again.
      */
     public function testViewerFixtureIsTheDataOfTheProjectFixture(): void
     {
         $file = __DIR__ . '/fixtures/content-model.json';
-        $json = Json::encode($this->data, JSON_PRETTY_PRINT | JSON_UNESCAPED_SLASHES | JSON_UNESCAPED_UNICODE) . "\n";
+        $data = (new ContentModel())->fromConfig($this->config, resolved: true);
+        $json = Json::encode($data, JSON_PRETTY_PRINT | JSON_UNESCAPED_SLASHES | JSON_UNESCAPED_UNICODE) . "\n";
         if (getenv('UPDATE_FIXTURES')) {
             file_put_contents($file, $json);
         }

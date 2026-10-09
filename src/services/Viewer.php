@@ -23,7 +23,7 @@ class Viewer extends Component
         $plugin = Plugin::getInstance();
         $settings = $plugin->getSettings();
 
-        $data = $plugin->contentModel->getData() + [
+        $data = $plugin->contentModel->getData(resolved: true) + [
             'prefixes' => [
                 'page' => $settings->prefixes('pageHandlePrefix'),
                 'block' => $settings->prefixes('blockHandlePrefix'),
