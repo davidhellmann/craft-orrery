@@ -1,6 +1,7 @@
 // Shared rendering helpers and the detail renderer used by every view.
 const esc = s => String(s == null ? '' : s).replace(/[&<>"]/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' }[c]));
-const glyph = kind => `<span class="g g-${kind}" aria-hidden="true"></span>`;
+// A field layout outside the graph shares one look whatever its kind.
+const glyph = kind => `<span class="g g-${kind}${isLayoutOwner(kind) ? ' layout-owner' : ''}" aria-hidden="true"></span>`;
 const kindLabel = kind => `<span class="kind">${glyph(kind)}${KIND[kind].label}</span>`;
 // Where a URI ends up on a site, or under the site's name if it has no base URL. Craft gives the homepage `__home__`.
 const siteUrl = (site, uri) => `${(site.baseUrl || site.name).replace(/\/$/, '')}/${uri === '__home__' ? '' : uri || ''}`;
@@ -38,6 +39,8 @@ const condTag = el => (el && el.conditional ? `<span class="tag outline">${t('if
 // note reads "as “Pull quote”". Both are plain text, to escape where they're drawn.
 const perUseName = (e, name) => (name && name !== e.name ? name : '');
 const perUseNote = (e, name) => (perUseName(e, name) ? t('as {name}', { name: quoted(name) }) : '');
+// A field layout can give a field a label of its own. It counts only if it differs, and reads “Intro”. Plain text too.
+const layoutLabel = (el, f) => (el.label && el.label !== f.name ? quoted(el.label) : '');
 const sectionEntryTypes = s => `<div class="list">${s.entryTypes.map(u => byUid.et[u]).filter(Boolean).map(e => row(etKey(e), note(esc(perUseNote(e, s.contexts[e.uid]) || e.handle)))).join('')}</div>`;
 const prefixTag = e => (e.conventionOk === false ? `<span class="tag outline" title="${t('Handle doesn’t start with a prefix set in the plugin settings')}">${t('no {prefix}', { prefix: `<code>${esc(e.prefix)}</code>` })}</span>` : '');
 
@@ -68,7 +71,7 @@ function fieldDetail(f) {
     }).join('')}</div>`).join('')}`;
   }
   if (f.tabs) {
-    return `<h3>${t('Contains')}</h3><div class="list">${customElements(f.tabs).map(({ el, f: inner }) => row(fieldKey(inner), `${note(el.label && el.label !== inner.name ? quoted(esc(el.label)) : '')}${reqTag(el)}`)).join('')}</div>`;
+    return `<h3>${t('Contains')}</h3><div class="list">${customElements(f.tabs).map(({ el, f: inner }) => row(fieldKey(inner), `${note(esc(layoutLabel(el, inner)))}${reqTag(el)}`)).join('')}</div>`;
   }
   return '';
 }
@@ -98,6 +101,45 @@ function accessDetail(n) {
   return h;
 }
 
+// The fields of a field layout, with the label each gets there.
+function layoutFieldsHTML(o) {
+  const els = customElements(o.tabs);
+  return `<h3>${t('Fields ({n})', { n: els.length })}</h3><div class="list">${els.map(({ el, f }) => row(fieldKey(f), `${note(esc(layoutLabel(el, f)))}${reqTag(el)}${typeTag(f)}`)).join('')}</div>`;
+}
+
+// What the details say about each kind after its name and access, by the index its objects are in: Pages, Blocks and
+// unused entry types share theirs, and so do Builders and Fields. Field layouts outside the graph list their fields.
+const DETAILS = {
+  group: o => {
+    const secs = model.sections.filter(s => s.groups.includes(o.uid)).sort(byName);
+    return `<h3>${t('Sites')}</h3><div class="list">${o.sites.map(s => row(keyOf('site', s.uid), note(esc(s.language)))).join('')}</div>`
+      + `<h3>${t('Sections ({n})', { n: secs.length })}</h3><div class="list">${secs.map(s => row(keyOf('section', s.uid), note(sectionType(s)))).join('')}</div>`;
+  },
+  site: o => `<h3>${t('Site')}</h3><div class="list"><div class="row"><span class="grow">${t('Group')}</span>${chip(keyOf('group', o.group))}</div><div class="row"><span class="grow">${t('Language')}</span><code>${esc(o.language)}</code></div><div class="row"><span class="grow">${t('Base URL')}</span><code>${esc(o.baseUrl)}</code></div></div>`
+    + `<h3>${t('Sections ({n})', { n: o.sections.length })}</h3><div class="list">${o.sections.slice().sort(byName).map(s => row(keyOf('section', s.uid), note(sectionType(s)))).join('')}</div>`,
+  section: o => {
+    let h = `<h3>${t('URLs')}</h3><div class="list">${o.sites.map(ss => byUid.site[ss.site] ? `<div class="row"><span class="grow">${esc(byUid.site[ss.site].name)}</span>${ss.hasUrls ? `<code>${esc(ss.uriFormat)}</code>` : `<span class="faint">${t('no URLs')}</span>`}</div>` : '').join('')}</div>`;
+    h += `<h3>${t('Entry types')}</h3>${sectionEntryTypes(o)}`;
+    if (o.referencedBy.length) h += `<h3>${t('Pulled in by')}</h3><div class="list">${o.referencedBy.map(f => row(fieldKey(f), note(t('{n}× used', { n: f.usedIn.length })))).join('')}</div>`;
+    if (o.previewTargets.length) h += `<h3>${t('Preview targets')}</h3><div class="chips">${o.previewTargets.map(p => `<span class="chip">${esc(p)}</span>`).join('')}</div>`;
+    return h;
+  },
+  et: (o, kind) => {
+    let h = '';
+    if (o.sections.length) h += `<h3>${t('Lives in')}</h3><div class="list">${o.sections.map(s => row(keyOf('section', s.uid), note(sectionType(s)))).join('')}</div>`;
+    if (o.builders.length) h += `<h3>${t('Available in')}</h3><div class="list">${o.builders.map(b => row(fieldKey(b.field), note(esc(perUseNote(o, b.context) || b.group || '')))).join('')}</div>`;
+    if (kind === 'unused') h += `<h3>${t('Lives in')}</h3><p class="muted" style="margin:0">${t('No section or Matrix field has it.')}</p>`;
+    const sites = [...sitesOfEt(o)].map(u => byUid.site[u]).filter(Boolean);
+    if (sites.length) h += `<h3>${t('Ends up on')}</h3><div class="chips">${sites.map(s => chip(keyOf('site', s.uid))).join('')}</div>`;
+    const pulls = kind === 'block' ? [...pullsFrom(o)] : [];
+    if (pulls.length) h += `<h3>${t('Pulls content from')}</h3><div class="chips">${pulls.map(s => chip(keyOf('section', s.uid))).join('')}</div>`;
+    return h + layoutFieldsHTML(o);
+  },
+  field: o => fieldDetail(o) + `<h3>${t('Used in ({n})', { n: o.usedIn.length })}</h3>${o.usedIn.length
+    ? `<div class="list">${o.usedIn.map(u => row(useKey(u), `${note(u.el.handle ? esc(u.el.handle) : u.el.label ? quoted(esc(u.el.label)) : '')}${reqTag(u.el)}${condTag(u.el)}`)).join('')}</div>`
+    : `<p class="muted" style="margin:0">${t('Not used in any field layout.')}</p>`}`,
+};
+
 // "What is this, where does it live, where is it used" — the right-hand panel of every view.
 function detailHTML(n, { title = true } = {}) {
   const o = n.obj;
@@ -109,43 +151,8 @@ function detailHTML(n, { title = true } = {}) {
     if (o.instructions || o.description) h += `<p class="muted" style="margin:8px 0 0">${esc(o.instructions || o.description)}</p>`;
   }
   if (KIND[n.kind].layer) return h + accessDetail(n);
-  h += accessHTML(n);
-
-  if (n.kind === 'group') {
-    h += `<h3>${t('Sites')}</h3><div class="list">${o.sites.map(s => row(keyOf('site', s.uid), note(esc(s.language)))).join('')}</div>`;
-    const secs = model.sections.filter(s => s.groups.includes(o.uid)).sort(byName);
-    h += `<h3>${t('Sections ({n})', { n: secs.length })}</h3><div class="list">${secs.map(s => row(keyOf('section', s.uid), note(sectionType(s)))).join('')}</div>`;
-  }
-  if (n.kind === 'site') {
-    h += `<h3>${t('Site')}</h3><div class="list"><div class="row"><span class="grow">${t('Group')}</span>${chip(keyOf('group', o.group))}</div><div class="row"><span class="grow">${t('Language')}</span><code>${esc(o.language)}</code></div><div class="row"><span class="grow">${t('Base URL')}</span><code>${esc(o.baseUrl)}</code></div></div>`;
-    h += `<h3>${t('Sections ({n})', { n: o.sections.length })}</h3><div class="list">${o.sections.slice().sort(byName).map(s => row(keyOf('section', s.uid), note(sectionType(s)))).join('')}</div>`;
-  }
-  if (n.kind === 'section') {
-    h += `<h3>${t('URLs')}</h3><div class="list">${o.sites.map(ss => byUid.site[ss.site] ? `<div class="row"><span class="grow">${esc(byUid.site[ss.site].name)}</span>${ss.hasUrls ? `<code>${esc(ss.uriFormat)}</code>` : `<span class="faint">${t('no URLs')}</span>`}</div>` : '').join('')}</div>`;
-    h += `<h3>${t('Entry types')}</h3>${sectionEntryTypes(o)}`;
-    if (o.referencedBy.length) h += `<h3>${t('Pulled in by')}</h3><div class="list">${o.referencedBy.map(f => row(fieldKey(f), note(t('{n}× used', { n: f.usedIn.length })))).join('')}</div>`;
-    if (o.previewTargets.length) h += `<h3>${t('Preview targets')}</h3><div class="chips">${o.previewTargets.map(p => `<span class="chip">${esc(p)}</span>`).join('')}</div>`;
-  }
-  if (isEntryType(n.kind)) {
-    if (o.sections.length) h += `<h3>${t('Lives in')}</h3><div class="list">${o.sections.map(s => row(keyOf('section', s.uid), note(sectionType(s)))).join('')}</div>`;
-    if (o.builders.length) h += `<h3>${t('Available in')}</h3><div class="list">${o.builders.map(b => row(fieldKey(b.field), note(esc(perUseNote(o, b.context) || b.group || '')))).join('')}</div>`;
-    if (n.kind === 'unused') h += `<h3>${t('Lives in')}</h3><p class="muted" style="margin:0">${t('No section or Matrix field has it.')}</p>`;
-    const sites = [...sitesOfEt(o)].map(u => byUid.site[u]).filter(Boolean);
-    if (sites.length) h += `<h3>${t('Ends up on')}</h3><div class="chips">${sites.map(s => chip(keyOf('site', s.uid))).join('')}</div>`;
-    const pulls = n.kind === 'block' ? [...pullsFrom(o)] : [];
-    if (pulls.length) h += `<h3>${t('Pulls content from')}</h3><div class="chips">${pulls.map(s => chip(keyOf('section', s.uid))).join('')}</div>`;
-  }
-  if (isEntryType(n.kind) || isLayoutOwner(n.kind)) {
-    const els = customElements(o.tabs);
-    h += `<h3>${t('Fields ({n})', { n: els.length })}</h3><div class="list">${els.map(({ el, f }) => row(fieldKey(f), `${note(el.label && el.label !== f.name ? quoted(esc(el.label)) : '')}${reqTag(el)}${typeTag(f)}`)).join('')}</div>`;
-  }
-  if (isField(n.kind)) {
-    h += fieldDetail(o);
-    h += `<h3>${t('Used in ({n})', { n: o.usedIn.length })}</h3>${o.usedIn.length
-      ? `<div class="list">${o.usedIn.map(u => row(useKey(u), `${note(u.el.handle ? esc(u.el.handle) : u.el.label ? quoted(esc(u.el.label)) : '')}${reqTag(u.el)}${condTag(u.el)}`)).join('')}</div>`
-      : `<p class="muted" style="margin:0">${t('Not used in any field layout.')}</p>`}`;
-  }
-  return h;
+  const details = isLayoutOwner(n.kind) ? layoutFieldsHTML : DETAILS[KIND[n.kind].index];
+  return h + accessHTML(n) + details(o, n.kind);
 }
 
 // ---- views: each view's script registers it, so the header lists the views in the order of the scripts.

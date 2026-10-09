@@ -48,7 +48,12 @@ registerView((() => {
   }
   // Unused entry types and the field layouts of global sets, volumes, category and tag groups, users and addresses.
   const otherTree = () => otherLayouts(matchQ).map(([kind, list]) => `<details class="tgroup" ${state.q ? 'open' : ''}><summary>${glyph(kind)}<span>${esc(KIND[kind].plural)}</span><span class="c">${list.length}</span></summary><div class="kids">${list.map(o => item(keyOf(kind, o.uid))).join('')}</div></details>`).join('');
-  const TREES = { pages: { label: t('Pages'), draw: pagesTree }, blocks: { label: t('Blocks'), draw: blocksTree }, other: { label: t('Other'), draw: otherTree } };
+  // Each tab of the tree, with the kinds it lists: a section opens on Pages, a Builder on Blocks.
+  const TREES = {
+    pages: { label: t('Pages'), draw: pagesTree, kinds: ['page', 'section'] },
+    blocks: { label: t('Blocks'), draw: blocksTree, kinds: ['block', 'matrix'] },
+    other: { label: t('Other'), draw: otherTree, kinds: OTHER_LAYOUTS },
+  };
 
   function drawTree() {
     const h = TREES[state.tab].draw();
@@ -147,7 +152,7 @@ registerView((() => {
       : `<span class="url none">${esc(byUid.site[x.site].name)} · ${t('no URL')}</span>`)));
     const where = e.kind === 'block' ? e.builders.map(b => `<span class="url none">${t('inside {builder}', { builder: esc(b.field.name) })}${perUseName(e, b.context) ? ` ${esc(perUseNote(e, b.context))}` : ''}</span>`) : [];
     const zones = e.tabs.map(tab => {
-      const hasBuilder = tab.elements.some(x => x.kind === 'CustomField' && byUid.field[x.field] && byUid.field[x.field].blocks);
+      const hasBuilder = customElements([tab]).some(({ f }) => f.blocks);
       return `<div class="zone"><span class="zl">${esc(tab.name)}${hasBuilder ? ` · ${t('content builder')}` : ''}</span><div class="wf">${tab.elements.map(x => wfItem(x, byUid.field[x.field], 0)).join('')}</div></div>`;
     }).join('');
     return `<div class="browser"><div class="chrome"><div class="lights"><i></i><i></i><i></i></div><div class="urls">${[...urls, ...where].join('')}</div></div><div class="pagebody">${zones || `<p class="muted">${t('No field layout.')}</p>`}</div></div>`;
@@ -205,7 +210,7 @@ registerView((() => {
     const treeBtn = crumbsEl.querySelector('[data-tree]');
     if (treeBtn) treeBtn.addEventListener('click', () => el.querySelector('.tree').classList.toggle('closed'));
     [crumbsEl, canvas, context].forEach(r => bindGo(r, k => App.go('layout', k)));
-    const tab = n.kind === 'block' || n.kind === 'matrix' ? 'blocks' : n.kind === 'page' || n.kind === 'section' ? 'pages' : OTHER_LAYOUTS.includes(n.kind) ? 'other' : state.tab;
+    const tab = Object.keys(TREES).find(id => TREES[id].kinds.includes(n.kind)) || state.tab;
     if (tab !== state.tab) setTab(tab, false);
     drawTree();
     if (matchMedia('(max-width: 760px)').matches) el.querySelector('.tree').classList.add('closed');
