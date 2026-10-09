@@ -204,6 +204,13 @@
                             "field": "field-layout-style",
                             "required": false,
                             "conditional": false
+                        },
+                        {
+                            "kind": "CustomField",
+                            "width": 100,
+                            "field": "field-credits",
+                            "required": false,
+                            "conditional": false
                         }
                     ]
                 }
@@ -295,6 +302,13 @@
                             "kind": "CustomField",
                             "width": 100,
                             "field": "field-seo",
+                            "required": false,
+                            "conditional": false
+                        },
+                        {
+                            "kind": "CustomField",
+                            "width": 100,
+                            "field": "field-gallery",
                             "required": false,
                             "conditional": false
                         }
@@ -521,6 +535,7 @@
             "type": "PlainText",
             "typeClass": "craft\\fields\\PlainText",
             "typeLabel": "Plain Text",
+            "role": "field",
             "instructions": "Plain text, no formatting."
         },
         {
@@ -530,6 +545,7 @@
             "type": "Matrix",
             "typeClass": "craft\\fields\\Matrix",
             "typeLabel": "Matrix",
+            "role": "builder",
             "blocks": [
                 {
                     "entryType": "et-text"
@@ -542,12 +558,37 @@
             "max": 3
         },
         {
+            "uid": "field-credits",
+            "name": "Credits",
+            "handle": "credits",
+            "type": "Credits",
+            "typeClass": "davidhellmann\\orrery\\tests\\fixtures\\fields\\Credits",
+            "typeLabel": "Credits",
+            "role": "builder",
+            "tabs": [
+                {
+                    "name": "Content",
+                    "conditional": false,
+                    "elements": [
+                        {
+                            "kind": "CustomField",
+                            "width": 100,
+                            "field": "field-photographer",
+                            "required": false,
+                            "conditional": false
+                        }
+                    ]
+                }
+            ]
+        },
+        {
             "uid": "field-curators",
             "name": "Curators",
             "handle": "curators",
             "type": "Entries",
             "typeClass": "craft\\fields\\Entries",
             "typeLabel": "Entries",
+            "role": "relation",
             "sources": [
                 "section:section-people",
                 "section:section-archive"
@@ -560,10 +601,26 @@
             "type": "Entries",
             "typeClass": "craft\\fields\\Entries",
             "typeLabel": "Entries",
+            "role": "relation",
             "sources": [
                 "*"
             ],
             "max": 1
+        },
+        {
+            "uid": "field-gallery",
+            "name": "Gallery",
+            "handle": "gallery",
+            "type": "Gallery",
+            "typeClass": "davidhellmann\\orrery\\tests\\fixtures\\fields\\Gallery",
+            "typeLabel": "Gallery",
+            "role": "builder",
+            "blocks": [
+                {
+                    "entryType": "et-image"
+                }
+            ],
+            "viewMode": "cards"
         },
         {
             "uid": "field-image",
@@ -572,6 +629,7 @@
             "type": "Assets",
             "typeClass": "craft\\fields\\Assets",
             "typeLabel": "Assets",
+            "role": "field",
             "sources": [
                 "volume:volume-images"
             ],
@@ -584,6 +642,7 @@
             "type": "Dropdown",
             "typeClass": "craft\\fields\\Dropdown",
             "typeLabel": "Dropdown",
+            "role": "field",
             "options": [
                 {
                     "label": "Wide",
@@ -603,7 +662,8 @@
             "handle": "oldTeaser",
             "type": "PlainText",
             "typeClass": "craft\\fields\\PlainText",
-            "typeLabel": "Plain Text"
+            "typeLabel": "Plain Text",
+            "role": "field"
         },
         {
             "uid": "field-page-builder",
@@ -612,6 +672,7 @@
             "type": "Matrix",
             "typeClass": "craft\\fields\\Matrix",
             "typeLabel": "Matrix",
+            "role": "builder",
             "blocks": [
                 {
                     "entryType": "et-text",
@@ -643,12 +704,22 @@
             "max": 20
         },
         {
+            "uid": "field-photographer",
+            "name": "Photographer",
+            "handle": "photographer",
+            "type": "PlainText",
+            "typeClass": "craft\\fields\\PlainText",
+            "typeLabel": "Plain Text",
+            "role": "field"
+        },
+        {
             "uid": "field-related-news",
             "name": "Related news",
             "handle": "relatedNews",
             "type": "Entries",
             "typeClass": "craft\\fields\\Entries",
             "typeLabel": "Entries",
+            "role": "relation",
             "sources": [
                 "section:section-news"
             ],
@@ -661,6 +732,7 @@
             "type": "ContentBlock",
             "typeClass": "craft\\fields\\ContentBlock",
             "typeLabel": "Content Block",
+            "role": "builder",
             "tabs": [
                 {
                     "name": "Content",
@@ -693,7 +765,8 @@
             "handle": "summary",
             "type": "PlainText",
             "typeClass": "craft\\fields\\PlainText",
-            "typeLabel": "Plain Text"
+            "typeLabel": "Plain Text",
+            "role": "field"
         }
     ],
     "userGroups": [

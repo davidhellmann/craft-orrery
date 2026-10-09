@@ -371,6 +371,16 @@ entryTypes:
                 uid: el-image-layout-style
                 userCondition: null
                 width: 50
+              - elementCondition: null
+                fieldUid: field-credits
+                handle: null
+                instructions: null
+                label: null
+                required: false
+                type: craft\fieldlayoutelements\CustomField
+                uid: el-image-credits
+                userCondition: null
+                width: 100
             name: Content
             uid: tab-image-content
             userCondition: null
@@ -431,6 +441,16 @@ entryTypes:
                 required: false
                 type: craft\fieldlayoutelements\CustomField
                 uid: el-exhibition-seo
+                userCondition: null
+                width: 100
+              - elementCondition: null
+                fieldUid: field-gallery
+                handle: null
+                instructions: null
+                label: null
+                required: false
+                type: craft\fieldlayoutelements\CustomField
+                uid: el-exhibition-gallery
                 userCondition: null
                 width: 100
             name: Content
@@ -989,6 +1009,122 @@ fields:
     instructions: null
     name: 'Old teaser'
     searchable: false
+    settings:
+      byteLimit: null
+      charLimit: null
+      code: false
+      initialRows: 4
+      multiline: false
+      placeholder: null
+      uiMode: normal
+    translationKeyFormat: null
+    translationMethod: none
+    type: craft\fields\PlainText
+  # A plugin's field type built on Matrix.
+  field-gallery:
+    columnSuffix: null
+    handle: gallery
+    instructions: null
+    name: Gallery
+    searchable: false
+    settings:
+      createButtonLabel: 'Add an image'
+      defaultIndexViewMode: cards
+      enableVersioning: false
+      entryTypes:
+        -
+          __assoc__:
+            -
+              - uid
+              - et-image
+      includeTableView: false
+      maxEntries: null
+      minEntries: null
+      pageSize: null
+      propagationKeyFormat: null
+      propagationMethod: all
+      showCardsInGrid: true
+      viewMode: cards
+    translationKeyFormat: null
+    translationMethod: site
+    type: davidhellmann\orrery\tests\fixtures\fields\Gallery
+  # A plugin's field type built on ContentBlock.
+  field-credits:
+    columnSuffix: null
+    handle: credits
+    instructions: null
+    name: Credits
+    searchable: false
+    settings:
+      fieldLayouts:
+        __assoc__:
+          -
+            - layout-credits
+            -
+              __assoc__:
+                -
+                  - tabs
+                  -
+                    -
+                      __assoc__:
+                        -
+                          - elementCondition
+                          - null
+                        -
+                          - elements
+                          -
+                            -
+                              __assoc__:
+                                -
+                                  - elementCondition
+                                  - null
+                                -
+                                  - fieldUid
+                                  - field-photographer
+                                -
+                                  - handle
+                                  - null
+                                -
+                                  - instructions
+                                  - null
+                                -
+                                  - label
+                                  - null
+                                -
+                                  - required
+                                  - false
+                                -
+                                  - type
+                                  - craft\fieldlayoutelements\CustomField
+                                -
+                                  - uid
+                                  - el-credits-photographer
+                                -
+                                  - userCondition
+                                  - null
+                                -
+                                  - width
+                                  - 100
+                        -
+                          - name
+                          - Content
+                        -
+                          - uid
+                          - tab-credits-content
+                        -
+                          - userCondition
+                          - null
+      viewMode: grouped
+    translationKeyFormat: null
+    translationMethod: none
+    type: davidhellmann\orrery\tests\fixtures\fields\Credits
+  # Used only inside Credits.
+  field-photographer:
+    columnSuffix: null
+    handle: photographer
+    instructions: null
+    name: Photographer
+    searchable: true
     settings:
       byteLimit: null
       charLimit: null

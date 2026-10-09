@@ -1,15 +1,17 @@
 // Diff view: pick what to compare, then two of them, and see where they differ.
 const DiffView = (() => {
+  // What can be compared: the kinds that share an index, so Pages with Blocks and Builders with Fields.
+  const kindsOf = type => Object.keys(KIND).filter(k => KIND[k].index === type.index);
+  const listOf = type => kindsOf(type).flatMap(ofKind);
   const TYPES = [
-    { id: 'site', label: 'Sites', one: 'site', kinds: ['site'], list: () => M.sites },
-    { id: 'section', label: 'Sections', one: 'section', kinds: ['section'], list: () => M.sections },
-    { id: 'entrytype', label: 'Entry types', one: 'entry type', kinds: ['page', 'block'], list: () => M.entryTypes },
-    { id: 'field', label: 'Fields', one: 'field', kinds: ['field', 'matrix'], list: () => M.fields },
-    { id: 'usergroup', label: 'User groups', one: 'user group', kinds: ['usergroup'], list: () => M.userGroups },
-    { id: 'schema', label: 'GraphQL schemas', one: 'GraphQL schema', kinds: ['schema'], list: () => M.gqlSchemas },
-  ].filter(t => t.list().length);
-  const keyFor = (type, o) => (type.id === 'entrytype' ? etKey(o) : type.id === 'field' ? fieldKey(o) : keyOf(type.id, o.uid));
-  const typeOf = key => { const n = nodeOf(key); return n ? TYPES.find(t => t.kinds.includes(n.kind)) : null; };
+    { id: 'site', label: 'Sites', one: 'site', index: 'site' },
+    { id: 'section', label: 'Sections', one: 'section', index: 'section' },
+    { id: 'entrytype', label: 'Entry types', one: 'entry type', index: 'et' },
+    { id: 'field', label: 'Fields', one: 'field', index: 'field' },
+    { id: 'usergroup', label: 'User groups', one: 'user group', index: 'usergroup' },
+    { id: 'schema', label: 'GraphQL schemas', one: 'GraphQL schema', index: 'schema' },
+  ].filter(t => listOf(t).length);
+  const typeOf = key => { const n = nodeOf(key); return n ? TYPES.find(t => t.index === KIND[n.kind].index) : null; };
 
   // ---- what each kind of thing is made of: properties compared as values, groups compared item by item
   const yes = v => (v ? 'Yes' : 'No');
@@ -29,9 +31,9 @@ const DiffView = (() => {
     const handle = el.handle && el.handle !== f.handle ? el.handle : null;
     return item(fieldKey(f), [t.name, el.label && `“${el.label}”`, handle && `handle ${handle}`, el.required && 'required', el.conditional && 'conditional', el.width !== 100 && `${el.width}%`], handle ? `${fieldKey(f)}#${handle}` : fieldKey(f));
   }));
-  const accessGroups = key => ACCESS.filter(kind => accessList(kind).length && accessApplies(kind, nodeOf(key).kind)).map(kind => ({
+  const accessGroups = key => ACCESS.filter(kind => ofKind(kind).length && accessApplies(kind, nodeOf(key).kind)).map(kind => ({
     title: KIND[kind].plural,
-    items: accessList(kind).map(a => { const r = rightsOn(a, kind, key); return r && item(keyOf(kind, a.uid), rightTags(r)); }),
+    items: ofKind(kind).map(a => { const r = rightsOn(a, kind, key); return r && item(keyOf(kind, a.uid), rightTags(r)); }),
   }));
 
   function describe(n) {
@@ -57,7 +59,7 @@ const DiffView = (() => {
         ],
       };
     }
-    if (n.kind === 'page' || n.kind === 'block') {
+    if (isEntryType(n.kind)) {
       return {
         props: [['Handle', o.handle], ['Kind', KIND[o.kind].label], ['Title field', yes(o.hasTitleField)], ['Tabs', o.tabs.map(t => t.name).join(', ')], ['GraphQL type', o.gql]],
         groups: [
@@ -70,7 +72,7 @@ const DiffView = (() => {
         ],
       };
     }
-    if (n.kind === 'field' || n.kind === 'matrix') {
+    if (isField(n.kind)) {
       const props = [['Handle', o.handle], ['Type', fieldTypeLabel(o)], ['Instructions', o.instructions]];
       if (o.blocks) props.push(['View mode', o.viewMode], ['Min entries', o.min], ['Max entries', o.max]);
       if (o.sources) props.push(['Sources', o.allSources ? 'All sections' : null], ['Max relations', o.max]);
@@ -78,7 +80,7 @@ const DiffView = (() => {
       if (o.options) groups.push({ title: 'Options', items: o.options.map(op => ({ id: op.value, name: op.label, tags: [op.value, op.default && 'default'] })) });
       if (o.blocks) groups.push({ title: 'Blocks', items: o.blocks.map(b => by.et[b.entryType] && item(etKey(by.et[b.entryType]), [quoted(b.context, by.et[b.entryType].name), b.group])) });
       if (o.targets.length) groups.push({ title: 'Pulls from', items: o.targets.map(s => item(keyOf('section', s.uid))) });
-      if (o.type === 'ContentBlock') groups.push({ title: 'Contains', items: fieldItems(o.tabs) });
+      if (o.tabs) groups.push({ title: 'Contains', items: fieldItems(o.tabs) });
       groups.push({ title: 'Used in', items: o.usedIn.map(u => item(useKey(u), [u.el.label && `“${u.el.label}”`, u.el.required && 'required', u.el.conditional && 'conditional'])) });
       return { props, groups: [...groups, ...accessGroups(n.key)] };
     }
@@ -128,10 +130,11 @@ const DiffView = (() => {
 
   function options(side) {
     const other = side === 'a' ? state.b : state.a;
-    const opt = o => { const k = keyFor(state.type, o); return `<option value="${k}" ${k === state[side] ? 'selected' : ''} ${k === other ? 'disabled' : ''}>${esc(o.name)}</option>`; };
-    const list = state.type.list().slice().sort(byName);
-    const grouped = state.type.id === 'entrytype' ? [['Pages', list.filter(e => e.kind === 'page')], ['Blocks', list.filter(e => e.kind === 'block')]]
-      : state.type.id === 'field' ? [['Builders', list.filter(f => f.isBuilder)], ['Fields', list.filter(f => !f.isBuilder)]] : null;
+    const opt = o => { const k = keyOf(o.kind, o.uid); return `<option value="${k}" ${k === state[side] ? 'selected' : ''} ${k === other ? 'disabled' : ''}>${esc(o.name)}</option>`; };
+    const list = listOf(state.type).sort(byName);
+    // a type that holds several kinds lists them apart, Pages and Blocks, Builders and Fields
+    const kinds = kindsOf(state.type);
+    const grouped = kinds.length > 1 ? kinds.map(k => [KIND[k].plural, list.filter(o => o.kind === k)]) : null;
     const article = /^[aeiou]/i.test(state.type.one) ? 'an' : 'a';
     return `<option value="">${side.toUpperCase()}: pick ${article} ${esc(state.type.one)}</option>${grouped
       ? grouped.filter(([, l]) => l.length).map(([label, l]) => `<optgroup label="${label}">${l.map(opt).join('')}</optgroup>`).join('')

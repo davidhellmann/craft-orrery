@@ -36,7 +36,7 @@ const TableView = (() => {
   function cells(o) {
     if (state.mode === 'fields') {
       const key = fieldKey(o);
-      return [key, `<td class="name">${glyph(key.split(':')[0])} ${esc(o.name)}${accessMarks(key)}</td><td><code class="faint">${esc(o.handle)}</code></td><td>${typeTag(o)}</td><td class="num ${o.usedIn.length ? '' : 'zero'}">${o.usedIn.length}</td><td><div class="chips">${o.usedIn.map(usedChip).join('') || '<span class="faint">not used</span>'}</div></td>`];
+      return [key, `<td class="name">${glyph(o.kind)} ${esc(o.name)}${accessMarks(key)}</td><td><code class="faint">${esc(o.handle)}</code></td><td>${typeTag(o)}</td><td class="num ${o.usedIn.length ? '' : 'zero'}">${o.usedIn.length}</td><td><div class="chips">${o.usedIn.map(usedChip).join('') || '<span class="faint">not used</span>'}</div></td>`];
     }
     const key = etKey(o), els = customElements(o.tabs);
     const lives = o.kind === 'page'
@@ -70,7 +70,7 @@ const TableView = (() => {
       ? `<select data-f="type" aria-label="Field type"><option value="">All types</option>${fieldTypes.map(t => `<option ${t === state.type ? 'selected' : ''}>${esc(t)}</option>`).join('')}</select>
          ${groups}
          <label class="check"><input type="checkbox" data-f="unused" ${state.unused ? 'checked' : ''}> only unused</label>`
-      : `<select data-f="kind" aria-label="Kind"><option value="">Pages and blocks</option><option value="page" ${state.kind === 'page' ? 'selected' : ''}>Pages</option><option value="block" ${state.kind === 'block' ? 'selected' : ''}>Blocks</option></select>
+      : `<select data-f="kind" aria-label="Kind"><option value="">Pages and blocks</option>${Object.keys(KIND).filter(isEntryType).map(k => `<option value="${k}" ${state.kind === k ? 'selected' : ''}>${KIND[k].plural}</option>`).join('')}</select>
          ${groups}
          ${checksHandles ? `<label class="check"><input type="checkbox" data-f="unprefixed" ${state.unprefixed ? 'checked' : ''}> only without prefix</label>` : ''}`;
     f.querySelectorAll('[data-f]').forEach(x => x.addEventListener('change', () => { state[x.dataset.f] = x.type === 'checkbox' ? x.checked : x.value; draw(); }));
@@ -130,7 +130,7 @@ const TableView = (() => {
       const n = nodeOf(key);
       // a deep link to an entry type opens the entry type table, a field the field table
       if (n && opts.fromHash) {
-        const mode = n.kind === 'page' || n.kind === 'block' ? 'entryTypes' : n.kind === 'field' || n.kind === 'matrix' ? 'fields' : state.mode;
+        const mode = isEntryType(n.kind) ? 'entryTypes' : isField(n.kind) ? 'fields' : state.mode;
         if (mode !== state.mode) setMode(mode);
       }
       state.selected = n ? key : null;

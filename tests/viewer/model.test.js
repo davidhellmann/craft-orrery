@@ -37,6 +37,22 @@ test('keys find every kind of node, and nothing for unknown ones', () => {
   assert.equal(nodeOf(null), null);
 });
 
+test('each kind lists its own objects, in the order of the data', () => {
+  const { ofKind } = loadViewer();
+
+  assert.deepEqual(handles(ofKind('site')), ['en', 'de', 'shop']);
+  assert.deepEqual(handles(ofKind('block')), ['block_columns', 'block_image', 'block_teaser', 'block_text', 'quote']);
+  assert.deepEqual(handles(ofKind('field')), ['body', 'curators', 'featured', 'image', 'layoutStyle', 'oldTeaser', 'photographer', 'relatedNews', 'summary']);
+  assert.deepEqual(handles(ofKind('usergroup')), ['editors', 'members', 'shopStaff']);
+});
+
+test('Pages and Blocks are entry types, Builders and Fields are fields', () => {
+  const { KIND, isEntryType, isField } = loadViewer();
+
+  assert.deepEqual(Object.keys(KIND).filter(isEntryType), ['page', 'block']);
+  assert.deepEqual(Object.keys(KIND).filter(isField), ['matrix', 'field']);
+});
+
 test('site groups hold their sites, sites the sections on them', () => {
   const { by } = loadViewer();
 
@@ -47,10 +63,23 @@ test('site groups hold their sites, sites the sections on them', () => {
   assert.equal(by.section['section-people'].hasUrls, false);
 });
 
-test('Matrix and ContentBlock fields are Builders', () => {
+test('Matrix and ContentBlock fields are Builders, and so are field types built on them', () => {
   const { M } = loadViewer();
 
-  assert.deepEqual(handles(M.fields.filter(f => f.isBuilder)), ['columns', 'pageBuilder', 'seo']);
+  assert.deepEqual(handles(M.fields.filter(f => f.kind === 'matrix')), ['columns', 'credits', 'gallery', 'pageBuilder', 'seo']);
+});
+
+test('a field type built on Matrix is a Builder with its Blocks', () => {
+  const { by, fieldKey } = loadViewer();
+
+  assert.equal(fieldKey(by.field['field-gallery']), 'matrix:field-gallery');
+  assert.deepEqual(by.et['et-image'].builders.map(b => b.field.handle), ['gallery', 'pageBuilder']);
+});
+
+test('the fields in a field type built on ContentBlock are used there', () => {
+  const { by } = loadViewer();
+
+  assert.deepEqual(by.field['field-photographer'].usedIn.map(u => [u.ownerKind, u.owner.handle]), [['matrix', 'credits']]);
 });
 
 test('a Block knows the Builders it is in, with its name and group there', () => {
@@ -137,7 +166,7 @@ test('a site group has the fields of its Pages and of the Blocks that end up the
   const fieldsIn = group => handles(M.fields.filter(f => groupsOfField(f).has(group)));
 
   assert.deepEqual(fieldsIn('group-shop'), ['body', 'image']);
-  assert.deepEqual(fieldsIn('group-museum'), ['body', 'columns', 'curators', 'featured', 'image', 'layoutStyle', 'pageBuilder', 'relatedNews', 'seo', 'summary']);
+  assert.deepEqual(fieldsIn('group-museum'), ['body', 'columns', 'credits', 'curators', 'featured', 'gallery', 'image', 'layoutStyle', 'pageBuilder', 'photographer', 'relatedNews', 'seo', 'summary']);
 });
 
 test('a handle passes if it starts with any of the prefixes for its kind', () => {

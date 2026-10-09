@@ -51,7 +51,7 @@ function fieldDetail(f) {
   if (f.options) {
     return `<h3>Options</h3><div class="list">${f.options.map(o => `<div class="row"><span class="grow">${esc(o.label)}</span><code class="faint">${esc(o.value)}</code>${o.default ? '<span class="tag solid">default</span>' : ''}</div>`).join('')}</div>`;
   }
-  if (f.type === 'Entries') {
+  if (f.role === 'relation') {
     return `<h3>Pulls from</h3><div class="chips">${f.allSources ? '<span class="chip">any section</span>' : f.targets.map(s => chip(keyOf('section', s.uid))).join('') || '<span class="chip">—</span>'}</div><p class="muted" style="margin:8px 0 0">${f.max === 1 ? 'One entry' : f.max ? `Up to ${f.max} entries` : 'Any number of entries'}</p>`;
   }
   if (f.blocks) {
@@ -62,7 +62,7 @@ function fieldDetail(f) {
       return e ? row(etKey(e), b.context && b.context !== e.name ? note(`as “${esc(b.context)}”`) : '') : '';
     }).join('')}</div>`).join('')}`;
   }
-  if (f.type === 'ContentBlock') {
+  if (f.tabs) {
     return `<h3>Contains</h3><div class="list">${customElements(f.tabs).map(({ el, f: inner }) => row(fieldKey(inner), `${note(el.label && el.label !== inner.name ? `“${esc(el.label)}”` : '')}${reqTag(el)}`)).join('')}</div>`;
   }
   return '';
@@ -98,7 +98,7 @@ function detailHTML(n, { title = true } = {}) {
   const o = n.obj;
   let h = '';
   if (title) {
-    h += `<div style="display:flex;gap:8px;align-items:center;margin-bottom:6px;flex-wrap:wrap">${kindLabel(n.kind)}${n.kind === 'field' || n.kind === 'matrix' ? typeTag(o) : ''}${prefixTag(o)}${o.public ? '<span class="tag outline">public</span>' : ''}</div>`;
+    h += `<div style="display:flex;gap:8px;align-items:center;margin-bottom:6px;flex-wrap:wrap">${kindLabel(n.kind)}${isField(n.kind) ? typeTag(o) : ''}${prefixTag(o)}${o.public ? '<span class="tag outline">public</span>' : ''}</div>`;
     h += `<h2>${esc(o.name)}</h2>`;
     if (o.handle) h += `<div class="mono faint" style="margin-top:3px">${esc(o.handle)}${o.gql ? ` · ${esc(o.gql)}` : ''}</div>`;
     if (o.instructions || o.description) h += `<p class="muted" style="margin:8px 0 0">${esc(o.instructions || o.description)}</p>`;
@@ -121,7 +121,7 @@ function detailHTML(n, { title = true } = {}) {
     if (o.referencedBy.length) h += `<h3>Pulled in by</h3><div class="list">${o.referencedBy.map(f => row(fieldKey(f), note(`${f.usedIn.length}× used`))).join('')}</div>`;
     if (o.previewTargets.length) h += `<h3>Preview targets</h3><div class="chips">${o.previewTargets.map(p => `<span class="chip">${esc(p)}</span>`).join('')}</div>`;
   }
-  if (n.kind === 'page' || n.kind === 'block') {
+  if (isEntryType(n.kind)) {
     if (o.sections.length) h += `<h3>Lives in</h3><div class="list">${o.sections.map(s => row(keyOf('section', s.uid), note(s.type))).join('')}</div>`;
     if (o.builders.length) h += `<h3>Available in</h3><div class="list">${o.builders.map(b => row(fieldKey(b.field), note(b.context && b.context !== o.name ? `as “${esc(b.context)}”` : esc(b.group || '')))).join('')}</div>`;
     const sites = [...sitesOfEt(o)].map(u => by.site[u]).filter(Boolean);
@@ -131,7 +131,7 @@ function detailHTML(n, { title = true } = {}) {
     const els = customElements(o.tabs);
     h += `<h3>Fields (${els.length})</h3><div class="list">${els.map(({ el, f }) => row(fieldKey(f), `${note(el.label && el.label !== f.name ? `“${esc(el.label)}”` : '')}${reqTag(el)}${typeTag(f)}`)).join('')}</div>`;
   }
-  if (n.kind === 'field' || n.kind === 'matrix') {
+  if (isField(n.kind)) {
     h += fieldDetail(o);
     h += `<h3>Used in (${o.usedIn.length})</h3>${o.usedIn.length
       ? `<div class="list">${o.usedIn.map(u => row(useKey(u), `${note(u.el.handle ? esc(u.el.handle) : u.el.label ? `“${esc(u.el.label)}”` : '')}${reqTag(u.el)}${condTag(u.el)}`)).join('')}</div>`
@@ -140,15 +140,12 @@ function detailHTML(n, { title = true } = {}) {
   return h;
 }
 
-// Buttons that jump to the same thing in another view.
+// Buttons that jump to the same thing in the other views that have a place for its kind.
+const CROSS_LINKS = { graph: 'Show in graph', table: 'Show in table', layout: 'Open layout', diff: 'Compare' };
 function crossLinks(key, here) {
   const n = nodeOf(key);
   if (!n) return '';
-  const links = [];
-  if (here !== 'graph') links.push(`<a class="btn" href="#graph/${key}">Show in graph</a>`);
-  if (here !== 'table' && (n.kind === 'field' || n.kind === 'matrix' || n.kind === 'page' || n.kind === 'block')) links.push(`<a class="btn" href="#table/${key}">Show in table</a>`);
-  if (here !== 'layout' && (n.kind === 'page' || n.kind === 'block' || n.kind === 'section' || n.kind === 'matrix' || n.kind === 'field')) links.push(`<a class="btn" href="#layout/${key}">Open layout</a>`);
-  if (here !== 'diff' && n.kind !== 'group') links.push(`<a class="btn" href="#diff/${key}">Compare</a>`);
+  const links = KIND[n.kind].views.filter(view => view !== here).map(view => `<a class="btn" href="#${view}/${key}">${CROSS_LINKS[view]}</a>`);
   return links.length ? `<div class="actions">${links.join('')}</div>` : '';
 }
 

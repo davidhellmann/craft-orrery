@@ -14,7 +14,7 @@ const GraphView = (() => {
   M.sites.forEach(s => add('site', s));
   M.sections.forEach(s => add('section', s));
   M.entryTypes.forEach(e => add(e.kind, e));
-  M.fields.forEach(f => add(f.isBuilder ? 'matrix' : 'field', f));
+  M.fields.forEach(f => add(f.kind, f));
   const seen = new Set();
   const link = (a, b, type = 'contain') => {
     if (!nodes[a] || !nodes[b] || a === b || seen.has(a + '>' + b)) return;
@@ -30,7 +30,7 @@ const GraphView = (() => {
   M.entryTypes.forEach(e => customElements(e.tabs).forEach(({ f }) => link(etKey(e), fieldKey(f))));
   M.fields.forEach(f => {
     (f.blocks || []).forEach(b => by.et[b.entryType] && link(fieldKey(f), etKey(by.et[b.entryType])));
-    if (f.type === 'ContentBlock') customElements(f.tabs).forEach(({ f: inner }) => link(fieldKey(f), fieldKey(inner)));
+    customElements(f.tabs).forEach(({ f: inner }) => link(fieldKey(f), fieldKey(inner)));
     f.targets.forEach(s => link(fieldKey(f), keyOf('section', s.uid), 'ref'));
   });
 
@@ -84,7 +84,7 @@ const GraphView = (() => {
       const g = svgEl('g', { class: 'node' });
       g.appendChild(svgEl('rect', { class: 'body', width: COL_W, height: NODE_H, rx: 6 }));
       g.appendChild(glyphNode(n.kind));
-      const subText = n.kind === 'field' || n.kind === 'matrix' ? fieldTypeLabel(n.obj)
+      const subText = isField(n.kind) ? fieldTypeLabel(n.obj)
         : n.obj.conventionOk === false ? `no ${n.obj.prefix}` : n.kind === 'section' ? n.obj.type : '';
       // Shorten the name so it stops before the label on the right.
       const room = Math.floor((COL_W - 46 - subText.length * 6.3) / 7);

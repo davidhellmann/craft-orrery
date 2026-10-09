@@ -2,17 +2,22 @@
 // Glossary: a Page is an entry type attached to a Craft section, a Block one attached to a Matrix field.
 const M = window.CONTENT_MODEL;
 
+// Every kind of node: what it's called, the index in `by` that holds its objects, and the views it has a place in.
+// Pages and Blocks are entry types, Builders and Fields are fields. Each object carries its kind.
+const ALL_VIEWS = ['graph', 'table', 'layout', 'diff'];
 const KIND = {
-  group: { label: 'Site Group', plural: 'Site Groups' },
-  site: { label: 'Site', plural: 'Sites' },
-  section: { label: 'Section', plural: 'Sections' },
-  page: { label: 'Page', plural: 'Pages', hint: 'Entry type attached to a section' },
-  matrix: { label: 'Builder', plural: 'Builders', hint: 'Matrix or content block field' },
-  block: { label: 'Block', plural: 'Blocks', hint: 'Entry type attached to a matrix field' },
-  field: { label: 'Field', plural: 'Fields' },
-  usergroup: { label: 'User Group', plural: 'User Groups', layer: true },
-  schema: { label: 'GraphQL Schema', plural: 'GraphQL Schemas', layer: true },
+  group: { label: 'Site Group', plural: 'Site Groups', index: 'group', views: ['graph'] },
+  site: { label: 'Site', plural: 'Sites', index: 'site', views: ['graph', 'diff'] },
+  section: { label: 'Section', plural: 'Sections', index: 'section', views: ['graph', 'layout', 'diff'] },
+  page: { label: 'Page', plural: 'Pages', hint: 'Entry type attached to a section', index: 'et', views: ALL_VIEWS },
+  matrix: { label: 'Builder', plural: 'Builders', hint: 'Matrix or content block field', index: 'field', views: ALL_VIEWS },
+  block: { label: 'Block', plural: 'Blocks', hint: 'Entry type attached to a matrix field', index: 'et', views: ALL_VIEWS },
+  field: { label: 'Field', plural: 'Fields', index: 'field', views: ALL_VIEWS },
+  usergroup: { label: 'User Group', plural: 'User Groups', index: 'usergroup', views: ['graph', 'diff'], layer: true },
+  schema: { label: 'GraphQL Schema', plural: 'GraphQL Schemas', index: 'schema', views: ['graph', 'diff'], layer: true },
 };
+const isEntryType = kind => KIND[kind].index === 'et';
+const isField = kind => KIND[kind].index === 'field';
 
 const fieldTypeLabel = f => f.typeLabel || f.type;
 
@@ -21,15 +26,17 @@ const PREFIX = { page: [], block: [], ...M.prefixes };
 const checksHandles = PREFIX.page.length > 0 || PREFIX.block.length > 0;
 
 const by = { group: {}, site: {}, section: {}, et: {}, field: {}, usergroup: {}, schema: {} };
-M.siteGroups.forEach(g => { by.group[g.uid] = g; g.sites = []; });
-M.sites.forEach(s => { by.site[s.uid] = s; s.sections = []; if (by.group[s.group]) by.group[s.group].sites.push(s); });
+M.siteGroups.forEach(g => { by.group[g.uid] = g; g.kind = 'group'; g.sites = []; });
+M.sites.forEach(s => { by.site[s.uid] = s; s.kind = 'site'; s.sections = []; if (by.group[s.group]) by.group[s.group].sites.push(s); });
 M.entryTypes.forEach(e => { by.et[e.uid] = e; e.sections = []; e.builders = []; });
-M.fields.forEach(f => { by.field[f.uid] = f; f.usedIn = []; f.targets = []; });
-M.userGroups.forEach(g => { by.usergroup[g.uid] = g; });
-M.gqlSchemas.forEach(s => { by.schema[s.uid] = s; });
+// The server says which fields are Builders and which relate to entries, field types built on them included.
+M.fields.forEach(f => { by.field[f.uid] = f; f.kind = f.role === 'builder' ? 'matrix' : 'field'; f.usedIn = []; f.targets = []; });
+M.userGroups.forEach(g => { by.usergroup[g.uid] = g; g.kind = 'usergroup'; });
+M.gqlSchemas.forEach(s => { by.schema[s.uid] = s; s.kind = 'schema'; });
 
 M.sections.forEach(s => {
   by.section[s.uid] = s;
+  s.kind = 'section';
   s.referencedBy = [];
   s.sites.forEach(ss => by.site[ss.site] && by.site[ss.site].sections.push(s));
   s.groups = [...new Set(s.sites.map(ss => by.site[ss.site] && by.site[ss.site].group).filter(Boolean))];
@@ -38,9 +45,8 @@ M.sections.forEach(s => {
 });
 
 M.fields.forEach(f => {
-  f.isBuilder = f.type === 'Matrix' || f.type === 'ContentBlock';
   (f.blocks || []).forEach(b => by.et[b.entryType] && by.et[b.entryType].builders.push({ field: f, context: b.context, group: b.group }));
-  if (f.type === 'Entries') {
+  if (f.role === 'relation') {
     f.allSources = (f.sources || []).includes('*');
     (f.sources || []).forEach(src => {
       const m = /^section:(.+)$/.exec(src || '');
@@ -59,30 +65,32 @@ M.entryTypes.forEach(e => {
   e.conventionOk = !PREFIX[e.kind].length || PREFIX[e.kind].some(p => e.handle.startsWith(p));
   eachCustom(e.tabs, el => by.field[el.field] && by.field[el.field].usedIn.push({ owner: e, ownerKind: e.kind, el }));
 });
+// A ContentBlock, or a field type built on it, holds fields in a layout of its own.
 M.fields.forEach(f => {
-  if (f.type === 'ContentBlock') eachCustom(f.tabs, el => by.field[el.field] && by.field[el.field].usedIn.push({ owner: f, ownerKind: 'matrix', el }));
+  eachCustom(f.tabs, el => by.field[el.field] && by.field[el.field].usedIn.push({ owner: f, ownerKind: f.kind, el }));
 });
 
-// Node keys are "<kind>:<uid>"; pages and blocks are entry types, builders are fields.
+// Node keys are "<kind>:<uid>".
 const keyOf = (kind, uid) => `${kind}:${uid}`;
 const etKey = e => keyOf(e.kind, e.uid);
-const fieldKey = f => keyOf(f.isBuilder ? 'matrix' : 'field', f.uid);
-const useKey = u => (u.ownerKind === 'matrix' ? fieldKey(u.owner) : etKey(u.owner));
+const fieldKey = f => keyOf(f.kind, f.uid);
+const useKey = u => keyOf(u.ownerKind, u.owner.uid);
 function nodeOf(key) {
   if (!key) return null;
   const i = key.indexOf(':');
   const kind = key.slice(0, i), uid = key.slice(i + 1);
-  const obj = kind === 'group' ? by.group[uid] : kind === 'site' ? by.site[uid] : kind === 'section' ? by.section[uid]
-    : kind === 'page' || kind === 'block' ? by.et[uid] : kind === 'matrix' || kind === 'field' ? by.field[uid]
-    : kind === 'usergroup' || kind === 'schema' ? by[kind][uid] : null;
+  const index = KIND[kind] && by[KIND[kind].index];
+  const obj = index && index[uid];
   return obj ? { kind, uid, obj, key } : null;
 }
+// The objects of a kind, in the order of the data.
+const ofKind = kind => Object.values(by[KIND[kind].index]).filter(o => o.kind === kind);
 
 // Entry types that contain a field, looking through content blocks.
 function ownersOfField(f, seen = new Set()) {
   if (seen.has(f.uid)) return [];
   seen.add(f.uid);
-  return f.usedIn.flatMap(u => (u.ownerKind === 'matrix' ? ownersOfField(u.owner, seen) : [u.owner]));
+  return f.usedIn.flatMap(u => (isField(u.ownerKind) ? ownersOfField(u.owner, seen) : [u.owner]));
 }
 // Sites an entry type ends up on: its sections, or the sections of whatever page holds its builder.
 function sitesOfEt(e, seen = new Set()) {
@@ -106,7 +114,6 @@ function pullsFrom(e, depth = 0) {
   });
   return out;
 }
-const buildersOf = e => customElements(e.tabs).map(x => x.f).filter(f => f.type === 'Matrix');
 
 const unusedFields = M.fields.filter(f => !f.usedIn.length);
 const unprefixedEntryTypes = M.entryTypes.filter(e => !e.conventionOk);
@@ -114,9 +121,8 @@ const byName = (a, b) => a.name.localeCompare(b.name);
 
 // ---- access: user groups and GraphQL schemas, a layer the header pickers switch on over every view
 const ACCESS = ['usergroup', 'schema'];
-const accessList = kind => (kind === 'usergroup' ? M.userGroups : M.gqlSchemas);
 const shownAccess = { usergroup: new Set(), schema: new Set() };
-const activeAccess = kind => accessList(kind).filter(a => shownAccess[kind].has(a.uid));
+const activeAccess = kind => ofKind(kind).filter(a => shownAccess[kind].has(a.uid));
 // User groups reach sites, sections and the pages in them; schemas also reach builders and their blocks.
 const accessApplies = (kind, nodeKind) => ['site', 'section', 'page'].includes(nodeKind) || (kind === 'schema' && ['matrix', 'block'].includes(nodeKind));
 
