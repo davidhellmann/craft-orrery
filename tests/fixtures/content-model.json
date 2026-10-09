@@ -317,6 +317,41 @@
             ]
         },
         {
+            "uid": "et-promo",
+            "name": "Old promo",
+            "handle": "oldPromo",
+            "icon": "bullhorn",
+            "hasTitleField": true,
+            "tabs": [
+                {
+                    "name": "Content",
+                    "conditional": false,
+                    "elements": [
+                        {
+                            "kind": "Title",
+                            "width": 100,
+                            "required": true
+                        },
+                        {
+                            "kind": "CustomField",
+                            "width": 50,
+                            "field": "field-image",
+                            "label": "Visual",
+                            "required": false,
+                            "conditional": false
+                        },
+                        {
+                            "kind": "CustomField",
+                            "width": 50,
+                            "field": "field-featured",
+                            "required": false,
+                            "conditional": false
+                        }
+                    ]
+                }
+            ]
+        },
+        {
             "uid": "et-article",
             "name": "Article",
             "handle": "page_article",

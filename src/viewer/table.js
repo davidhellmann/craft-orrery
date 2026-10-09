@@ -70,7 +70,7 @@ const TableView = (() => {
       ? `<select data-f="type" aria-label="Field type"><option value="">All types</option>${fieldTypes.map(t => `<option ${t === state.type ? 'selected' : ''}>${esc(t)}</option>`).join('')}</select>
          ${groups}
          <label class="check"><input type="checkbox" data-f="unused" ${state.unused ? 'checked' : ''}> only unused</label>`
-      : `<select data-f="kind" aria-label="Kind"><option value="">Pages and blocks</option>${Object.keys(KIND).filter(isEntryType).map(k => `<option value="${k}" ${state.kind === k ? 'selected' : ''}>${KIND[k].plural}</option>`).join('')}</select>
+      : `<select data-f="kind" aria-label="Kind"><option value="">All kinds</option>${Object.keys(KIND).filter(isEntryType).map(k => `<option value="${k}" ${state.kind === k ? 'selected' : ''}>${KIND[k].plural}</option>`).join('')}</select>
          ${groups}
          ${checksHandles ? `<label class="check"><input type="checkbox" data-f="unprefixed" ${state.unprefixed ? 'checked' : ''}> only without prefix</label>` : ''}`;
     f.querySelectorAll('[data-f]').forEach(x => x.addEventListener('change', () => { state[x.dataset.f] = x.type === 'checkbox' ? x.checked : x.value; draw(); }));

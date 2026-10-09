@@ -13,7 +13,8 @@ const GraphView = (() => {
   M.siteGroups.forEach(g => add('group', g));
   M.sites.forEach(s => add('site', s));
   M.sections.forEach(s => add('section', s));
-  M.entryTypes.forEach(e => add(e.kind, e));
+  // Unused entry types hang from nothing, so they stay off the map; Worth a look lists them.
+  M.entryTypes.filter(e => COLS.includes(e.kind)).forEach(e => add(e.kind, e));
   M.fields.forEach(f => add(f.kind, f));
   const seen = new Set();
   const link = (a, b, type = 'contain') => {
@@ -221,9 +222,11 @@ const GraphView = (() => {
     }
   }
 
-  // ---- selection: a node lights up its lineage, a user group or schema everything it reaches
+  // ---- selection: a node lights up its lineage, a user group or schema everything it reaches, and an entry type
+  // off the map what it's made of
   function reach(key) {
     const n = nodeOf(key);
+    if (isEntryType(n.kind)) return new Set(customElements(n.obj.tabs).flatMap(({ f }) => [...subtree(fieldKey(f))]));
     return new Set(Object.keys(nodes).filter(k => rightsOn(n.obj, n.kind, k)));
   }
   function highlight() {
@@ -273,8 +276,10 @@ const GraphView = (() => {
     <h3>Worth a look</h3>
     <div class="list">
       ${checksHandles ? `<div class="row"><span class="grow">Handles without prefix (${[...PREFIX.page, ...PREFIX.block].map(esc).join(' / ')})</span><b>${unprefixedEntryTypes.length}</b></div>` : ''}
+      <div class="row"><span class="grow">Entry types not used anywhere</span><b>${unusedEntryTypes.length}</b></div>
       <div class="row"><span class="grow">Fields not used anywhere</span><b>${unusedFields.length}</b></div>
     </div>
+    ${unusedEntryTypes.length ? `<h3>Unused entry types</h3><div class="list">${unusedEntryTypes.map(e => row(etKey(e), note(esc(e.handle)))).join('')}</div>` : ''}
     ${unusedFields.length ? `<h3>Unused fields</h3><div class="list">${unusedFields.map(f => row(fieldKey(f), typeTag(f))).join('')}</div>` : ''}`);
 
   function mount(root) {

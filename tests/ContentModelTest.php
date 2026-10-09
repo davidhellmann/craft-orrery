@@ -444,6 +444,7 @@ class ContentModelTest extends TestCase
             'block_teaser',
             'block_text',
             'exhibition',
+            'oldPromo',
             'page_article',
             'page_link',
             'page_person',
