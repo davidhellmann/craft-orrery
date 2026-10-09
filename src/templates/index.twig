@@ -65,7 +65,7 @@
             history.replaceState(history.state, '', hash || location.pathname + location.search);
             newTab.href = appUrl + hash;
         };
-        frame.contentWindow.addEventListener('hashchange', sync);
+        frame.contentWindow.addEventListener('orrery:navigate', sync);
         sync();
     });
     frame.src = window.LOCATION_HASH ? `${appUrl}#${window.LOCATION_HASH}` : appUrl;

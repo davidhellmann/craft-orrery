@@ -19,7 +19,7 @@ const App = (() => {
     const [view, ...rest] = hash.replace(/^#/, '').split('/');
     return { view: VIEWS.find(v => v.id === view) ? view : 'graph', key: rest.join('/') || null };
   };
-  // In-page links (#view/key) route directly, so they also work where hashchange doesn't fire.
+  // In-page links (#view/key) go through the viewer's own history.
   document.addEventListener('click', ev => {
     const a = ev.target.closest && ev.target.closest('a[href^="#"]');
     if (!a || ev.metaKey || ev.ctrlKey || ev.shiftKey) return;
@@ -39,18 +39,40 @@ const App = (() => {
     v.show(key, opts);
   }
 
-  // Navigation from inside a view: update the hash without re-entering through hashchange.
-  let silent = false;
+  // History: each navigation is a browser history entry that knows its position, so back never leaves
+  // the viewer and the header buttons agree with the browser's. The page embedding the viewer listens
+  // for "orrery:navigate", as pushState fires no hashchange.
+  const back = document.getElementById('back'), forward = document.getElementById('forward');
+  let pos = history.state && Number.isInteger(history.state.orrery) ? history.state.orrery : 0, last = pos;
+  history.replaceState({ orrery: pos }, '');
+  function navigated() {
+    back.disabled = pos === 0;
+    forward.disabled = pos >= last;
+    window.dispatchEvent(new Event('orrery:navigate'));
+  }
   function go(viewId, key, opts = {}) {
     const hash = `#${viewId}${key ? '/' + key : ''}`;
-    if (location.hash !== hash) { silent = true; location.hash = hash; }
+    if (location.hash !== hash) {
+      last = ++pos;
+      history.pushState({ orrery: pos }, '', hash);
+    }
     activate(viewId, key, opts);
+    navigated();
   }
-  window.addEventListener('hashchange', () => {
-    if (silent) { silent = false; return; }
+  window.addEventListener('popstate', ev => {
+    if (ev.state && Number.isInteger(ev.state.orrery)) {
+      pos = ev.state.orrery;
+      last = Math.max(last, pos);
+    } else {
+      last = ++pos;
+      history.replaceState({ orrery: pos }, '');
+    }
     const { view, key } = parse();
     activate(view, key, { fromHash: true });
+    navigated();
   });
+  back.addEventListener('click', () => pos > 0 && history.back());
+  forward.addEventListener('click', () => pos < last && history.forward());
   document.addEventListener('keydown', ev => {
     if (ev.key !== 'Escape') return;
     if (closePickers()) return;
@@ -138,7 +160,7 @@ const App = (() => {
   });
   setTheme(document.documentElement.dataset.theme);
 
-  return { go, start() { const { view, key } = parse(); activate(view, key, { fromHash: true }); } };
+  return { go, start() { const { view, key } = parse(); activate(view, key, { fromHash: true }); navigated(); } };
 })();
 
 App.start();

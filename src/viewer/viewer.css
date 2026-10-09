@@ -46,6 +46,9 @@ code, .mono { font-family: var(--mono); font-size: 12px; }
 .meta { color: var(--faint); font-size: 12px; white-space: nowrap; }
 .icon-btn { width: 32px; height: 32px; display: grid; place-items: center; border-radius: 8px; border: 1px solid var(--line); background: var(--surface); cursor: pointer; }
 .icon-btn:hover { border-color: var(--line-strong); }
+.icon-btn[disabled] { opacity: .35; cursor: default; }
+.icon-btn[disabled]:hover { border-color: var(--line); }
+.history { display: flex; gap: 4px; margin-left: -6px; }
 .icon-btn svg { width: 16px; height: 16px; }
 
 main { flex: 1; min-height: 0; position: relative; }
