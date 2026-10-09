@@ -1,0 +1,23 @@
+{% import '_includes/forms' as forms %}
+
+{{ forms.textField({
+    label: 'Page handle prefix'|t('orrery'),
+    instructions: 'Handles of entry types attached to a section should start with this. Leave blank to skip the check.'|t('orrery'),
+    id: 'pageHandlePrefix',
+    name: 'pageHandlePrefix',
+    value: settings.pageHandlePrefix,
+    placeholder: 'page_',
+    class: 'code',
+    errors: settings.getErrors('pageHandlePrefix'),
+}) }}
+
+{{ forms.textField({
+    label: 'Block handle prefix'|t('orrery'),
+    instructions: 'Handles of entry types attached to a Matrix field should start with this. Leave blank to skip the check.'|t('orrery'),
+    id: 'blockHandlePrefix',
+    name: 'blockHandlePrefix',
+    value: settings.blockHandlePrefix,
+    placeholder: 'block_',
+    class: 'code',
+    errors: settings.getErrors('blockHandlePrefix'),
+}) }}

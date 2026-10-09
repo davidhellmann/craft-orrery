@@ -1,0 +1,65 @@
+{
+    "name": "davidhellmann/craft-orrery",
+    "description": "A live map of your Craft CMS content model: where content lives, what it’s made of, and how it all connects.",
+    "type": "craft-plugin",
+    "keywords": [
+        "craft",
+        "cms",
+        "craftcms",
+        "craft-plugin",
+        "content model",
+        "project config",
+        "fields",
+        "matrix"
+    ],
+    "license": "mit",
+    "authors": [
+        {
+            "name": "David Hellmann",
+            "homepage": "https://davidhellmann.com"
+        }
+    ],
+    "support": {
+        "email": "david@hellmann.io",
+        "issues": "https://github.com/davidhellmann/craft-orrery/issues?state=open",
+        "source": "https://github.com/davidhellmann/craft-orrery",
+        "docs": "https://github.com/davidhellmann/craft-orrery",
+        "rss": "https://github.com/davidhellmann/craft-orrery/releases.atom"
+    },
+    "require": {
+        "php": ">=8.2",
+        "craftcms/cms": "^5.0.0"
+    },
+    "require-dev": {
+        "craftcms/ecs": "dev-main",
+        "craftcms/phpstan": "dev-main",
+        "phpstan/phpstan": "^2.1"
+    },
+    "autoload": {
+        "psr-4": {
+            "davidhellmann\\orrery\\": "src/"
+        }
+    },
+    "extra": {
+        "handle": "orrery",
+        "name": "Orrery",
+        "developer": "David Hellmann",
+        "developerUrl": "https://davidhellmann.com",
+        "documentationUrl": "https://github.com/davidhellmann/craft-orrery"
+    },
+    "scripts": {
+        "check-cs": "ecs check --ansi",
+        "fix-cs": "ecs check --ansi --fix",
+        "phpstan": "phpstan --memory-limit=1G"
+    },
+    "config": {
+        "sort-packages": true,
+        "platform": {
+            "php": "8.2"
+        },
+        "allow-plugins": {
+            "yiisoft/yii2-composer": true,
+            "craftcms/plugin-installer": true
+        }
+    }
+}

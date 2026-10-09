@@ -1,0 +1,148 @@
+// Shared rendering helpers and the detail renderer used by every view.
+const esc = s => String(s == null ? '' : s).replace(/[&<>"]/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' }[c]));
+const glyph = kind => `<span class="g g-${kind}" aria-hidden="true"></span>`;
+const kindLabel = kind => `<span class="kind">${glyph(kind)}${KIND[kind].label}</span>`;
+const siteUrl = (site, uri) => `${site.name.replace(/\/$/, '')}/${uri || ''}`;
+
+// A mark for each access layer (user groups, schemas) whose switched-on members reach the node.
+function accessMarks(key) {
+  return ACCESS.map(kind => {
+    const names = activeAccess(kind).filter(a => rightsOn(a, kind, key)).map(a => a.name);
+    return names.length ? `<span class="acc acc-${kind}" title="${esc(names.join(', '))}"></span>` : '';
+  }).join('');
+}
+
+function chip(key, extra = '') {
+  const n = nodeOf(key);
+  return n ? `<span class="chip link" data-go="${key}">${glyph(n.kind)}${esc(n.obj.name)}${accessMarks(key)}${extra}</span>` : '';
+}
+function row(key, note = '') {
+  const n = nodeOf(key);
+  return n ? `<div class="row link" data-go="${key}">${glyph(n.kind)}<span class="grow">${esc(n.obj.name)}</span>${accessMarks(key)}${note}</div>` : '';
+}
+// A row with a second line underneath, for rights that don't fit next to the name.
+function stackedRow(key, sub, faint = false) {
+  const n = nodeOf(key);
+  return n ? `<div class="row link stacked" data-go="${key}">${glyph(n.kind)}<span class="grow"><span class="name">${esc(n.obj.name)}</span><span class="sub${faint ? ' faint' : ''}">${esc(sub)}</span></span>${accessMarks(key)}</div>` : '';
+}
+const note = s => (s ? `<span class="note">${s}</span>` : '');
+const typeTag = f => `<span class="tag">${esc(fieldTypeLabel(f))}</span>`;
+const reqTag = el => (el && el.required ? '<span class="tag solid">req</span>' : '');
+const condTag = el => (el && el.conditional ? '<span class="tag outline">if</span>' : '');
+// A section can give an entry type its own name, like a Matrix field does.
+const sectionEntryTypes = s => `<div class="list">${s.entryTypes.map(u => by.et[u]).filter(Boolean).map(e => row(etKey(e), note(s.contexts[e.uid] && s.contexts[e.uid] !== e.name ? `as “${esc(s.contexts[e.uid])}”` : esc(e.handle)))).join('')}</div>`;
+const prefixTag = e => (e.conventionOk === false ? `<span class="tag outline" title="Handle doesn’t start with the prefix set in the plugin settings">no <code>${esc(e.prefix)}</code></span>` : '');
+
+// Wires every [data-go] inside root to the app's navigation.
+function bindGo(root, go) {
+  root.querySelectorAll('[data-go]').forEach(el => el.addEventListener('click', ev => {
+    ev.stopPropagation();
+    if (el.dataset.go) go(el.dataset.go);
+  }));
+}
+
+function fieldDetail(f) {
+  if (f.options) {
+    return `<h3>Options</h3><div class="list">${f.options.map(o => `<div class="row"><span class="grow">${esc(o.label)}</span><code class="faint">${esc(o.value)}</code>${o.default ? '<span class="tag solid">default</span>' : ''}</div>`).join('')}</div>`;
+  }
+  if (f.type === 'Entries') {
+    return `<h3>Pulls from</h3><div class="chips">${f.allSources ? '<span class="chip">any section</span>' : f.targets.map(s => chip(keyOf('section', s.uid))).join('') || '<span class="chip">—</span>'}</div><p class="muted" style="margin:8px 0 0">${f.max === 1 ? 'One entry' : f.max ? `Up to ${f.max} entries` : 'Any number of entries'}</p>`;
+  }
+  if (f.blocks) {
+    const groups = {};
+    f.blocks.forEach(b => (groups[b.group || ''] = groups[b.group || ''] || []).push(b));
+    return `<h3>Blocks (${f.blocks.length})</h3>${Object.keys(groups).map(g => `${g ? `<div class="sub-label" style="padding-left:0">${esc(g)}</div>` : ''}<div class="list">${groups[g].map(b => {
+      const e = by.et[b.entryType];
+      return e ? row(etKey(e), b.context && b.context !== e.name ? note(`as “${esc(b.context)}”`) : '') : '';
+    }).join('')}</div>`).join('')}`;
+  }
+  if (f.type === 'ContentBlock') {
+    return `<h3>Contains</h3><div class="list">${customElements(f.tabs).map(({ el, f: inner }) => row(fieldKey(inner), `${note(el.label && el.label !== inner.name ? `“${esc(el.label)}”` : '')}${reqTag(el)}`)).join('')}</div>`;
+  }
+  return '';
+}
+
+// Which of the switched-on groups and schemas reach a node, and what they may do there.
+function accessHTML(n) {
+  const items = ACCESS.filter(kind => accessApplies(kind, n.kind)).flatMap(kind => activeAccess(kind).map(a => [kind, a, rightsOn(a, kind, n.key)]));
+  if (!items.length) return '';
+  return `<h3>Access</h3><div class="list">${items.map(([kind, a, rights]) => stackedRow(keyOf(kind, a.uid), rights ? rightsText(kind, rights) : 'No access', !rights)).join('')}</div>`;
+}
+
+const ELEMENT_SCOPES = { drafts: 'Drafts', revisions: 'Revisions', inactive: 'Disabled elements' };
+
+// Everything a user group or schema can reach.
+function accessDetail(n) {
+  const a = n.obj, kind = n.kind;
+  const none = '<p class="muted" style="margin:0">None</p>';
+  const sites = M.sites.filter(s => a.sites.includes(s.uid));
+  let h = `<h3>Sites</h3>${sites.length ? `<div class="chips">${sites.map(s => chip(keyOf('site', s.uid))).join('')}</div>` : none}`;
+  const secs = M.sections.filter(s => a.sections[s.uid]).sort(byName);
+  h += `<h3>Sections (${secs.length})</h3>${secs.length ? `<div class="list">${secs.map(s => stackedRow(keyOf('section', s.uid), rightsText(kind, a.sections[s.uid]))).join('')}</div>` : none}`;
+  if (kind === 'schema') {
+    const builders = M.fields.filter(f => a.fields[f.uid]).sort(byName);
+    if (builders.length) h += `<h3>Builders (${builders.length})</h3><div class="list">${builders.map(f => stackedRow(fieldKey(f), rightsText(kind, a.fields[f.uid]))).join('')}</div>`;
+    if (a.elements.length) h += `<h3>Also queries</h3><div class="chips">${a.elements.map(e => `<span class="chip">${esc(ELEMENT_SCOPES[e] || e)}</span>`).join('')}</div>`;
+  }
+  return h;
+}
+
+// "What is this, where does it live, where is it used" — the right-hand panel of every view.
+function detailHTML(n, { title = true } = {}) {
+  const o = n.obj;
+  let h = '';
+  if (title) {
+    h += `<div style="display:flex;gap:8px;align-items:center;margin-bottom:6px;flex-wrap:wrap">${kindLabel(n.kind)}${n.kind === 'field' || n.kind === 'matrix' ? typeTag(o) : ''}${prefixTag(o)}${o.public ? '<span class="tag outline">public</span>' : ''}</div>`;
+    h += `<h2>${esc(o.name)}</h2>`;
+    if (o.handle) h += `<div class="mono faint" style="margin-top:3px">${esc(o.handle)}${o.gql ? ` · ${esc(o.gql)}` : ''}</div>`;
+    if (o.instructions || o.description) h += `<p class="muted" style="margin:8px 0 0">${esc(o.instructions || o.description)}</p>`;
+  }
+  if (KIND[n.kind].layer) return h + accessDetail(n);
+  h += accessHTML(n);
+
+  if (n.kind === 'group') {
+    h += `<h3>Sites</h3><div class="list">${o.sites.map(s => row(keyOf('site', s.uid), note(esc(s.language)))).join('')}</div>`;
+    const secs = M.sections.filter(s => s.groups.includes(o.uid)).sort(byName);
+    h += `<h3>Sections (${secs.length})</h3><div class="list">${secs.map(s => row(keyOf('section', s.uid), note(s.type))).join('')}</div>`;
+  }
+  if (n.kind === 'site') {
+    h += `<h3>Site</h3><div class="list"><div class="row"><span class="grow">Group</span>${chip(keyOf('group', o.group))}</div><div class="row"><span class="grow">Language</span><code>${esc(o.language)}</code></div><div class="row"><span class="grow">Base URL</span><code>${esc(o.baseUrl)}</code></div></div>`;
+    h += `<h3>Sections (${o.sections.length})</h3><div class="list">${o.sections.slice().sort(byName).map(s => row(keyOf('section', s.uid), note(s.type))).join('')}</div>`;
+  }
+  if (n.kind === 'section') {
+    h += `<h3>URLs</h3><div class="list">${o.sites.map(ss => by.site[ss.site] ? `<div class="row"><span class="grow">${esc(by.site[ss.site].name)}</span>${ss.hasUrls ? `<code>${esc(ss.uriFormat)}</code>` : '<span class="faint">no URLs</span>'}</div>` : '').join('')}</div>`;
+    h += `<h3>Entry types</h3>${sectionEntryTypes(o)}`;
+    if (o.referencedBy.length) h += `<h3>Pulled in by</h3><div class="list">${o.referencedBy.map(f => row(fieldKey(f), note(`${f.usedIn.length}× used`))).join('')}</div>`;
+    if (o.previewTargets.length) h += `<h3>Preview targets</h3><div class="chips">${o.previewTargets.map(p => `<span class="chip">${esc(p)}</span>`).join('')}</div>`;
+  }
+  if (n.kind === 'page' || n.kind === 'block') {
+    if (o.sections.length) h += `<h3>Lives in</h3><div class="list">${o.sections.map(s => row(keyOf('section', s.uid), note(s.type))).join('')}</div>`;
+    if (o.builders.length) h += `<h3>Available in</h3><div class="list">${o.builders.map(b => row(fieldKey(b.field), note(b.context && b.context !== o.name ? `as “${esc(b.context)}”` : esc(b.group || '')))).join('')}</div>`;
+    const sites = [...sitesOfEt(o)].map(u => by.site[u]).filter(Boolean);
+    if (sites.length) h += `<h3>Ends up on</h3><div class="chips">${sites.map(s => chip(keyOf('site', s.uid))).join('')}</div>`;
+    const pulls = n.kind === 'block' ? [...pullsFrom(o)] : [];
+    if (pulls.length) h += `<h3>Pulls content from</h3><div class="chips">${pulls.map(s => chip(keyOf('section', s.uid))).join('')}</div>`;
+    const els = customElements(o.tabs);
+    h += `<h3>Fields (${els.length})</h3><div class="list">${els.map(({ el, f }) => row(fieldKey(f), `${note(el.label && el.label !== f.name ? `“${esc(el.label)}”` : '')}${reqTag(el)}${typeTag(f)}`)).join('')}</div>`;
+  }
+  if (n.kind === 'field' || n.kind === 'matrix') {
+    h += fieldDetail(o);
+    h += `<h3>Used in (${o.usedIn.length})</h3>${o.usedIn.length
+      ? `<div class="list">${o.usedIn.map(u => row(useKey(u), `${note(u.el.handle ? esc(u.el.handle) : u.el.label ? `“${esc(u.el.label)}”` : '')}${reqTag(u.el)}${condTag(u.el)}`)).join('')}</div>`
+      : '<p class="muted" style="margin:0">Not used in any field layout.</p>'}`;
+  }
+  return h;
+}
+
+// Buttons that jump to the same thing in another view.
+function crossLinks(key, here) {
+  const n = nodeOf(key);
+  if (!n) return '';
+  const links = [];
+  if (here !== 'graph') links.push(`<a class="btn" href="#graph/${key}">Show in graph</a>`);
+  if (here !== 'table' && (n.kind === 'field' || n.kind === 'matrix' || n.kind === 'page' || n.kind === 'block')) links.push(`<a class="btn" href="#table/${key}">Show in table</a>`);
+  if (here !== 'layout' && (n.kind === 'page' || n.kind === 'block' || n.kind === 'section' || n.kind === 'matrix' || n.kind === 'field')) links.push(`<a class="btn" href="#layout/${key}">Open layout</a>`);
+  return links.length ? `<div class="actions">${links.join('')}</div>` : '';
+}
+
+const legendHTML = () => Object.keys(KIND).filter(k => !KIND[k].layer).map(k => `<span>${glyph(k)}${KIND[k].plural}</span>`).join('');

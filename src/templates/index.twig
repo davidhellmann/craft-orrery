@@ -1,0 +1,75 @@
+{% extends '_layouts/cp' %}
+{% import '_includes/forms' as forms %}
+
+{% set title = 'Content Model'|t('orrery') %}
+{% set appUrl = cpUrl('orrery/app') %}
+
+{% block actionButton %}
+    {{ forms.button({
+        label: 'Fullscreen'|t('orrery'),
+        icon: 'expand',
+        attributes: {id: 'orrery-fullscreen'},
+    }) }}
+    <a class="btn" id="orrery-new-tab" href="{{ appUrl }}" target="_blank" rel="noopener">
+        <div class="inline-flex">
+            <div class="cp-icon">{{ iconSvg('arrow-up-right-from-square') }}</div>
+            <div class="label">{{ 'Open in new tab'|t('orrery') }}</div>
+        </div>
+    </a>
+    <a class="btn" href="{{ cpUrl('orrery/app', {download: 1}) }}">
+        <div class="inline-flex">
+            <div class="cp-icon">{{ iconSvg('download') }}</div>
+            <div class="label">{{ 'Download'|t('orrery') }}</div>
+        </div>
+    </a>
+{% endblock %}
+
+{% block main %}
+    <iframe id="orrery-frame" class="orrery-frame" title="{{ title }}" data-src="{{ appUrl }}"></iframe>
+{% endblock %}
+
+{% css %}
+    .orrery-frame {
+        display: block;
+        width: 100%;
+        height: 70vh;
+        border: 0;
+        border-radius: var(--large-border-radius);
+        box-shadow: 0 0 0 1px var(--hairline-color);
+        background: var(--white);
+    }
+    .orrery-frame:fullscreen {
+        border-radius: 0;
+    }
+{% endcss %}
+
+{% js %}
+(() => {
+    const frame = document.getElementById('orrery-frame');
+    const newTab = document.getElementById('orrery-new-tab');
+    const appUrl = frame.dataset.src;
+
+    // Fill the viewport without scrolling the page, whatever the control panel puts below the frame.
+    const fit = () => {
+        frame.style.height = `${window.innerHeight}px`;
+        const { top, bottom } = frame.getBoundingClientRect();
+        const below = document.documentElement.scrollHeight - window.scrollY - bottom;
+        frame.style.height = `${Math.max(400, window.innerHeight - top - window.scrollY - below)}px`;
+    };
+    fit();
+    window.addEventListener('resize', fit);
+
+    frame.addEventListener('load', () => {
+        const sync = () => {
+            const hash = frame.contentWindow.location.hash;
+            history.replaceState(history.state, '', hash || location.pathname + location.search);
+            newTab.href = appUrl + hash;
+        };
+        frame.contentWindow.addEventListener('hashchange', sync);
+        sync();
+    });
+    frame.src = window.LOCATION_HASH ? `${appUrl}#${window.LOCATION_HASH}` : appUrl;
+
+    document.getElementById('orrery-fullscreen').addEventListener('click', () => frame.requestFullscreen());
+})();
+{% endjs %}
