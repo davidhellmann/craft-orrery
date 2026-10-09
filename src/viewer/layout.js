@@ -31,7 +31,7 @@ const LayoutView = (() => {
       });
     } else {
       const groups = new Map();
-      M.fields.filter(f => f.type === 'Matrix').sort(byName).forEach(f => {
+      M.fields.filter(f => f.blocks).sort(byName).forEach(f => {
         const list = (f.blocks || []).map(b => by.et[b.entryType]).filter(e => e && matchQ(e));
         if (list.length || (state.q && matchQ(f))) groups.set(f, list);
       });
@@ -53,7 +53,7 @@ const LayoutView = (() => {
 
   // ---- form mode: what an editor sees
   function control(f) {
-    if (f.type === 'Matrix') {
+    if (f.blocks) {
       const groups = {};
       (f.blocks || []).forEach(b => (groups[b.group || ''] = groups[b.group || ''] || []).push(b));
       return `<div class="ctl">${Object.keys(groups).map(g => `${g ? `<span class="grp">${esc(g)}</span>` : ''}${groups[g].map(b => {
@@ -61,8 +61,8 @@ const LayoutView = (() => {
         return e ? `<span class="blockchip" data-go="${etKey(e)}"><b>${esc(b.context || e.name)}</b>${b.context && b.context !== e.name ? esc(e.name) : ''}</span>` : '';
       }).join('')}`).join('')}</div>`;
     }
-    if (f.type === 'ContentBlock') return `<div class="ctl">${customElements(f.tabs).map(({ f: inner }) => chip(fieldKey(inner))).join('')}</div>`;
-    if (f.type === 'Entries') return `<div class="ctl">→ ${f.allSources ? 'any section' : f.targets.map(s => chip(keyOf('section', s.uid))).join(' ')}${f.max ? ` <span>max ${f.max}</span>` : ''}</div>`;
+    if (f.tabs) return `<div class="ctl">${customElements(f.tabs).map(({ f: inner }) => chip(fieldKey(inner))).join('')}</div>`;
+    if (f.role === 'relation') return `<div class="ctl">→ ${f.allSources ? 'any section' : f.targets.map(s => chip(keyOf('section', s.uid))).join(' ')}${f.max ? ` <span>max ${f.max}</span>` : ''}</div>`;
     if (f.options) return `<div class="ctl">${f.options.map(o => `<span>${esc(o.label)}${o.default ? ' ●' : ''}</span>`).join('<span>·</span>')}</div>`;
     return `<div class="ctl">${esc(fieldTypeLabel(f))}</div>`;
   }
@@ -95,11 +95,11 @@ const LayoutView = (() => {
     if (e.kind === 'Title') return `<div class="wfi" ${span}>${cap}<div class="wf-title"></div></div>`;
     if (!f) return '';
     const name = `${f.name} ${e.handle || ''}`.toLowerCase();
-    if (f.type === 'Matrix') return `<div class="wfi" style="grid-column:1/-1">${cap}${lane(f, depth + 1)}</div>`;
-    if (f.type === 'ContentBlock') return `<div class="wfi" style="grid-column:1/-1">${cap}<div class="wf" style="border-left:2px dashed var(--line-strong);padding-left:12px">${(f.tabs || []).flatMap(t => t.elements).map(x => wfItem(x, by.field[x.field], depth + 1)).join('')}</div></div>`;
+    if (f.blocks) return `<div class="wfi" style="grid-column:1/-1">${cap}${lane(f, depth + 1)}</div>`;
+    if (f.tabs) return `<div class="wfi" style="grid-column:1/-1">${cap}<div class="wf" style="border-left:2px dashed var(--line-strong);padding-left:12px">${(f.tabs || []).flatMap(t => t.elements).map(x => wfItem(x, by.field[x.field], depth + 1)).join('')}</div></div>`;
     let body;
     if (f.type === 'Assets' || /image|logo|svg/.test(name)) body = `<div class="wf-img">${esc(fieldTypeLabel(f))}</div>`;
-    else if (f.type === 'Entries') body = `<div class="wf-ref" data-go="${f.targets[0] ? keyOf('section', f.targets[0].uid) : ''}">→ ${f.allSources ? 'any section' : f.targets.map(s => esc(s.name)).join(', ') || 'entries'} · ${f.max === 1 ? 'one' : 'many'}</div>`;
+    else if (f.role === 'relation') body = `<div class="wf-ref" data-go="${f.targets[0] ? keyOf('section', f.targets[0].uid) : ''}">→ ${f.allSources ? 'any section' : f.targets.map(s => esc(s.name)).join(', ') || 'entries'} · ${f.max === 1 ? 'one' : 'many'}</div>`;
     else if (f.options) body = `<div class="wf-pills">${f.options.map(o => `<span class="${o.default ? 'def' : ''}">${esc(o.label)}</span>`).join('')}</div>`;
     else if (f.type === 'HyperField' || f.type === 'Link') body = `<div class="wf-btns"><span></span>${f.max !== 1 ? '<span></span>' : ''}</div>`;
     else if (f.type === 'Lightswitch') body = '<div class="wf-switch"></div>';
@@ -131,7 +131,7 @@ const LayoutView = (() => {
       : `<span class="url none">${esc(by.site[x.site].name)} · no URL</span>`)));
     const where = e.kind === 'block' ? e.builders.map(b => `<span class="url none">inside ${esc(b.field.name)}${b.context && b.context !== e.name ? ` as “${esc(b.context)}”` : ''}</span>`) : [];
     const zones = e.tabs.map(t => {
-      const hasBuilder = t.elements.some(x => x.kind === 'CustomField' && by.field[x.field] && by.field[x.field].type === 'Matrix');
+      const hasBuilder = t.elements.some(x => x.kind === 'CustomField' && by.field[x.field] && by.field[x.field].blocks);
       return `<div class="zone"><span class="zl">${esc(t.name)}${hasBuilder ? ' · content builder' : ''}</span><div class="wf">${t.elements.map(x => wfItem(x, by.field[x.field], 0)).join('')}</div></div>`;
     }).join('');
     return `<div class="browser"><div class="chrome"><div class="lights"><i></i><i></i><i></i></div><div class="urls">${[...urls, ...where].join('')}</div></div><div class="pagebody">${zones || '<p class="muted">No field layout.</p>'}</div></div>`;
@@ -145,19 +145,19 @@ const LayoutView = (() => {
     if (n.kind === 'section' && n.obj.groups[0]) parts.push(keyOf('group', n.obj.groups[0]));
     parts.push(n.key);
     const trail = parts.map((k, i) => { const p = nodeOf(k); return i === parts.length - 1 ? `<span class="here">${esc(p.obj.name)}</span>` : `<a data-go="${k}">${esc(p.obj.name)}</a><span class="faint">/</span>`; }).join(' ');
-    const isEt = n.kind === 'page' || n.kind === 'block';
+    const isEt = isEntryType(n.kind);
     return `<button class="btn only-small" data-tree>Browse</button>${trail}${isEt ? `<span class="end seg"><button data-mode="form" class="${state.mode === 'form' ? 'on' : ''}">Form</button><button data-mode="page" class="${state.mode === 'page' ? 'on' : ''}">Page</button></span>` : ''}`;
   }
   function canvasHTML(n) {
     const o = n.obj;
     let h = `<div class="headline"><div class="big">${glyph(n.kind)}</div><div style="min-width:0">${kindLabel(n.kind)}<h2>${esc(o.name)}</h2><div class="mono faint">${esc(o.handle || '')}${o.gql ? ` · ${esc(o.gql)}` : ''}${o.conventionOk === false ? ` ${prefixTag(o)}` : ''}</div></div></div>`;
-    if (n.kind === 'page' || n.kind === 'block') return h + (state.mode === 'page' ? pageHTML(o) : formHTML(o.tabs));
+    if (isEntryType(n.kind)) return h + (state.mode === 'page' ? pageHTML(o) : formHTML(o.tabs));
     if (n.kind === 'section') {
       return h + `<h3>Entry types</h3>${sectionEntryTypes(o)}`;
     }
-    if (n.kind === 'field' || n.kind === 'matrix') {
-      if (o.type === 'ContentBlock') h += formHTML(o.tabs);
-      else if (o.type === 'Matrix') h += `<div class="form"><div class="fbox w100"><div class="lbl">${esc(o.name)}</div><div class="h">${esc(o.handle)}</div>${control(o)}</div></div>`;
+    if (isField(n.kind)) {
+      if (o.tabs) h += formHTML(o.tabs);
+      else if (o.blocks) h += `<div class="form"><div class="fbox w100"><div class="lbl">${esc(o.name)}</div><div class="h">${esc(o.handle)}</div>${control(o)}</div></div>`;
       else h += fieldDetail(o) || `<p class="muted">${esc(fieldTypeLabel(o))} field, no settings worth showing.</p>`;
       return h + `<h3>Placed in ${o.usedIn.length} layouts</h3>${o.usedIn.length ? `<div class="list">${o.usedIn.map(u => row(useKey(u), `${note(u.el.label ? `“${esc(u.el.label)}”` : '')}${reqTag(u.el)}${condTag(u.el)}`)).join('')}</div>` : '<p class="muted">Not used anywhere.</p>'}`;
     }

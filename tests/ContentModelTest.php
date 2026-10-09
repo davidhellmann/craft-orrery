@@ -171,6 +171,7 @@ class ContentModelTest extends TestCase
             'type' => 'PlainText',
             'typeClass' => 'craft\fields\PlainText',
             'typeLabel' => 'Plain Text',
+            'role' => 'field',
             'instructions' => 'Plain text, no formatting.',
         ], $this->item('fields', 'field-body'));
     }
@@ -184,6 +185,7 @@ class ContentModelTest extends TestCase
             'type' => 'Matrix',
             'typeClass' => 'craft\fields\Matrix',
             'typeLabel' => 'Matrix',
+            'role' => 'builder',
             'blocks' => [
                 ['entryType' => 'et-text', 'group' => 'Text'],
                 ['entryType' => 'et-quote', 'context' => 'Pull quote', 'group' => 'Text'],
@@ -207,6 +209,7 @@ class ContentModelTest extends TestCase
             'type' => 'ContentBlock',
             'typeClass' => 'craft\fields\ContentBlock',
             'typeLabel' => 'Content Block',
+            'role' => 'builder',
             'tabs' => [
                 [
                     'name' => 'Content',
@@ -237,6 +240,7 @@ class ContentModelTest extends TestCase
             'type' => 'Entries',
             'typeClass' => 'craft\fields\Entries',
             'typeLabel' => 'Entries',
+            'role' => 'relation',
             'sources' => ['section:section-news'],
             'max' => 3,
         ], $this->item('fields', 'field-related-news'));
@@ -248,6 +252,30 @@ class ContentModelTest extends TestCase
         $this->assertSame(['section:section-people', 'section:section-archive'], $this->item('fields', 'field-curators')['sources']);
         $this->assertArrayNotHasKey('max', $this->item('fields', 'field-curators'));
         $this->assertSame(['volume:volume-images'], $this->item('fields', 'field-image')['sources']);
+    }
+
+    public function testEachFieldSaysWhetherItIsABuilderOrARelationToEntries(): void
+    {
+        $roles = array_column($this->data['fields'], 'role', 'handle');
+
+        $this->assertSame('builder', $roles['pageBuilder']);
+        $this->assertSame('builder', $roles['seo']);
+        $this->assertSame('relation', $roles['relatedNews']);
+        $this->assertSame('relation', $roles['featured']);
+        $this->assertSame('field', $roles['image'], 'Assets relate to assets, not to entries.');
+        $this->assertSame('field', $roles['layoutStyle']);
+        $this->assertSame('field', $roles['body']);
+    }
+
+    public function testFieldTypesBuiltOnMatrixOrContentBlockAreBuilders(): void
+    {
+        $gallery = $this->item('fields', 'field-gallery');
+        $this->assertSame('builder', $gallery['role']);
+        $this->assertSame([['entryType' => 'et-image']], $gallery['blocks']);
+
+        $credits = $this->item('fields', 'field-credits');
+        $this->assertSame('builder', $credits['role']);
+        $this->assertSame(['field-photographer'], array_column($credits['tabs'][0]['elements'], 'field'));
     }
 
     public function testUserGroupRightsOnSitesAndSections(): void
@@ -325,12 +353,15 @@ class ContentModelTest extends TestCase
         $this->assertSame([
             'body',
             'columns',
+            'credits',
             'curators',
             'featured',
+            'gallery',
             'image',
             'layoutStyle',
             'oldTeaser',
             'pageBuilder',
+            'photographer',
             'relatedNews',
             'seo',
             'summary',

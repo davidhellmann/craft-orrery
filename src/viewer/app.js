@@ -84,19 +84,19 @@ const App = (() => {
   const PICKER = { usergroup: { label: 'User groups', all: 'All user groups' }, schema: { label: 'GraphQL', all: 'All GraphQL schemas' } };
   try {
     const saved = JSON.parse(localStorage.getItem('orrery-access') || '{}');
-    ACCESS.forEach(kind => (saved[kind] || []).forEach(uid => by[kind][uid] && shownAccess[kind].add(uid)));
+    ACCESS.forEach(kind => (saved[kind] || []).forEach(uid => nodeOf(keyOf(kind, uid)) && shownAccess[kind].add(uid)));
   } catch (e) {}
-  accessEl.innerHTML = ACCESS.filter(kind => accessList(kind).length).map(kind => `
+  accessEl.innerHTML = ACCESS.filter(kind => ofKind(kind).length).map(kind => `
     <div class="picker" data-kind="${kind}">
       <button class="pick" type="button" aria-haspopup="true" aria-expanded="false">${glyph(kind)}<span class="pick-label">${PICKER[kind].label}</span><span class="pick-count"></span></button>
       <div class="pop floating" hidden>
         <div class="opt all"><label><input type="checkbox" data-all>${PICKER[kind].all}</label></div>
-        ${accessList(kind).map(a => `<div class="opt"><label><input type="checkbox" value="${a.uid}">${esc(a.name)}</label><button class="opt-go" type="button" data-go="${keyOf(kind, a.uid)}" title="Show what ${esc(a.name)} can reach">→</button></div>`).join('')}
+        ${ofKind(kind).map(a => `<div class="opt"><label><input type="checkbox" value="${a.uid}">${esc(a.name)}</label><button class="opt-go" type="button" data-go="${keyOf(kind, a.uid)}" title="Show what ${esc(a.name)} can reach">→</button></div>`).join('')}
       </div>
     </div>`).join('');
 
   function syncPicker(p) {
-    const on = shownAccess[p.dataset.kind], total = accessList(p.dataset.kind).length;
+    const on = shownAccess[p.dataset.kind], total = ofKind(p.dataset.kind).length;
     p.querySelectorAll('input[value]').forEach(i => { i.checked = on.has(i.value); });
     const all = p.querySelector('[data-all]');
     all.checked = on.size === total;
@@ -127,7 +127,7 @@ const App = (() => {
       accessChanged();
     }));
     p.querySelector('[data-all]').addEventListener('change', ev => {
-      accessList(kind).forEach(a => (ev.target.checked ? shownAccess[kind].add(a.uid) : shownAccess[kind].delete(a.uid)));
+      ofKind(kind).forEach(a => (ev.target.checked ? shownAccess[kind].add(a.uid) : shownAccess[kind].delete(a.uid)));
       accessChanged();
     });
     bindGo(pop, key => { closePickers(); go(active ? active.id : 'graph', key); });
@@ -136,10 +136,8 @@ const App = (() => {
   document.addEventListener('pointerdown', ev => { if (!(ev.target.closest && ev.target.closest('.picker'))) closePickers(); });
 
   // header
-  const pages = M.entryTypes.filter(e => e.kind === 'page').length;
-  const builders = M.fields.filter(f => f.isBuilder).length;
-  const counts = { group: M.siteGroups.length, site: M.sites.length, section: M.sections.length, page: pages, block: M.entryTypes.length - pages, matrix: builders, field: M.fields.length - builders };
-  document.getElementById('stats').innerHTML = Object.keys(counts).map(k => `<span class="stat">${glyph(k)}<b>${counts[k]}</b>${KIND[k].plural}</span>`).join('');
+  const STATS = ['group', 'site', 'section', 'page', 'block', 'matrix', 'field'];
+  document.getElementById('stats').innerHTML = STATS.map(k => `<span class="stat">${glyph(k)}<b>${ofKind(k).length}</b>${KIND[k].plural}</span>`).join('');
   if (M.dateModified) document.getElementById('meta').textContent = `Config updated ${new Date(M.dateModified * 1000).toLocaleString()}`;
 
   // theme: light or dark, starts from the system's and is remembered per browser once switched

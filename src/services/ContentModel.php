@@ -11,6 +11,7 @@ use craft\fieldlayoutelements\TitleField;
 use craft\fields\BaseOptionsField;
 use craft\fields\BaseRelationField;
 use craft\fields\ContentBlock;
+use craft\fields\Entries;
 use craft\fields\Matrix;
 use craft\helpers\App;
 use craft\helpers\ProjectConfig as ProjectConfigHelper;
@@ -228,6 +229,7 @@ class ContentModel extends Component
                 'type' => $this->shortName($type),
                 'typeClass' => $type,
                 'typeLabel' => $this->typeLabel($type),
+                'role' => $this->role($type),
                 'instructions' => $this->filled($field, 'instructions'),
             ];
 
@@ -332,6 +334,19 @@ class ContentModel extends Component
         }
 
         return $data;
+    }
+
+    /**
+     * What a field is to the viewer: a Builder holds Blocks or fields of its own, a relation pulls in entries.
+     * Field types built on Matrix, ContentBlock or Entries count as those.
+     */
+    private function role(string $type): string
+    {
+        return match (true) {
+            is_a($type, Matrix::class, true), is_a($type, ContentBlock::class, true) => 'builder',
+            is_a($type, Entries::class, true) => 'relation',
+            default => 'field',
+        };
     }
 
     private function typeLabel(string $type): string
