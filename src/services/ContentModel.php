@@ -66,6 +66,13 @@ class ContentModel extends Component
             'sections' => $this->sections($config['sections'] ?? []),
             'entryTypes' => $this->entryTypes($config['entryTypes'] ?? []),
             'fields' => $this->fields($config['fields'] ?? [], $resolved),
+            'globalSets' => $this->layoutOwners($config['globalSets'] ?? []),
+            'volumes' => $this->layoutOwners($config['volumes'] ?? []),
+            'categoryGroups' => $this->layoutOwners($config['categoryGroups'] ?? []),
+            'tagGroups' => $this->layoutOwners($config['tagGroups'] ?? []),
+            // Users and addresses have one field layout each, with no name or UID of its own.
+            'users' => ['tabs' => $this->tabs($config['users']['fieldLayouts'] ?? [])],
+            'addresses' => ['tabs' => $this->tabs($config['addresses']['fieldLayouts'] ?? [])],
             'userGroups' => $this->userGroups($config['users']['groups'] ?? [], array_keys($config['sites'] ?? [])),
             'gqlSchemas' => $this->gqlSchemas($config['graphql']['schemas'] ?? []),
         ];
@@ -261,6 +268,24 @@ class ContentModel extends Component
             }
 
             $data[] = $this->withoutNulls($item);
+        }
+
+        return $this->sortBy($data, 'handle');
+    }
+
+    /**
+     * Global sets, volumes, category groups and tag groups each have a field layout of their own.
+     */
+    private function layoutOwners(array $owners): array
+    {
+        $data = [];
+        foreach ($owners as $uid => $owner) {
+            $data[] = [
+                'uid' => $uid,
+                'name' => $owner['name'] ?? '',
+                'handle' => $owner['handle'] ?? '',
+                'tabs' => $this->tabs($owner['fieldLayouts'] ?? []),
+            ];
         }
 
         return $this->sortBy($data, 'handle');

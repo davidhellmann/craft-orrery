@@ -222,11 +222,11 @@ const GraphView = (() => {
     }
   }
 
-  // ---- selection: a node lights up its lineage, a user group or schema everything it reaches, and an entry type
-  // off the map what it's made of
+  // ---- selection: a node lights up its lineage, a user group or schema everything it reaches, and anything off the
+  // map, like an unused entry type or a global set, what it's made of
   function reach(key) {
     const n = nodeOf(key);
-    if (isEntryType(n.kind)) return new Set(customElements(n.obj.tabs).flatMap(({ f }) => [...subtree(fieldKey(f))]));
+    if (!KIND[n.kind].layer) return new Set(customElements(n.obj.tabs).flatMap(({ f }) => [...subtree(fieldKey(f))]));
     return new Set(Object.keys(nodes).filter(k => rightsOn(n.obj, n.kind, k)));
   }
   function highlight() {

@@ -13,13 +13,15 @@ function accessMarks(key) {
   }).join('');
 }
 
+// Field layouts that aren't on the graph, like a global set's, say what they are: their glyph has no legend.
+const nameOf = n => `${esc(n.obj.name)}${isLayoutOwner(n.kind) ? ` <span class="faint">· ${KIND[n.kind].label}</span>` : ''}`;
 function chip(key, extra = '') {
   const n = nodeOf(key);
-  return n ? `<span class="chip link" data-go="${key}">${glyph(n.kind)}${esc(n.obj.name)}${accessMarks(key)}${extra}</span>` : '';
+  return n ? `<span class="chip link" data-go="${key}">${glyph(n.kind)}${nameOf(n)}${accessMarks(key)}${extra}</span>` : '';
 }
 function row(key, note = '') {
   const n = nodeOf(key);
-  return n ? `<div class="row link" data-go="${key}">${glyph(n.kind)}<span class="grow">${esc(n.obj.name)}</span>${accessMarks(key)}${note}</div>` : '';
+  return n ? `<div class="row link" data-go="${key}">${glyph(n.kind)}<span class="grow">${nameOf(n)}</span>${accessMarks(key)}${note}</div>` : '';
 }
 // A row with a second line underneath, for rights that don't fit next to the name.
 function stackedRow(key, sub, faint = false) {
@@ -129,6 +131,8 @@ function detailHTML(n, { title = true } = {}) {
     if (sites.length) h += `<h3>Ends up on</h3><div class="chips">${sites.map(s => chip(keyOf('site', s.uid))).join('')}</div>`;
     const pulls = n.kind === 'block' ? [...pullsFrom(o)] : [];
     if (pulls.length) h += `<h3>Pulls content from</h3><div class="chips">${pulls.map(s => chip(keyOf('section', s.uid))).join('')}</div>`;
+  }
+  if (isEntryType(n.kind) || isLayoutOwner(n.kind)) {
     const els = customElements(o.tabs);
     h += `<h3>Fields (${els.length})</h3><div class="list">${els.map(({ el, f }) => row(fieldKey(f), `${note(el.label && el.label !== f.name ? `“${esc(el.label)}”` : '')}${reqTag(el)}${typeTag(f)}`)).join('')}</div>`;
   }

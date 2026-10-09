@@ -593,6 +593,15 @@
             "max": 3
         },
         {
+            "uid": "field-copyright",
+            "name": "Copyright",
+            "handle": "copyright",
+            "type": "PlainText",
+            "typeClass": "craft\\fields\\PlainText",
+            "typeLabel": "Plain Text",
+            "role": "field"
+        },
+        {
             "uid": "field-credits",
             "name": "Credits",
             "handle": "credits",
@@ -690,6 +699,15 @@
                     "default": false
                 }
             ]
+        },
+        {
+            "uid": "field-notes",
+            "name": "Notes",
+            "handle": "notes",
+            "type": "PlainText",
+            "typeClass": "craft\\fields\\PlainText",
+            "typeLabel": "Plain Text",
+            "role": "field"
         },
         {
             "uid": "field-old-teaser",
@@ -804,6 +822,187 @@
             "role": "field"
         }
     ],
+    "globalSets": [
+        {
+            "uid": "global-contact",
+            "name": "Contact",
+            "handle": "contact",
+            "tabs": []
+        },
+        {
+            "uid": "global-footer",
+            "name": "Footer",
+            "handle": "footer",
+            "tabs": [
+                {
+                    "name": "Content",
+                    "conditional": false,
+                    "elements": [
+                        {
+                            "kind": "CustomField",
+                            "width": 100,
+                            "field": "field-copyright",
+                            "label": "Copyright line",
+                            "required": false,
+                            "conditional": false
+                        }
+                    ]
+                }
+            ]
+        }
+    ],
+    "volumes": [
+        {
+            "uid": "volume-images",
+            "name": "Images",
+            "handle": "images",
+            "tabs": [
+                {
+                    "name": "Content",
+                    "conditional": false,
+                    "elements": [
+                        {
+                            "kind": "Title",
+                            "width": 100,
+                            "required": true
+                        },
+                        {
+                            "kind": "AltField",
+                            "width": 100
+                        },
+                        {
+                            "kind": "CustomField",
+                            "width": 100,
+                            "field": "field-notes",
+                            "label": "Caption",
+                            "required": false,
+                            "conditional": false
+                        }
+                    ]
+                }
+            ]
+        }
+    ],
+    "categoryGroups": [
+        {
+            "uid": "catgroup-topics",
+            "name": "Topics",
+            "handle": "topics",
+            "tabs": [
+                {
+                    "name": "Content",
+                    "conditional": false,
+                    "elements": [
+                        {
+                            "kind": "Title",
+                            "width": 100,
+                            "required": true
+                        },
+                        {
+                            "kind": "CustomField",
+                            "width": 100,
+                            "field": "field-notes",
+                            "label": "Description",
+                            "required": false,
+                            "conditional": false
+                        }
+                    ]
+                }
+            ]
+        }
+    ],
+    "tagGroups": [
+        {
+            "uid": "taggroup-keywords",
+            "name": "Keywords",
+            "handle": "keywords",
+            "tabs": [
+                {
+                    "name": "Content",
+                    "conditional": false,
+                    "elements": [
+                        {
+                            "kind": "Title",
+                            "width": 100,
+                            "required": true
+                        },
+                        {
+                            "kind": "CustomField",
+                            "width": 100,
+                            "field": "field-notes",
+                            "required": false,
+                            "conditional": false
+                        }
+                    ]
+                }
+            ]
+        }
+    ],
+    "users": {
+        "tabs": [
+            {
+                "name": "Profile",
+                "conditional": false,
+                "elements": [
+                    {
+                        "kind": "UsernameField",
+                        "width": 100
+                    },
+                    {
+                        "kind": "FullNameField",
+                        "width": 100
+                    },
+                    {
+                        "kind": "PhotoField",
+                        "width": 100
+                    },
+                    {
+                        "kind": "EmailField",
+                        "width": 100
+                    },
+                    {
+                        "kind": "CustomField",
+                        "width": 100,
+                        "field": "field-notes",
+                        "label": "Bio",
+                        "required": false,
+                        "conditional": false
+                    }
+                ]
+            }
+        ]
+    },
+    "addresses": {
+        "tabs": [
+            {
+                "name": "Content",
+                "conditional": false,
+                "elements": [
+                    {
+                        "kind": "Title",
+                        "width": 100,
+                        "required": false
+                    },
+                    {
+                        "kind": "CountryCodeField",
+                        "width": 100
+                    },
+                    {
+                        "kind": "AddressField",
+                        "width": 100
+                    },
+                    {
+                        "kind": "CustomField",
+                        "width": 50,
+                        "field": "field-notes",
+                        "label": "Directions",
+                        "required": false,
+                        "conditional": false
+                    }
+                ]
+            }
+        ]
+    },
     "userGroups": [
         {
             "uid": "ug-editors",

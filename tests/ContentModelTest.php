@@ -329,12 +329,14 @@ class ContentModelTest extends TestCase
         $this->assertSame([
             'body' => 'Plain Text',
             'columns' => 'Matrix',
+            'copyright' => 'Plain Text',
             'credits' => 'Credits',
             'curators' => 'Entries',
             'featured' => 'Entries',
             'gallery' => 'Gallery',
             'image' => 'Assets',
             'layoutStyle' => 'Dropdown',
+            'notes' => 'Plain Text',
             'oldTeaser' => 'Plain Text',
             'pageBuilder' => 'Matrix',
             'photographer' => 'Plain Text',
@@ -351,6 +353,102 @@ class ContentModelTest extends TestCase
         $labels = array_column($data['fields'], 'typeLabel', 'handle');
 
         $this->assertSame(['Reiner Text', 'Einträge', 'Inhaltsblock'], [$labels['body'], $labels['relatedNews'], $labels['seo']]);
+    }
+
+    public function testGlobalSetWithItsTabs(): void
+    {
+        $this->assertSame([
+            'uid' => 'global-footer',
+            'name' => 'Footer',
+            'handle' => 'footer',
+            'tabs' => [
+                [
+                    'name' => 'Content',
+                    'conditional' => false,
+                    'elements' => [
+                        ['kind' => 'CustomField', 'width' => 100, 'field' => 'field-copyright', 'label' => 'Copyright line', 'required' => false, 'conditional' => false],
+                    ],
+                ],
+            ],
+        ], $this->item('globalSets', 'global-footer'));
+    }
+
+    public function testGlobalSetWithoutFields(): void
+    {
+        $this->assertSame([], $this->item('globalSets', 'global-contact')['tabs']);
+    }
+
+    public function testVolumeWithItsTabs(): void
+    {
+        $this->assertSame([
+            'uid' => 'volume-images',
+            'name' => 'Images',
+            'handle' => 'images',
+            'tabs' => [
+                [
+                    'name' => 'Content',
+                    'conditional' => false,
+                    'elements' => [
+                        ['kind' => 'Title', 'width' => 100, 'required' => true],
+                        ['kind' => 'AltField', 'width' => 100],
+                        ['kind' => 'CustomField', 'width' => 100, 'field' => 'field-notes', 'label' => 'Caption', 'required' => false, 'conditional' => false],
+                    ],
+                ],
+            ],
+        ], $this->item('volumes', 'volume-images'));
+    }
+
+    public function testCategoryAndTagGroupsWithTheirTabs(): void
+    {
+        $topics = $this->item('categoryGroups', 'catgroup-topics');
+        $this->assertSame(['Topics', 'topics'], [$topics['name'], $topics['handle']]);
+        $this->assertSame([
+            ['kind' => 'Title', 'width' => 100, 'required' => true],
+            ['kind' => 'CustomField', 'width' => 100, 'field' => 'field-notes', 'label' => 'Description', 'required' => false, 'conditional' => false],
+        ], $topics['tabs'][0]['elements']);
+
+        $keywords = $this->item('tagGroups', 'taggroup-keywords');
+        $this->assertSame(['Keywords', 'keywords'], [$keywords['name'], $keywords['handle']]);
+        $this->assertSame([
+            ['kind' => 'Title', 'width' => 100, 'required' => true],
+            ['kind' => 'CustomField', 'width' => 100, 'field' => 'field-notes', 'required' => false, 'conditional' => false],
+        ], $keywords['tabs'][0]['elements']);
+    }
+
+    /**
+     * Users and addresses have one field layout each, with no name or UID of its own.
+     */
+    public function testFieldLayoutsOfUsersAndAddresses(): void
+    {
+        $this->assertSame([
+            'tabs' => [
+                [
+                    'name' => 'Profile',
+                    'conditional' => false,
+                    'elements' => [
+                        ['kind' => 'UsernameField', 'width' => 100],
+                        ['kind' => 'FullNameField', 'width' => 100],
+                        ['kind' => 'PhotoField', 'width' => 100],
+                        ['kind' => 'EmailField', 'width' => 100],
+                        ['kind' => 'CustomField', 'width' => 100, 'field' => 'field-notes', 'label' => 'Bio', 'required' => false, 'conditional' => false],
+                    ],
+                ],
+            ],
+        ], $this->data['users']);
+        $this->assertSame([
+            ['kind' => 'Title', 'width' => 100, 'required' => false],
+            ['kind' => 'CountryCodeField', 'width' => 100],
+            ['kind' => 'AddressField', 'width' => 100],
+            ['kind' => 'CustomField', 'width' => 50, 'field' => 'field-notes', 'label' => 'Directions', 'required' => false, 'conditional' => false],
+        ], $this->data['addresses']['tabs'][0]['elements']);
+    }
+
+    public function testUsersAndAddressesWithoutFieldLayouts(): void
+    {
+        $data = (new ContentModel())->fromConfig(['users' => ['allowPublicRegistration' => false]]);
+
+        $this->assertSame(['tabs' => []], $data['users']);
+        $this->assertSame(['tabs' => []], $data['addresses']);
     }
 
     public function testUserGroupRightsOnSitesAndSections(): void
@@ -455,12 +553,14 @@ class ContentModelTest extends TestCase
         $this->assertSame([
             'body',
             'columns',
+            'copyright',
             'credits',
             'curators',
             'featured',
             'gallery',
             'image',
             'layoutStyle',
+            'notes',
             'oldTeaser',
             'pageBuilder',
             'photographer',
@@ -468,6 +568,7 @@ class ContentModelTest extends TestCase
             'seo',
             'summary',
         ], array_column($this->data['fields'], 'handle'));
+        $this->assertSame(['contact', 'footer'], array_column($this->data['globalSets'], 'handle'));
         $this->assertSame(['Editors', 'Members', 'Shop staff'], array_column($this->data['userGroups'], 'name'));
         $this->assertSame(['App', 'Public Schema'], array_column($this->data['gqlSchemas'], 'name'));
     }
