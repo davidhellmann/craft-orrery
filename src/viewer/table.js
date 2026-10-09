@@ -4,24 +4,24 @@ registerView((() => {
   const state = { mode: 'fields', q: '', type: '', kind: '', group: '', unused: false, unprefixed: false, sort: 'name', dir: 1, selected: null };
 
   const fieldTypes = [...new Set(model.fields.map(fieldTypeLabel))].sort();
-  const usedChip = u => chip(useKey(u), u.el.label && u.el.label !== u.owner.name && u.el.label !== (byUid.field[u.el.field] || {}).name ? ` <em>“${esc(u.el.label)}”</em>` : '');
-  const fieldChip = ({ el: e, f }) => chip(fieldKey(f), e.label && e.label !== f.name ? ` <em>“${esc(e.label)}”</em>` : '');
+  const usedChip = u => chip(useKey(u), u.el.label && u.el.label !== u.owner.name && u.el.label !== (byUid.field[u.el.field] || {}).name ? ` <em>${quoted(esc(u.el.label))}</em>` : '');
+  const fieldChip = ({ el: e, f }) => chip(fieldKey(f), e.label && e.label !== f.name ? ` <em>${quoted(esc(e.label))}</em>` : '');
 
   const COLUMNS = {
     fields: [
-      { id: 'name', label: 'Field', sort: f => f.name, w: '20%' },
-      { id: 'handle', label: 'Handle', sort: f => f.handle, w: '17%' },
-      { id: 'type', label: 'Type', sort: f => fieldTypeLabel(f), w: '120px' },
-      { id: 'uses', label: 'Uses', sort: f => f.usedIn.length, num: true, w: '64px' },
-      { id: 'where', label: 'Used in' },
+      { id: 'name', label: t('Field'), sort: f => f.name, w: '20%' },
+      { id: 'handle', label: t('Handle'), sort: f => f.handle, w: '17%' },
+      { id: 'type', label: t('Type'), sort: f => fieldTypeLabel(f), w: '120px' },
+      { id: 'uses', label: t('Uses'), sort: f => f.usedIn.length, num: true, w: '64px' },
+      { id: 'where', label: t('Used in') },
     ],
     entryTypes: [
-      { id: 'name', label: 'Entry type', sort: e => e.name, w: '18%' },
-      { id: 'handle', label: 'Handle', sort: e => e.handle, w: '16%' },
-      { id: 'kind', label: 'Kind', sort: e => e.kind, w: '76px' },
-      { id: 'lives', label: 'Lives in', w: '22%' },
+      { id: 'name', label: t('Entry type'), sort: e => e.name, w: '18%' },
+      { id: 'handle', label: t('Handle'), sort: e => e.handle, w: '16%' },
+      { id: 'kind', label: t('Kind'), sort: e => e.kind, w: '76px' },
+      { id: 'lives', label: t('Lives in'), w: '22%' },
       { id: 'uses', label: '#', sort: e => customElements(e.tabs).length, num: true, w: '52px' },
-      { id: 'where', label: 'Fields' },
+      { id: 'where', label: t('Fields') },
     ],
   };
 
@@ -34,7 +34,7 @@ registerView((() => {
   function cells(o) {
     if (state.mode === 'fields') {
       const key = fieldKey(o);
-      return [key, `<td class="name">${glyph(o.kind)} ${esc(o.name)}${accessMarks(key)}</td><td><code class="faint">${esc(o.handle)}</code></td><td>${typeTag(o)}</td><td class="num ${o.usedIn.length ? '' : 'zero'}">${o.usedIn.length}</td><td><div class="chips">${o.usedIn.map(usedChip).join('') || '<span class="faint">not used</span>'}</div></td>`];
+      return [key, `<td class="name">${glyph(o.kind)} ${esc(o.name)}${accessMarks(key)}</td><td><code class="faint">${esc(o.handle)}</code></td><td>${typeTag(o)}</td><td class="num ${o.usedIn.length ? '' : 'zero'}">${o.usedIn.length}</td><td><div class="chips">${o.usedIn.map(usedChip).join('') || `<span class="faint">${t('not used')}</span>`}</div></td>`];
     }
     const key = etKey(o), els = customElements(o.tabs);
     const lives = o.kind === 'page'
@@ -50,7 +50,7 @@ registerView((() => {
       const x = sortCol.sort(a), y = sortCol.sort(b);
       return (typeof x === 'number' ? x - y : String(x).localeCompare(String(y))) * state.dir || byName(a, b);
     });
-    countEl.textContent = `${list.length} ${state.mode === 'fields' ? 'fields' : 'entry types'}`;
+    countEl.textContent = state.mode === 'fields' ? tn(list.length, '{n} field', '{n} fields') : tn(list.length, '{n} entry type', '{n} entry types');
     const head = cols.map(c => `<th class="${c.sort ? 'sort' : ''}" data-sort="${c.sort ? c.id : ''}" ${c.num ? 'style="text-align:right"' : ''}>${c.label}<span class="arrow">${c.id === sortCol.id ? (state.dir > 0 ? ' ↑' : ' ↓') : ''}</span></th>`).join('');
     body.innerHTML = `<table class="t"><colgroup>${cols.map(c => `<col style="width:${c.w || 'auto'}">`).join('')}</colgroup><thead><tr>${head}</tr></thead><tbody>${list.map(o => { const [key, html] = cells(o); return `<tr data-row="${key}" class="${key === state.selected ? 'on' : ''}">${html}</tr>`; }).join('')}</tbody></table>`;
     body.querySelectorAll('th[data-sort]').forEach(th => th.dataset.sort && th.addEventListener('click', () => {
@@ -63,14 +63,14 @@ registerView((() => {
   }
   function filters() {
     const f = el.querySelector('[data-filters]');
-    const groups = `<select data-f="group" aria-label="Site group"><option value="">All site groups</option>${model.siteGroups.map(g => `<option value="${g.uid}" ${g.uid === state.group ? 'selected' : ''}>${esc(g.name)}</option>`).join('')}</select>`;
+    const groups = `<select data-f="group" aria-label="${t('Site group')}"><option value="">${t('All site groups')}</option>${model.siteGroups.map(g => `<option value="${g.uid}" ${g.uid === state.group ? 'selected' : ''}>${esc(g.name)}</option>`).join('')}</select>`;
     f.innerHTML = state.mode === 'fields'
-      ? `<select data-f="type" aria-label="Field type"><option value="">All types</option>${fieldTypes.map(t => `<option ${t === state.type ? 'selected' : ''}>${esc(t)}</option>`).join('')}</select>
+      ? `<select data-f="type" aria-label="${t('Field type')}"><option value="">${t('All types')}</option>${fieldTypes.map(type => `<option ${type === state.type ? 'selected' : ''}>${esc(type)}</option>`).join('')}</select>
          ${groups}
-         <label class="check"><input type="checkbox" data-f="unused" ${state.unused ? 'checked' : ''}> only unused</label>`
-      : `<select data-f="kind" aria-label="Kind"><option value="">All kinds</option>${Object.keys(KIND).filter(isEntryType).map(k => `<option value="${k}" ${state.kind === k ? 'selected' : ''}>${KIND[k].plural}</option>`).join('')}</select>
+         <label class="check"><input type="checkbox" data-f="unused" ${state.unused ? 'checked' : ''}> ${t('only unused')}</label>`
+      : `<select data-f="kind" aria-label="${t('Kind')}"><option value="">${t('All kinds')}</option>${Object.keys(KIND).filter(isEntryType).map(k => `<option value="${k}" ${state.kind === k ? 'selected' : ''}>${KIND[k].plural}</option>`).join('')}</select>
          ${groups}
-         ${checksHandles ? `<label class="check"><input type="checkbox" data-f="unprefixed" ${state.unprefixed ? 'checked' : ''}> only without prefix</label>` : ''}`;
+         ${checksHandles ? `<label class="check"><input type="checkbox" data-f="unprefixed" ${state.unprefixed ? 'checked' : ''}> ${t('only without prefix')}</label>` : ''}`;
     f.querySelectorAll('[data-f]').forEach(x => x.addEventListener('change', () => { state[x.dataset.f] = x.type === 'checkbox' ? x.checked : x.value; draw(); }));
   }
   function setMode(mode) {
@@ -82,7 +82,7 @@ registerView((() => {
     draw();
   }
   const panel = () => showDetails(side, state.selected, 'table', k => App.go('table', k));
-  const info = () => '<h2>Fields and where they sit</h2><p>Every field with each layout it’s placed in. A label in quotes is what that layout calls the field.</p><p>Switch to <b>Entry types</b> to read it from the other side: each page or block with its fields.</p><p>Click a row or a chip for details.</p>';
+  const info = () => `<h2>${t('Fields and where they sit')}</h2><p>${t('Every field with each layout it’s placed in. A label in quotes is what that layout calls the field.')}</p><p>${t('Switch to <b>Entry types</b> to read it from the other side: each page or block with its fields.')}</p><p>${t('Click a row or a chip for details.')}</p>`;
 
   function mount(root) {
     el = root;
@@ -90,8 +90,8 @@ registerView((() => {
       <div class="tbl-wrap">
         <div class="tbl-head">
           <div class="toolbar">
-            <div class="seg" role="tablist"><button data-mode="fields" class="on">Fields</button><button data-mode="entryTypes">Entry types</button></div>
-            <input type="search" placeholder="Search name or handle" aria-label="Search">
+            <div class="seg" role="tablist"><button data-mode="fields" class="on">${t('Fields')}</button><button data-mode="entryTypes">${t('Entry types')}</button></div>
+            <input type="search" placeholder="${t('Search name or handle')}" aria-label="${t('Search')}">
             <div class="toolbar" data-filters></div>
             <span class="tbl-count"></span>
           </div>
@@ -115,8 +115,8 @@ registerView((() => {
 
   return {
     id: 'table',
-    label: 'Table',
-    crossLink: 'Show in table',
+    label: t('Table'),
+    crossLink: t('Show in table'),
     // Fields and whatever holds them in a field layout.
     kinds: Object.keys(KIND).filter(k => isField(k) || isEntryType(k) || isLayoutOwner(k)),
     info,

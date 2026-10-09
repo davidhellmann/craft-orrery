@@ -7,24 +7,28 @@ const model = window.CONTENT_MODEL;
 // has a place for. Pages, Blocks and unused entry types are entry types, Builders and Fields are fields. Each object
 // carries its kind.
 const KIND = {
-  group: { label: 'Site Group', plural: 'Site Groups', index: 'group' },
-  site: { label: 'Site', plural: 'Sites', index: 'site' },
-  section: { label: 'Section', plural: 'Sections', index: 'section' },
-  page: { label: 'Page', plural: 'Pages', hint: 'Entry type attached to a section', index: 'et' },
-  matrix: { label: 'Builder', plural: 'Builders', hint: 'Matrix or content block field', index: 'field' },
-  block: { label: 'Block', plural: 'Blocks', hint: 'Entry type attached to a matrix field', index: 'et' },
-  field: { label: 'Field', plural: 'Fields', index: 'field' },
-  unused: { label: 'Unused', plural: 'Unused entry types', index: 'et' },
-  usergroup: { label: 'User Group', plural: 'User Groups', index: 'usergroup', layer: true },
-  schema: { label: 'GraphQL Schema', plural: 'GraphQL Schemas', index: 'schema', layer: true },
-  globalset: { label: 'Global Set', plural: 'Global Sets', index: 'globalset' },
-  volume: { label: 'Volume', plural: 'Volumes', index: 'volume' },
-  categorygroup: { label: 'Category Group', plural: 'Category Groups', index: 'categorygroup' },
-  taggroup: { label: 'Tag Group', plural: 'Tag Groups', index: 'taggroup' },
-  fieldlayout: { label: 'Field Layout', plural: 'Field Layouts', index: 'fieldlayout' },
+  group: { label: t('Site Group'), plural: t('Site Groups'), index: 'group' },
+  site: { label: t('Site'), plural: t('Sites'), index: 'site' },
+  section: { label: t('Section'), plural: t('Sections'), index: 'section' },
+  page: { label: t('Page'), plural: t('Pages'), hint: t('entry type attached to a section'), index: 'et' },
+  matrix: { label: t('Builder'), plural: t('Builders'), hint: t('matrix or content block field'), index: 'field' },
+  block: { label: t('Block'), plural: t('Blocks'), hint: t('entry type attached to a matrix field'), index: 'et' },
+  field: { label: t('Field'), plural: t('Fields'), index: 'field' },
+  unused: { label: t('Unused'), plural: t('Unused entry types'), index: 'et' },
+  usergroup: { label: t('User Group'), plural: t('User Groups'), index: 'usergroup', layer: true },
+  schema: { label: t('GraphQL Schema'), plural: t('GraphQL Schemas'), index: 'schema', layer: true },
+  globalset: { label: t('Global Set'), plural: t('Global Sets'), index: 'globalset' },
+  volume: { label: t('Volume'), plural: t('Volumes'), index: 'volume' },
+  categorygroup: { label: t('Category Group'), plural: t('Category Groups'), index: 'categorygroup' },
+  taggroup: { label: t('Tag Group'), plural: t('Tag Groups'), index: 'taggroup' },
+  fieldlayout: { label: t('Field Layout'), plural: t('Field Layouts'), index: 'fieldlayout' },
 };
 const isEntryType = kind => KIND[kind].index === 'et';
 const isField = kind => KIND[kind].index === 'field';
+
+// A section's type in words.
+const SECTION_TYPES = { single: t('single'), channel: t('channel'), structure: t('structure') };
+const sectionType = s => SECTION_TYPES[s.type] || s.type;
 
 const fieldTypeLabel = f => f.typeLabel || f.type;
 
@@ -72,7 +76,7 @@ function blockGroups(f) {
   return [...groups];
 }
 
-const eachCustom = (tabs, fn) => (tabs || []).forEach(t => t.elements.forEach(el => el.kind === 'CustomField' && fn(el, t)));
+const eachCustom = (tabs, fn) => (tabs || []).forEach(tab => tab.elements.forEach(el => el.kind === 'CustomField' && fn(el, tab)));
 const customElements = tabs => { const out = []; eachCustom(tabs, el => byUid.field[el.field] && out.push({ el, f: byUid.field[el.field] })); return out; };
 
 model.entryTypes.forEach(e => {
@@ -94,7 +98,7 @@ const LAYOUT_OWNERS = {
   volume: model.volumes,
   categorygroup: model.categoryGroups,
   taggroup: model.tagGroups,
-  fieldlayout: [Object.assign(model.users, { uid: 'users', name: 'Users' }), Object.assign(model.addresses, { uid: 'addresses', name: 'Addresses' })],
+  fieldlayout: [Object.assign(model.users, { uid: 'users', name: t('Users') }), Object.assign(model.addresses, { uid: 'addresses', name: t('Addresses') })],
 };
 Object.entries(LAYOUT_OWNERS).forEach(([kind, list]) => list.forEach(o => {
   byUid[kind][o.uid] = o;
@@ -105,12 +109,12 @@ const isLayoutOwner = kind => kind in LAYOUT_OWNERS;
 
 // Craft's own fields in a field layout, by the name Craft gives them. Other elements go by their class name.
 const NATIVE_FIELDS = {
-  UsernameField: 'Username', FullNameField: 'Full Name', PhotoField: 'Photo', EmailField: 'Email', AffiliatedSiteField: 'Affiliated Site',
-  AltField: 'Alternative Text', OrganizationField: 'Organization', OrganizationTaxIdField: 'Organization Tax ID', CountryCodeField: 'Country',
-  AddressField: 'Address', LatLongField: 'Latitude/Longitude',
+  UsernameField: t('Username'), FullNameField: t('Full Name'), PhotoField: t('Photo'), EmailField: t('Email'), AffiliatedSiteField: t('Affiliated Site'),
+  AltField: t('Alternative Text'), OrganizationField: t('Organization'), OrganizationTaxIdField: t('Organization Tax ID'), CountryCodeField: t('Country'),
+  AddressField: t('Address'), LatLongField: t('Latitude/Longitude'),
 };
 // The address Label field is built on the title field, so it arrives as one.
-const nativeName = (el, owner) => el.label || (el.kind === 'Title' ? (owner === byUid.fieldlayout.addresses ? 'Label' : 'Title') : NATIVE_FIELDS[el.kind] || el.kind);
+const nativeName = (el, owner) => el.label || (el.kind === 'Title' ? (owner === byUid.fieldlayout.addresses ? t('Label') : t('Title')) : NATIVE_FIELDS[el.kind] || el.kind);
 
 // Node keys are "<kind>:<uid>".
 const keyOf = (kind, uid) => `${kind}:${uid}`;
@@ -186,11 +190,14 @@ function rightsOn(a, kind, key) {
   return union(o.builders.map(b => a.fields[b.field.uid] || []));
 }
 
+// What a user group or schema may do, in words.
+const RIGHT_LABELS = { view: t('view'), create: t('create'), save: t('save'), delete: t('delete'), edit: t('edit'), read: t('read') };
+const rightLabels = rights => rights.map(r => RIGHT_LABELS[r] || r).join(', ');
 // "view, create, save · others’ entries: view · others’ drafts: view"
 function rightsText(kind, rights) {
-  if (kind === 'schema') return rights.join(', ');
+  if (kind === 'schema') return rightLabels(rights);
   const own = rights.filter(r => !r.includes('Peer'));
   const peer = rights.filter(r => r.endsWith('Peer')).map(r => r.replace('Peer', ''));
   const drafts = rights.filter(r => r.endsWith('PeerDrafts')).map(r => r.replace('PeerDrafts', ''));
-  return [own.join(', '), peer.length && `others’ entries: ${peer.join(', ')}`, drafts.length && `others’ drafts: ${drafts.join(', ')}`].filter(Boolean).join(' · ');
+  return [rightLabels(own), peer.length && t('others’ entries: {rights}', { rights: rightLabels(peer) }), drafts.length && t('others’ drafts: {rights}', { rights: rightLabels(drafts) })].filter(Boolean).join(' · ');
 }

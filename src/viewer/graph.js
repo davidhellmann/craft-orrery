@@ -86,12 +86,12 @@ registerView((() => {
       g.appendChild(svgEl('rect', { class: 'body', width: COL_W, height: NODE_H, rx: 6 }));
       g.appendChild(glyphNode(n.kind));
       const subText = isField(n.kind) ? fieldTypeLabel(n.obj)
-        : n.obj.conventionOk === false ? `no ${n.obj.prefix}` : n.kind === 'section' ? n.obj.type : '';
+        : n.obj.conventionOk === false ? t('no {prefix}', { prefix: n.obj.prefix }) : n.kind === 'section' ? sectionType(n.obj) : '';
       // Shorten the name so it stops before the label on the right.
       const room = Math.floor((COL_W - 46 - subText.length * 6.3) / 7);
-      const t = svgEl('text', { x: 28, y: 19 });
-      t.textContent = n.obj.name.length > room ? n.obj.name.slice(0, room - 1) + '…' : n.obj.name;
-      g.appendChild(t);
+      const name = svgEl('text', { x: 28, y: 19 });
+      name.textContent = n.obj.name.length > room ? n.obj.name.slice(0, room - 1) + '…' : n.obj.name;
+      g.appendChild(name);
       const tip = svgEl('title');
       tip.textContent = n.obj.name;
       g.appendChild(tip);
@@ -136,8 +136,8 @@ registerView((() => {
     gCols.innerHTML = '';
     COLS.forEach((k, ci) => {
       const x = ci * (COL_W + COL_GAP);
-      const t = svgEl('text', { class: 'col-label', x, y: 30 }); t.textContent = KIND[k].plural; gCols.appendChild(t);
-      const c = svgEl('text', { class: 'col-count', x, y: 48 }); c.textContent = `${counts[k] || 0}${KIND[k].hint ? ` · ${KIND[k].hint.toLowerCase()}` : ''}`; gCols.appendChild(c);
+      const label = svgEl('text', { class: 'col-label', x, y: 30 }); label.textContent = KIND[k].plural; gCols.appendChild(label);
+      const c = svgEl('text', { class: 'col-count', x, y: 48 }); c.textContent = `${counts[k] || 0}${KIND[k].hint ? ` · ${KIND[k].hint}` : ''}`; gCols.appendChild(c);
     });
   }
   function applyLayout(visible, animate = true) {
@@ -259,20 +259,20 @@ registerView((() => {
   }
   const panel = () => showDetails(side, selected, 'graph', k => App.go('graph', k));
   const info = () => `
-    <h2>Reading the map</h2>
-    <div class="legend">${COLS.map(k => `<span>${glyph(k)}${KIND[k].plural}</span>`).join('')}<span><svg width="22" height="6" aria-hidden="true"><line x1="0" y1="3" x2="22" y2="3" stroke="currentColor" stroke-dasharray="4 3"/></svg>Relation</span></div>
-    <p>Left to right is where content lives: site groups have sites, sites have sections, sections hold pages.</p>
-    <p>Pages are made of fields. Builders (matrix fields) hold blocks, and blocks are made of fields again. Dashed lines are relations, a field that pulls entries from another section.</p>
-    <p>Click anything to light up what it’s connected to. <b>Isolate</b> lays out only that part.</p>
-    <p>Double-click to zoom in, with Shift to zoom out. Scroll or drag the background to move around, drag a node to move it and the others make room.</p>
-    <h3>Worth a look</h3>
+    <h2>${t('Reading the map')}</h2>
+    <div class="legend">${COLS.map(k => `<span>${glyph(k)}${KIND[k].plural}</span>`).join('')}<span><svg width="22" height="6" aria-hidden="true"><line x1="0" y1="3" x2="22" y2="3" stroke="currentColor" stroke-dasharray="4 3"/></svg>${t('Relation')}</span></div>
+    <p>${t('Left to right is where content lives: site groups have sites, sites have sections, sections hold pages.')}</p>
+    <p>${t('Pages are made of fields. Builders (matrix fields) hold blocks, and blocks are made of fields again. Dashed lines are relations, a field that pulls entries from another section.')}</p>
+    <p>${t('Click anything to light up what it’s connected to. <b>Isolate</b> lays out only that part.')}</p>
+    <p>${t('Double-click to zoom in, with Shift to zoom out. Scroll or drag the background to move around, drag a node to move it and the others make room.')}</p>
+    <h3>${t('Worth a look')}</h3>
     <div class="list">
-      ${checksHandles ? `<div class="row"><span class="grow">Handles without prefix (${[...PREFIX.page, ...PREFIX.block].map(esc).join(' / ')})</span><b>${unprefixedEntryTypes.length}</b></div>` : ''}
-      <div class="row"><span class="grow">Entry types not used anywhere</span><b>${unusedEntryTypes.length}</b></div>
-      <div class="row"><span class="grow">Fields not used anywhere</span><b>${unusedFields.length}</b></div>
+      ${checksHandles ? `<div class="row"><span class="grow">${t('Handles without prefix ({prefixes})', { prefixes: [...PREFIX.page, ...PREFIX.block].map(esc).join(' / ') })}</span><b>${unprefixedEntryTypes.length}</b></div>` : ''}
+      <div class="row"><span class="grow">${t('Entry types not used anywhere')}</span><b>${unusedEntryTypes.length}</b></div>
+      <div class="row"><span class="grow">${t('Fields not used anywhere')}</span><b>${unusedFields.length}</b></div>
     </div>
-    ${unusedEntryTypes.length ? `<h3>Unused entry types</h3><div class="list">${unusedEntryTypes.map(e => row(etKey(e), note(esc(e.handle)))).join('')}</div>` : ''}
-    ${unusedFields.length ? `<h3>Unused fields</h3><div class="list">${unusedFields.map(f => row(fieldKey(f), typeTag(f))).join('')}</div>` : ''}`;
+    ${unusedEntryTypes.length ? `<h3>${t('Unused entry types')}</h3><div class="list">${unusedEntryTypes.map(e => row(etKey(e), note(esc(e.handle)))).join('')}</div>` : ''}
+    ${unusedFields.length ? `<h3>${t('Unused fields')}</h3><div class="list">${unusedFields.map(f => row(fieldKey(f), typeTag(f))).join('')}</div>` : ''}`;
 
   function mount(root) {
     el = root;
@@ -280,14 +280,14 @@ registerView((() => {
       <div class="map dots">
         <div class="tools">
           <div class="floating toolbar">
-            <input type="search" placeholder="Search name or handle  ⏎" aria-label="Search the map">
-            <select aria-label="Site group"><option value="">All site groups</option>${model.siteGroups.map(g => `<option value="${g.uid}">${esc(g.name)}</option>`).join('')}</select>
-            <button class="btn" data-isolate title="Lay out only the highlighted part">Isolate</button>
-            <button class="btn" data-reset>Reset</button>
+            <input type="search" placeholder="${t('Search name or handle')}  ⏎" aria-label="${t('Search the map')}">
+            <select aria-label="${t('Site group')}"><option value="">${t('All site groups')}</option>${model.siteGroups.map(g => `<option value="${g.uid}">${esc(g.name)}</option>`).join('')}</select>
+            <button class="btn" data-isolate title="${t('Lay out only the highlighted part')}">${t('Isolate')}</button>
+            <button class="btn" data-reset>${t('Reset')}</button>
           </div>
         </div>
         ${infoCard(info())}
-        <div class="zoom"><button class="btn floating" data-zoom="in" aria-label="Zoom in">+</button><button class="btn floating" data-zoom="out" aria-label="Zoom out">−</button><button class="btn floating" data-fit aria-label="Fit to screen" style="font-size:11px">Fit</button></div>
+        <div class="zoom"><button class="btn floating" data-zoom="in" aria-label="${t('Zoom in')}">+</button><button class="btn floating" data-zoom="out" aria-label="${t('Zoom out')}">−</button><button class="btn floating" data-fit aria-label="${t('Fit to screen')}" style="font-size:11px">${t('Fit')}</button></div>
         <svg class="graph-svg"><g class="vp"><g class="cols"></g><g class="edges"></g><g class="nodes"></g></g></svg>
       </div>
       ${PANEL_HTML}`;
@@ -382,8 +382,8 @@ registerView((() => {
 
   return {
     id: 'graph',
-    label: 'Graph',
-    crossLink: 'Show in graph',
+    label: t('Graph'),
+    crossLink: t('Show in graph'),
     // Whatever has a column, and the user groups and schemas that light up what they reach.
     kinds: [...COLS, ...ACCESS],
     info,
