@@ -221,9 +221,11 @@ const GraphView = (() => {
     }
   }
 
-  // ---- selection: a node lights up its lineage, a user group or schema everything it reaches
+  // ---- selection: a node lights up its lineage, a user group or schema everything it reaches, and a field layout
+  // that isn't on the map, like a global set's, the fields in it
   function reach(key) {
     const n = nodeOf(key);
+    if (!KIND[n.kind].layer) return new Set(customElements(n.obj.tabs).map(({ f }) => fieldKey(f)));
     return new Set(Object.keys(nodes).filter(k => rightsOn(n.obj, n.kind, k)));
   }
   function highlight() {

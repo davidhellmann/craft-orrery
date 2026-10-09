@@ -15,6 +15,11 @@ const KIND = {
   field: { label: 'Field', plural: 'Fields', index: 'field', views: ALL_VIEWS },
   usergroup: { label: 'User Group', plural: 'User Groups', index: 'usergroup', views: ['graph', 'diff'], layer: true },
   schema: { label: 'GraphQL Schema', plural: 'GraphQL Schemas', index: 'schema', views: ['graph', 'diff'], layer: true },
+  globalset: { label: 'Global Set', plural: 'Global Sets', index: 'globalset', views: ['table'] },
+  volume: { label: 'Volume', plural: 'Volumes', index: 'volume', views: ['table'] },
+  categorygroup: { label: 'Category Group', plural: 'Category Groups', index: 'categorygroup', views: ['table'] },
+  taggroup: { label: 'Tag Group', plural: 'Tag Groups', index: 'taggroup', views: ['table'] },
+  fieldlayout: { label: 'Field Layout', plural: 'Field Layouts', index: 'fieldlayout', views: ['table'] },
 };
 const isEntryType = kind => KIND[kind].index === 'et';
 const isField = kind => KIND[kind].index === 'field';
@@ -25,7 +30,7 @@ const fieldTypeLabel = f => f.typeLabel || f.type;
 const PREFIX = { page: [], block: [], ...M.prefixes };
 const checksHandles = PREFIX.page.length > 0 || PREFIX.block.length > 0;
 
-const by = { group: {}, site: {}, section: {}, et: {}, field: {}, usergroup: {}, schema: {} };
+const by = Object.fromEntries(Object.values(KIND).map(k => [k.index, {}]));
 M.siteGroups.forEach(g => { by.group[g.uid] = g; g.kind = 'group'; g.sites = []; });
 M.sites.forEach(s => { by.site[s.uid] = s; s.kind = 'site'; s.sections = []; if (by.group[s.group]) by.group[s.group].sites.push(s); });
 M.entryTypes.forEach(e => { by.et[e.uid] = e; e.sections = []; e.builders = []; });
@@ -69,6 +74,21 @@ M.entryTypes.forEach(e => {
 M.fields.forEach(f => {
   eachCustom(f.tabs, el => by.field[el.field] && by.field[el.field].usedIn.push({ owner: f, ownerKind: f.kind, el }));
 });
+// Global sets, volumes, category and tag groups, users and addresses hold fields too, outside the graph's hierarchy.
+// Users and addresses have one field layout each, without a name or UID, so they get fixed ones.
+const LAYOUT_OWNERS = {
+  globalset: M.globalSets,
+  volume: M.volumes,
+  categorygroup: M.categoryGroups,
+  taggroup: M.tagGroups,
+  fieldlayout: [Object.assign(M.users, { uid: 'users', name: 'Users' }), Object.assign(M.addresses, { uid: 'addresses', name: 'Addresses' })],
+};
+Object.entries(LAYOUT_OWNERS).forEach(([kind, list]) => list.forEach(o => {
+  by[kind][o.uid] = o;
+  o.kind = kind;
+  eachCustom(o.tabs, el => by.field[el.field] && by.field[el.field].usedIn.push({ owner: o, ownerKind: kind, el }));
+}));
+const isLayoutOwner = kind => kind in LAYOUT_OWNERS;
 
 // Node keys are "<kind>:<uid>".
 const keyOf = (kind, uid) => `${kind}:${uid}`;
@@ -86,11 +106,11 @@ function nodeOf(key) {
 // The objects of a kind, in the order of the data.
 const ofKind = kind => Object.values(by[KIND[kind].index]).filter(o => o.kind === kind);
 
-// Entry types that contain a field, looking through content blocks.
+// Entry types that contain a field, looking through content blocks. Other field layouts don't count.
 function ownersOfField(f, seen = new Set()) {
   if (seen.has(f.uid)) return [];
   seen.add(f.uid);
-  return f.usedIn.flatMap(u => (isField(u.ownerKind) ? ownersOfField(u.owner, seen) : [u.owner]));
+  return f.usedIn.flatMap(u => (isField(u.ownerKind) ? ownersOfField(u.owner, seen) : isEntryType(u.ownerKind) ? [u.owner] : []));
 }
 // Sites an entry type ends up on: its sections, or the sections of whatever page holds its builder.
 function sitesOfEt(e, seen = new Set()) {

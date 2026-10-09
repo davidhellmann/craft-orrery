@@ -32,8 +32,14 @@ test('keys find every kind of node, and nothing for unknown ones', () => {
   assert.deepEqual(found('field:field-body'), ['field', 'body']);
   assert.deepEqual(found('usergroup:ug-editors'), ['usergroup', 'editors']);
   assert.deepEqual(found('schema:gql-app'), ['schema', 'App']);
+  assert.deepEqual(found('globalset:global-footer'), ['globalset', 'footer']);
+  assert.deepEqual(found('volume:volume-images'), ['volume', 'images']);
+  assert.deepEqual(found('categorygroup:catgroup-topics'), ['categorygroup', 'topics']);
+  assert.deepEqual(found('taggroup:taggroup-keywords'), ['taggroup', 'keywords']);
+  assert.deepEqual(found('fieldlayout:users'), ['fieldlayout', 'Users']);
+  assert.deepEqual(found('fieldlayout:addresses'), ['fieldlayout', 'Addresses']);
   assert.equal(nodeOf('section:section-archive'), null);
-  assert.equal(nodeOf('volume:volume-images'), null);
+  assert.equal(nodeOf('producttype:producttype-shirts'), null);
   assert.equal(nodeOf(null), null);
 });
 
@@ -42,7 +48,7 @@ test('each kind lists its own objects, in the order of the data', () => {
 
   assert.deepEqual(handles(ofKind('site')), ['en', 'de', 'shop']);
   assert.deepEqual(handles(ofKind('block')), ['block_columns', 'block_image', 'block_teaser', 'block_text', 'quote']);
-  assert.deepEqual(handles(ofKind('field')), ['body', 'curators', 'featured', 'image', 'layoutStyle', 'oldTeaser', 'photographer', 'relatedNews', 'summary']);
+  assert.deepEqual(handles(ofKind('field')), ['body', 'copyright', 'curators', 'featured', 'image', 'layoutStyle', 'notes', 'oldTeaser', 'photographer', 'relatedNews', 'summary']);
   assert.deepEqual(handles(ofKind('usergroup')), ['editors', 'members', 'shopStaff']);
 });
 
@@ -101,7 +107,25 @@ test('a field lists each layout it sits in, including ContentBlocks', () => {
   assert.equal(by.field['field-body'].usedIn.find(u => u.owner.handle === 'page_article').el.label, 'Introduction');
 });
 
-test('fields that no entry type or ContentBlock holds are unused', () => {
+test('a field that only sits in a global set is used there, with the label it gets there', () => {
+  const { by } = loadViewer();
+
+  assert.deepEqual(by.field['field-copyright'].usedIn.map(u => [u.ownerKind, u.owner.handle, u.el.label]), [['globalset', 'footer', 'Copyright line']]);
+});
+
+test('volumes, category and tag groups, users and addresses list the fields in them, with the label they get there', () => {
+  const { by } = loadViewer();
+
+  assert.deepEqual(by.field['field-notes'].usedIn.map(u => [u.ownerKind, u.owner.name, u.el.label]), [
+    ['volume', 'Images', 'Caption'],
+    ['categorygroup', 'Topics', 'Description'],
+    ['taggroup', 'Keywords', undefined],
+    ['fieldlayout', 'Users', 'Bio'],
+    ['fieldlayout', 'Addresses', 'Directions'],
+  ]);
+});
+
+test('fields that no field layout holds are unused', () => {
   const { unusedFields } = loadViewer();
 
   assert.deepEqual(handles(unusedFields), ['oldTeaser']);
@@ -159,6 +183,12 @@ test('a field ends up in the site groups of the Pages and Blocks that hold it, t
   assert.deepEqual(groups('field-columns'), ['group-museum']);
   assert.deepEqual(groups('field-summary'), ['group-museum']);
   assert.deepEqual(groups('field-old-teaser'), []);
+});
+
+test('a field that only sits in field layouts outside entry types ends up in no site group', () => {
+  const { by, groupsOfField } = loadViewer();
+
+  assert.deepEqual([...groupsOfField(by.field['field-copyright'])], []);
 });
 
 test('a site group has the fields of its Pages and of the Blocks that end up there', () => {

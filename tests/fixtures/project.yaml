@@ -1136,9 +1136,223 @@ fields:
     translationKeyFormat: null
     translationMethod: none
     type: craft\fields\PlainText
+  # Used only in the Footer global set.
+  field-copyright:
+    columnSuffix: null
+    handle: copyright
+    instructions: null
+    name: Copyright
+    searchable: false
+    settings:
+      byteLimit: null
+      charLimit: null
+      code: false
+      initialRows: 4
+      multiline: false
+      placeholder: null
+      uiMode: normal
+    translationKeyFormat: null
+    translationMethod: site
+    type: craft\fields\PlainText
+  # Used only outside entry types: in a volume, a category group, a tag group, and the users' and addresses' layouts.
+  field-notes:
+    columnSuffix: null
+    handle: notes
+    instructions: null
+    name: Notes
+    searchable: true
+    settings:
+      byteLimit: null
+      charLimit: null
+      code: false
+      initialRows: 4
+      multiline: true
+      placeholder: null
+      uiMode: normal
+    translationKeyFormat: null
+    translationMethod: none
+    type: craft\fields\PlainText
+globalSets:
+  global-footer:
+    fieldLayouts:
+      layout-footer:
+        tabs:
+          - elementCondition: null
+            elements:
+              - elementCondition: null
+                fieldUid: field-copyright
+                handle: null
+                instructions: null
+                label: 'Copyright line'
+                required: false
+                type: craft\fieldlayoutelements\CustomField
+                uid: el-footer-copyright
+                userCondition: null
+                width: 100
+            name: Content
+            uid: tab-footer-content
+            userCondition: null
+    handle: footer
+    name: Footer
+    sortOrder: 2
+  # Craft leaves out a field layout without anything in it.
+  global-contact:
+    handle: contact
+    name: Contact
+    sortOrder: 1
+volumes:
+  volume-images:
+    altTranslationKeyFormat: null
+    altTranslationMethod: none
+    fieldLayouts:
+      layout-images:
+        tabs:
+          - elementCondition: null
+            elements:
+              - elementCondition: null
+                label: null
+                required: true
+                type: craft\fieldlayoutelements\assets\AssetTitleField
+                uid: el-images-title
+                userCondition: null
+                width: 100
+              - elementCondition: null
+                label: null
+                required: false
+                type: craft\fieldlayoutelements\assets\AltField
+                uid: el-images-alt
+                userCondition: null
+                width: 100
+              - elementCondition: null
+                fieldUid: field-notes
+                handle: null
+                instructions: null
+                label: Caption
+                required: false
+                type: craft\fieldlayoutelements\CustomField
+                uid: el-images-notes
+                userCondition: null
+                width: 100
+            name: Content
+            uid: tab-images-content
+            userCondition: null
+    fs: images
+    handle: images
+    name: Images
+    sortOrder: 1
+    subpath: ''
+    titleTranslationKeyFormat: null
+    titleTranslationMethod: site
+    transformFs: ''
+    transformSubpath: ''
+categoryGroups:
+  catgroup-topics:
+    defaultPlacement: end
+    fieldLayouts:
+      layout-topics:
+        tabs:
+          - elementCondition: null
+            elements:
+              - elementCondition: null
+                label: null
+                required: true
+                type: craft\fieldlayoutelements\TitleField
+                uid: el-topics-title
+                userCondition: null
+                width: 100
+              - elementCondition: null
+                fieldUid: field-notes
+                handle: null
+                instructions: null
+                label: Description
+                required: false
+                type: craft\fieldlayoutelements\CustomField
+                uid: el-topics-notes
+                userCondition: null
+                width: 100
+            name: Content
+            uid: tab-topics-content
+            userCondition: null
+    handle: topics
+    name: Topics
+    siteSettings:
+      site-en:
+        hasUrls: true
+        template: topics/_category
+        uriFormat: 'topics/{slug}'
+    structure:
+      maxLevels: null
+      uid: structure-topics
+tagGroups:
+  taggroup-keywords:
+    fieldLayouts:
+      layout-keywords:
+        tabs:
+          - elementCondition: null
+            elements:
+              - elementCondition: null
+                label: null
+                required: true
+                type: craft\fieldlayoutelements\TitleField
+                uid: el-keywords-title
+                userCondition: null
+                width: 100
+              - elementCondition: null
+                fieldUid: field-notes
+                handle: null
+                instructions: null
+                label: null
+                required: false
+                type: craft\fieldlayoutelements\CustomField
+                uid: el-keywords-notes
+                userCondition: null
+                width: 100
+            name: Content
+            uid: tab-keywords-content
+            userCondition: null
+    handle: keywords
+    name: Keywords
 users:
   allowPublicRegistration: true
   defaultGroup: ug-members
+  fieldLayouts:
+    layout-users:
+      tabs:
+        - elementCondition: null
+          elements:
+            - elementCondition: null
+              type: craft\fieldlayoutelements\users\UsernameField
+              uid: el-users-username
+              userCondition: null
+              width: 100
+            - elementCondition: null
+              type: craft\fieldlayoutelements\users\FullNameField
+              uid: el-users-full-name
+              userCondition: null
+              width: 100
+            - elementCondition: null
+              type: craft\fieldlayoutelements\users\PhotoField
+              uid: el-users-photo
+              userCondition: null
+              width: 100
+            - elementCondition: null
+              type: craft\fieldlayoutelements\users\EmailField
+              uid: el-users-email
+              userCondition: null
+              width: 100
+            - elementCondition: null
+              fieldUid: field-notes
+              handle: null
+              instructions: null
+              label: Bio
+              required: false
+              type: craft\fieldlayoutelements\CustomField
+              uid: el-users-notes
+              userCondition: null
+              width: 100
+          name: Profile
+          uid: tab-users-profile
+          userCondition: null
   groups:
     ug-shop:
       description: null
@@ -1182,6 +1396,42 @@ users:
   photoSubpath: null
   photoVolumeUid: null
   requireEmailVerification: true
+addresses:
+  fieldLayouts:
+    layout-addresses:
+      tabs:
+        - elementCondition: null
+          elements:
+            - elementCondition: null
+              label: null
+              required: false
+              type: craft\fieldlayoutelements\addresses\LabelField
+              uid: el-addresses-label
+              userCondition: null
+              width: 100
+            - elementCondition: null
+              type: craft\fieldlayoutelements\addresses\CountryCodeField
+              uid: el-addresses-country
+              userCondition: null
+              width: 100
+            - elementCondition: null
+              type: craft\fieldlayoutelements\addresses\AddressField
+              uid: el-addresses-address
+              userCondition: null
+              width: 100
+            - elementCondition: null
+              fieldUid: field-notes
+              handle: null
+              instructions: null
+              label: Directions
+              required: false
+              type: craft\fieldlayoutelements\CustomField
+              uid: el-addresses-notes
+              userCondition: null
+              width: 50
+          name: Content
+          uid: tab-addresses-content
+          userCondition: null
 graphql:
   publicToken:
     enabled: true
