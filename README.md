@@ -55,7 +55,7 @@ php craft orrery/export                                # content-model.html in t
 php craft orrery/export @storage/content-model.json    # .json writes the data instead
 ```
 
-The JSON is stable between runs, so committing it lets you review content model changes in a pull request. Mind where you write it: the export lists every section, entry type and field.
+The JSON holds the raw config values: names, base URLs and languages set through environment variables or aliases, like `$PRIMARY_SITE_URL` or `@web`, stay as written, so no resolved environment value ends up in the file. Field types are named in English, and there’s no timestamp. Two exports are the same file as long as the content model is, on any machine, so committing it lets you review content model changes in a pull request. The viewer and the HTML file show the resolved values. Mind where you write it: the export lists every section, entry type and field.
 
 ## Settings
 
@@ -92,7 +92,7 @@ Then `composer require davidhellmann/craft-orrery` and `php craft plugin/install
 - `composer test` runs the PHP tests. They read a made-up project config, `tests/fixtures/project.yaml`, into the content model, with no database and no Craft install.
 - `npm test` runs the viewer tests in Node, on the data of that project config. There’s nothing to install for it.
 
-The viewer tests read a copy of that data, `tests/fixtures/content-model.json`. After changing the project config or what the content model makes of it, `UPDATE_FIXTURES=1 composer test` writes the copy again.
+The viewer tests read that data as the viewer gets it, with environment values resolved, from a copy in `tests/fixtures/content-model.json`. After changing the project config or what the content model makes of it, `UPDATE_FIXTURES=1 composer test` writes the copy again.
 
 The viewer in `src/viewer/` is plain JavaScript and CSS. Orrery inlines it into one page together with the data, so there’s no build step.
 
