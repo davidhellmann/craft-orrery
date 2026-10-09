@@ -142,6 +142,7 @@ function crossLinks(key, here) {
   if (here !== 'graph') links.push(`<a class="btn" href="#graph/${key}">Show in graph</a>`);
   if (here !== 'table' && (n.kind === 'field' || n.kind === 'matrix' || n.kind === 'page' || n.kind === 'block')) links.push(`<a class="btn" href="#table/${key}">Show in table</a>`);
   if (here !== 'layout' && (n.kind === 'page' || n.kind === 'block' || n.kind === 'section' || n.kind === 'matrix' || n.kind === 'field')) links.push(`<a class="btn" href="#layout/${key}">Open layout</a>`);
+  if (here !== 'diff' && n.kind !== 'group') links.push(`<a class="btn" href="#diff/${key}">Compare</a>`);
   return links.length ? `<div class="actions">${links.join('')}</div>` : '';
 }
 

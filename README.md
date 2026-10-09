@@ -11,6 +11,7 @@ A live map of your Craft CMS content model: where content lives, what it’s mad
 - **Graph**: site groups → sites → sections → pages → builders → blocks → fields, as one pannable map. Click anything to light up what it’s connected to, or *Isolate* it to lay out only that part. Double-click zooms in like a map, Shift + double-click zooms out. Drag a node to move it and the others make room. Dashed lines are relations, where a field pulls entries from another section.
 - **Table**: every field and each layout it sits in, with the label it gets there. Flip it to read every entry type with its fields. Filter by type, by site group, or to fields that aren’t used anywhere.
 - **Layout**: every field layout as the editor sees the form, or drawn as a page wireframe with its builders and blocks.
+- **Diff**: pick what to compare (sites, sections, entry types, fields, user groups or GraphQL schemas), then two of them. Properties are compared side by side, and everything they contain, like the fields of an entry type or the rights of a user group, row by row: only in one of them, or in both but set up differently. Any *Compare* button in the details starts a comparison there.
 
 ### Access
 
@@ -20,7 +21,7 @@ User groups show which sites they may edit and what they may do with the entries
 
 A *page* is an entry type attached to a section, a *block* one attached to a Matrix field. When a section or Matrix field gives an entry type its own name, Orrery shows that name too.
 
-Every view has shareable links, like `#graph/page:<uid>` or `#table/field:<uid>`.
+Every view has shareable links, like `#graph/page:<uid>`, `#table/field:<uid>` or `#diff/page:<uid>/page:<uid>`.
 
 ![The layout view drawing a page as a wireframe, in dark mode](resources/screenshot-layout.png)
 

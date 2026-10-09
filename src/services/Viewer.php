@@ -16,7 +16,7 @@ class Viewer extends Component
     /**
      * Scripts share one scope, so later files can use what earlier ones define.
      */
-    private const SCRIPTS = ['model', 'ui', 'graph', 'table', 'layout', 'app'];
+    private const SCRIPTS = ['model', 'ui', 'graph', 'table', 'layout', 'diff', 'app'];
 
     public function render(): string
     {

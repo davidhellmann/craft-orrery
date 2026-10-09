@@ -196,6 +196,26 @@ table.t td.num { text-align: right; font-variant-numeric: tabular-nums; width: 1
 table.t td.zero { color: var(--faint); }
 .tbl-wrap .scroll { flex: 1; }
 
+/* ---------- diff ---------- */
+#view-diff { flex-direction: row; }
+.tbl-head select[data-side] { max-width: 260px; }
+#view-diff .tbl-head > .seg { align-self: flex-start; flex-wrap: wrap; }
+.ab { display: inline-grid; place-items: center; width: 18px; height: 18px; margin-right: 8px; border-radius: 4px; background: var(--text); color: var(--inverse); font-size: 11px; font-weight: 700; vertical-align: middle; }
+.btn[disabled] { opacity: .4; cursor: default; }
+table.diff tbody tr { cursor: default; }
+table.diff tbody tr:hover td { background: var(--surface); }
+table.diff thead th { text-transform: none; letter-spacing: 0; font-size: 13px; }
+table.diff td { padding: 7px 12px; }
+table.diff td.lbl { font-weight: 600; }
+table.diff td.st { text-align: right; }
+table.diff tr.grp td { padding: 18px 12px 8px; font-size: 11px; font-weight: 650; text-transform: uppercase; letter-spacing: .08em; color: var(--muted); background: var(--bg); }
+table.diff tr.grp td .faint { text-transform: none; letter-spacing: 0; font-weight: 400; margin-left: 6px; }
+table.diff tr.same td { color: var(--muted); }
+table.diff tr:not(.same):not(.grp) td:first-child { box-shadow: inset 3px 0 0 var(--text); }
+table.diff .tag { display: inline-block; margin: 1px 0; text-transform: none; letter-spacing: 0; font-size: 11.5px; }
+.diff-empty { padding: 48px 24px; max-width: 560px; }
+.diff-empty h2 { margin-bottom: 8px; }
+
 /* ---------- layout ---------- */
 #view-layout { flex-direction: row; }
 .tree { width: 290px; flex: none; border-right: 1px solid var(--line); background: var(--surface); display: flex; flex-direction: column; min-height: 0; }

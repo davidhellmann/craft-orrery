@@ -1,6 +1,6 @@
 // Routing between views (#<view>/<kind>:<uid>), header and theme.
 const App = (() => {
-  const VIEWS = [GraphView, TableView, LayoutView];
+  const VIEWS = [GraphView, TableView, LayoutView, DiffView];
   const main = document.getElementById('main');
   const nav = document.getElementById('views');
   let active = null;
@@ -36,7 +36,7 @@ const App = (() => {
       nav.querySelectorAll('a').forEach(a => a.classList.toggle('on', a.dataset.view === v.id));
       active = v;
     }
-    v.show(nodeOf(key) ? key : null, opts);
+    v.show(key, opts);
   }
 
   // Navigation from inside a view: update the hash without re-entering through hashchange.
