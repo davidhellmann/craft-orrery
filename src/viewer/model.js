@@ -17,8 +17,8 @@ const KIND = {
 const fieldTypeLabel = f => f.typeLabel || f.type;
 
 // Handle prefixes come from the plugin settings; without them every handle passes.
-const PREFIX = M.prefixes || {};
-const checksHandles = !!(PREFIX.page || PREFIX.block);
+const PREFIX = { page: [], block: [], ...M.prefixes };
+const checksHandles = PREFIX.page.length > 0 || PREFIX.block.length > 0;
 
 const by = { group: {}, site: {}, section: {}, et: {}, field: {}, usergroup: {}, schema: {} };
 M.siteGroups.forEach(g => { by.group[g.uid] = g; g.sites = []; });
@@ -55,8 +55,8 @@ const customElements = tabs => { const out = []; eachCustom(tabs, el => by.field
 M.entryTypes.forEach(e => {
   e.kind = e.sections.length ? 'page' : 'block';
   e.gql = `${e.handle}_Entry`;
-  e.prefix = PREFIX[e.kind] || '';
-  e.conventionOk = e.handle.startsWith(e.prefix);
+  e.prefix = PREFIX[e.kind].join(' / ');
+  e.conventionOk = !PREFIX[e.kind].length || PREFIX[e.kind].some(p => e.handle.startsWith(p));
   eachCustom(e.tabs, el => by.field[el.field] && by.field[el.field].usedIn.push({ owner: e, ownerKind: e.kind, el }));
 });
 M.fields.forEach(f => {

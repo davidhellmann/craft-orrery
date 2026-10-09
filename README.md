@@ -59,18 +59,18 @@ The JSON is stable between runs, so committing it lets you review content model 
 
 ## Settings
 
-Projects that prefix entry type handles, like `page_` and `block_`, can have Orrery flag the ones that don’t. Set the prefixes under *Settings → Plugins → Orrery*, or in `config/orrery.php`:
+Projects that prefix entry type handles, like `page_` and `block_`, can have Orrery flag the ones that don’t. Nothing gets renamed; they’re only marked in the viewer. Set one prefix each under *Settings → Plugins → Orrery*, or use `config/orrery.php`, where an array allows several:
 
 ```php
 <?php
 
 return [
-    'pageHandlePrefix' => 'page_',
+    'pageHandlePrefix' => ['page_', 'single_'],
     'blockHandlePrefix' => 'block_',
 ];
 ```
 
-Leave a prefix blank to skip that check.
+A handle passes if it starts with any of its prefixes. Leave a prefix blank to skip that check. Anything set in `config/orrery.php` wins over the control panel, where it then shows read-only.
 
 ## Local development
 

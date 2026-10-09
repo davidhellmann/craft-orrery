@@ -1,23 +1,32 @@
-{% import '_includes/forms' as forms %}
+{# A setting in config/orrery.php wins over this form, so it shows here read-only. #}
+{% macro prefixField(settings, overrides, attribute, label, instructions, placeholder) %}
+    {% import '_includes/forms' as forms %}
+    {% set value = settings[attribute] %}
+    {% set overridden = attribute in overrides %}
+    {{ forms.textField({
+        label: label,
+        instructions: instructions,
+        id: attribute,
+        name: attribute,
+        value: value is iterable ? value|join(', ') : value,
+        placeholder: placeholder,
+        class: 'code',
+        disabled: overridden,
+        warning: overridden ? 'This is being overridden by the {setting} config setting.'|t('app', {setting: "`#{attribute}`"}) : null,
+        errors: settings.getErrors(attribute),
+    }) }}
+{% endmacro %}
 
-{{ forms.textField({
-    label: 'Page handle prefix'|t('orrery'),
-    instructions: 'Handles of entry types attached to a section should start with this. Leave blank to skip the check.'|t('orrery'),
-    id: 'pageHandlePrefix',
-    name: 'pageHandlePrefix',
-    value: settings.pageHandlePrefix,
-    placeholder: 'page_',
-    class: 'code',
-    errors: settings.getErrors('pageHandlePrefix'),
-}) }}
+<p>{{ 'If your entry type handles follow a naming convention, Orrery can point out the ones that don’t. They get flagged in the viewer; nothing in your project is renamed or changed.'|t('orrery') }}</p>
 
-{{ forms.textField({
-    label: 'Block handle prefix'|t('orrery'),
-    instructions: 'Handles of entry types attached to a Matrix field should start with this. Leave blank to skip the check.'|t('orrery'),
-    id: 'blockHandlePrefix',
-    name: 'blockHandlePrefix',
-    value: settings.blockHandlePrefix,
-    placeholder: 'block_',
-    class: 'code',
-    errors: settings.getErrors('blockHandlePrefix'),
-}) }}
+{{ _self.prefixField(settings, overrides, 'pageHandlePrefix',
+    'Page handle prefix'|t('orrery'),
+    'Expected at the start of every handle of an entry type used in a section, like `page_article`. Leave blank to skip the check. For more than one prefix, set an array in `config/orrery.php`.'|t('orrery'),
+    'e.g. page_'|t('orrery')
+) }}
+
+{{ _self.prefixField(settings, overrides, 'blockHandlePrefix',
+    'Block handle prefix'|t('orrery'),
+    'Expected at the start of every handle of an entry type used in a Matrix field, like `block_hero`. Leave blank to skip the check. For more than one prefix, set an array in `config/orrery.php`.'|t('orrery'),
+    'e.g. block_'|t('orrery')
+) }}

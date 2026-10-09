@@ -272,7 +272,7 @@ const GraphView = (() => {
     <p>Double-click to zoom in, with Shift to zoom out. Scroll or drag the background to move around, drag a node to move it and the others make room.</p>
     <h3>Worth a look</h3>
     <div class="list">
-      ${checksHandles ? `<div class="row"><span class="grow">Handles without prefix (${[PREFIX.page, PREFIX.block].filter(Boolean).map(esc).join(' / ')})</span><b>${unprefixedEntryTypes.length}</b></div>` : ''}
+      ${checksHandles ? `<div class="row"><span class="grow">Handles without prefix (${[...PREFIX.page, ...PREFIX.block].map(esc).join(' / ')})</span><b>${unprefixedEntryTypes.length}</b></div>` : ''}
       <div class="row"><span class="grow">Fields not used anywhere</span><b>${unusedFields.length}</b></div>
     </div>
     ${unusedFields.length ? `<h3>Unused fields</h3><div class="list">${unusedFields.map(f => row(fieldKey(f), typeTag(f))).join('')}</div>` : ''}`);

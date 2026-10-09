@@ -31,7 +31,7 @@ const reqTag = el => (el && el.required ? '<span class="tag solid">req</span>' :
 const condTag = el => (el && el.conditional ? '<span class="tag outline">if</span>' : '');
 // A section can give an entry type its own name, like a Matrix field does.
 const sectionEntryTypes = s => `<div class="list">${s.entryTypes.map(u => by.et[u]).filter(Boolean).map(e => row(etKey(e), note(s.contexts[e.uid] && s.contexts[e.uid] !== e.name ? `as “${esc(s.contexts[e.uid])}”` : esc(e.handle)))).join('')}</div>`;
-const prefixTag = e => (e.conventionOk === false ? `<span class="tag outline" title="Handle doesn’t start with the prefix set in the plugin settings">no <code>${esc(e.prefix)}</code></span>` : '');
+const prefixTag = e => (e.conventionOk === false ? `<span class="tag outline" title="Handle doesn’t start with a prefix set in the plugin settings">no <code>${esc(e.prefix)}</code></span>` : '');
 
 const CLOSE_ICON = '<svg viewBox="0 0 16 16" aria-hidden="true"><path d="M4 4l8 8M12 4l-8 8" stroke="currentColor" stroke-width="1.6" stroke-linecap="round"/></svg>';
 const closeButton = (label, attr) => `<button class="icon-btn close" type="button" ${attr} aria-label="${label}" title="${label}">${CLOSE_ICON}</button>`;

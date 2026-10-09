@@ -25,8 +25,8 @@ class Viewer extends Component
 
         $data = $plugin->contentModel->getData() + [
             'prefixes' => [
-                'page' => $settings->pageHandlePrefix,
-                'block' => $settings->blockHandlePrefix,
+                'page' => $settings->prefixes('pageHandlePrefix'),
+                'block' => $settings->prefixes('blockHandlePrefix'),
             ],
         ];
 

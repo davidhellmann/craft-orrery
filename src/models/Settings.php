@@ -2,6 +2,7 @@
 
 namespace davidhellmann\orrery\models;
 
+use Craft;
 use craft\base\Model;
 
 /**
@@ -10,20 +11,38 @@ use craft\base\Model;
 class Settings extends Model
 {
     /**
-     * @var string Prefix that handles of entry types attached to a section should start with. Empty skips the check.
+     * @var string|string[] Prefix that handles of entry types attached to a section should start with. Several
+     * prefixes go in `config/orrery.php` as an array. Empty skips the check.
      */
-    public string $pageHandlePrefix = '';
+    public string|array $pageHandlePrefix = '';
 
     /**
-     * @var string Prefix that handles of entry types attached to a Matrix field should start with. Empty skips the check.
+     * @var string|string[] Prefix that handles of entry types attached to a Matrix field should start with. Several
+     * prefixes go in `config/orrery.php` as an array. Empty skips the check.
      */
-    public string $blockHandlePrefix = '';
+    public string|array $blockHandlePrefix = '';
+
+    /**
+     * @return string[] The prefixes set for an attribute, without blanks.
+     */
+    public function prefixes(string $attribute): array
+    {
+        $prefixes = array_map(fn($prefix) => trim((string)$prefix), (array)$this->$attribute);
+
+        return array_values(array_filter($prefixes, fn(string $prefix) => $prefix !== ''));
+    }
 
     protected function defineRules(): array
     {
         return [
-            [['pageHandlePrefix', 'blockHandlePrefix'], 'trim'],
-            [['pageHandlePrefix', 'blockHandlePrefix'], 'string', 'max' => 64],
+            [['pageHandlePrefix', 'blockHandlePrefix'], function(string $attribute) {
+                foreach ((array)$this->$attribute as $prefix) {
+                    if (!is_string($prefix) || mb_strlen($prefix) > 64) {
+                        $this->addError($attribute, Craft::t('orrery', 'Prefixes must be text, up to 64 characters each.'));
+                        return;
+                    }
+                }
+            }],
         ];
     }
 }
