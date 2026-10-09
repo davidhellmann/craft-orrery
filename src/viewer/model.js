@@ -18,11 +18,11 @@ const KIND = {
   unused: { label: 'Unused', plural: 'Unused entry types', index: 'et', views: ['table', 'layout', 'diff'] },
   usergroup: { label: 'User Group', plural: 'User Groups', index: 'usergroup', views: ['graph', 'diff'], layer: true },
   schema: { label: 'GraphQL Schema', plural: 'GraphQL Schemas', index: 'schema', views: ['graph', 'diff'], layer: true },
-  globalset: { label: 'Global Set', plural: 'Global Sets', index: 'globalset', views: ['table'] },
-  volume: { label: 'Volume', plural: 'Volumes', index: 'volume', views: ['table'] },
-  categorygroup: { label: 'Category Group', plural: 'Category Groups', index: 'categorygroup', views: ['table'] },
-  taggroup: { label: 'Tag Group', plural: 'Tag Groups', index: 'taggroup', views: ['table'] },
-  fieldlayout: { label: 'Field Layout', plural: 'Field Layouts', index: 'fieldlayout', views: ['table'] },
+  globalset: { label: 'Global Set', plural: 'Global Sets', index: 'globalset', views: ['table', 'layout'] },
+  volume: { label: 'Volume', plural: 'Volumes', index: 'volume', views: ['table', 'layout'] },
+  categorygroup: { label: 'Category Group', plural: 'Category Groups', index: 'categorygroup', views: ['table', 'layout'] },
+  taggroup: { label: 'Tag Group', plural: 'Tag Groups', index: 'taggroup', views: ['table', 'layout'] },
+  fieldlayout: { label: 'Field Layout', plural: 'Field Layouts', index: 'fieldlayout', views: ['table', 'layout'] },
 };
 const isEntryType = kind => KIND[kind].index === 'et';
 const isField = kind => KIND[kind].index === 'field';
@@ -94,6 +94,15 @@ Object.entries(LAYOUT_OWNERS).forEach(([kind, list]) => list.forEach(o => {
 }));
 const isLayoutOwner = kind => kind in LAYOUT_OWNERS;
 
+// Craft's own fields in a field layout, by the name Craft gives them. Other elements go by their class name.
+const NATIVE_FIELDS = {
+  UsernameField: 'Username', FullNameField: 'Full Name', PhotoField: 'Photo', EmailField: 'Email', AffiliatedSiteField: 'Affiliated Site',
+  AltField: 'Alternative Text', OrganizationField: 'Organization', OrganizationTaxIdField: 'Organization Tax ID', CountryCodeField: 'Country',
+  AddressField: 'Address', LatLongField: 'Latitude/Longitude',
+};
+// The address Label field is built on the title field, so it arrives as one.
+const nativeName = (el, owner) => el.label || (el.kind === 'Title' ? (owner === by.fieldlayout.addresses ? 'Label' : 'Title') : NATIVE_FIELDS[el.kind] || el.kind);
+
 // Node keys are "<kind>:<uid>".
 const keyOf = (kind, uid) => `${kind}:${uid}`;
 const etKey = e => keyOf(e.kind, e.uid);
@@ -143,6 +152,10 @@ const unusedFields = M.fields.filter(f => !f.usedIn.length);
 const unusedEntryTypes = ofKind('unused');
 const unprefixedEntryTypes = M.entryTypes.filter(e => !e.conventionOk);
 const byName = (a, b) => a.name.localeCompare(b.name);
+
+// Field layouts that belong to neither a Page nor a Block, by kind and name, as far as `keep` lets them through.
+const OTHER_LAYOUTS = ['unused', ...Object.keys(LAYOUT_OWNERS)];
+const otherLayouts = (keep = () => true) => OTHER_LAYOUTS.map(kind => [kind, ofKind(kind).filter(keep).sort(byName)]).filter(([, list]) => list.length);
 
 // ---- access: user groups and GraphQL schemas, a layer the header pickers switch on over every view
 const ACCESS = ['usergroup', 'schema'];

@@ -63,6 +63,15 @@ test('a field layout that isn’t on the graph says what it is wherever it’s l
   assert.doesNotMatch(chip('page:et-article'), /faint/);
 });
 
+test('field layouts outside the graph open in the Layout view', () => {
+  const { crossLinks } = loadViewer();
+
+  ['globalset:global-footer', 'volume:volume-images', 'categorygroup:catgroup-topics', 'taggroup:taggroup-keywords', 'fieldlayout:users', 'fieldlayout:addresses'].forEach(key => {
+    assert.match(crossLinks(key, 'table'), new RegExp(`href="#layout/${key}">Open layout<`));
+    assert.doesNotMatch(crossLinks(key, 'table'), /#graph\//);
+  });
+});
+
 test('the graph’s legend only shows what is on the map', () => {
   const { legendHTML } = loadViewer();
 
