@@ -2,7 +2,8 @@
 const esc = s => String(s == null ? '' : s).replace(/[&<>"]/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' }[c]));
 const glyph = kind => `<span class="g g-${kind}" aria-hidden="true"></span>`;
 const kindLabel = kind => `<span class="kind">${glyph(kind)}${KIND[kind].label}</span>`;
-const siteUrl = (site, uri) => `${site.name.replace(/\/$/, '')}/${uri || ''}`;
+// Where a URI ends up on a site, or under the site's name if it has no base URL. Craft gives the homepage `__home__`.
+const siteUrl = (site, uri) => `${(site.baseUrl || site.name).replace(/\/$/, '')}/${uri === '__home__' ? '' : uri || ''}`;
 
 // A mark for each access layer (user groups, schemas) whose switched-on members reach the node.
 function accessMarks(key) {

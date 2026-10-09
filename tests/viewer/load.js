@@ -1,10 +1,10 @@
-// Runs the viewer's model layer in Node the way the page does (see src/services/Viewer.php): the data in the global
+// Runs the viewer's model layer and shared helpers in Node the way the page does (see src/services/Viewer.php): the data in the global
 // CONTENT_MODEL, the scripts in one shared scope. The views draw on the page, so they stay out.
 const fs = require('node:fs');
 const path = require('node:path');
 const vm = require('node:vm');
 
-const SCRIPTS = ['model'];
+const SCRIPTS = ['model', 'ui'];
 const VIEWER = path.join(__dirname, '../../src/viewer');
 // The data of tests/fixtures/project.yaml, written by the PHP tests.
 const FIXTURE = path.join(__dirname, '../fixtures/content-model.json');

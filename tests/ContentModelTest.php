@@ -278,6 +278,32 @@ class ContentModelTest extends TestCase
         ], $this->item('userGroups', 'ug-members'));
     }
 
+    /**
+     * Craft has no site permissions with one site, so the shared fixture with its three sites can't show this.
+     */
+    public function testOnASingleSiteOnlyGroupsWithControlPanelAccessEditIt(): void
+    {
+        $data = (new ContentModel())->fromConfig([
+            'sites' => [
+                'site-blog' => ['baseUrl' => 'https://blog.test/', 'handle' => 'blog', 'name' => 'Blog', 'primary' => true, 'sortOrder' => 1],
+            ],
+            'users' => [
+                'groups' => [
+                    'ug-authors' => ['handle' => 'authors', 'name' => 'Authors', 'permissions' => ['accesscp']],
+                    'ug-readers' => ['handle' => 'readers', 'name' => 'Readers', 'permissions' => []],
+                    // Left over from when there were more sites; Craft ignores it now.
+                    'ug-translators' => ['handle' => 'translators', 'name' => 'Translators', 'permissions' => ['editsite:site-blog']],
+                ],
+            ],
+        ]);
+
+        $this->assertSame([
+            'Authors' => ['site-blog'],
+            'Readers' => [],
+            'Translators' => [],
+        ], array_column($data['userGroups'], 'sites', 'name'));
+    }
+
     public function testSchemaScopes(): void
     {
         $this->assertSame([
