@@ -1,5 +1,5 @@
 // Diff view: pick what to compare, then two of them, and see where they differ.
-const DiffView = (() => {
+registerView((() => {
   // What can be compared: the kinds that share an index, so Pages with Blocks and Builders with Fields.
   const kindsOf = type => Object.keys(KIND).filter(k => KIND[k].index === type.index);
   const listOf = type => kindsOf(type).flatMap(ofKind);
@@ -21,13 +21,12 @@ const DiffView = (() => {
     viewPeerDrafts: 'view others’ drafts', savePeerDrafts: 'save others’ drafts', deletePeerDrafts: 'delete others’ drafts',
   };
   const rightTags = rights => rights.map(r => RIGHTS[r] || r);
-  const quoted = (s, name) => (s && s !== name ? `as “${s}”` : null);
   function item(key, tags = [], id = key) {
     const n = nodeOf(key);
     return n ? { id, key, name: n.obj.name, tags: tags.filter(Boolean) } : null;
   }
-  const fieldItems = tabs => tabs.flatMap(t => t.elements.filter(el => el.kind === 'CustomField' && by.field[el.field]).map(el => {
-    const f = by.field[el.field];
+  const fieldItems = tabs => tabs.flatMap(t => t.elements.filter(el => el.kind === 'CustomField' && byUid.field[el.field]).map(el => {
+    const f = byUid.field[el.field];
     const handle = el.handle && el.handle !== f.handle ? el.handle : null;
     return item(fieldKey(f), [t.name, el.label && `“${el.label}”`, handle && `handle ${handle}`, el.required && 'required', el.conditional && 'conditional', el.width !== 100 && `${el.width}%`], handle ? `${fieldKey(f)}#${handle}` : fieldKey(f));
   }));
@@ -40,7 +39,7 @@ const DiffView = (() => {
     const o = n.obj;
     if (n.kind === 'site') {
       return {
-        props: [['Handle', o.handle], ['Site group', (by.group[o.group] || {}).name], ['Language', o.language], ['Base URL', o.baseUrl], ['Primary', yes(o.primary)]],
+        props: [['Handle', o.handle], ['Site group', (byUid.group[o.group] || {}).name], ['Language', o.language], ['Base URL', o.baseUrl], ['Primary', yes(o.primary)]],
         groups: [
           { title: 'Sections', items: o.sections.map(s => { const ss = s.sites.find(x => x.site === o.uid); return item(keyOf('section', s.uid), [s.type, ss && ss.hasUrls ? ss.uriFormat : 'no URLs']); }) },
           ...accessGroups(n.key),
@@ -52,7 +51,7 @@ const DiffView = (() => {
         props: [['Handle', o.handle], ['Type', o.type]],
         groups: [
           { title: 'Sites', items: o.sites.map(ss => item(keyOf('site', ss.site), [ss.hasUrls ? ss.uriFormat : 'no URLs'])) },
-          { title: 'Entry types', items: o.entryTypes.map(u => by.et[u] && item(etKey(by.et[u]), [quoted(o.contexts[u], by.et[u].name)])) },
+          { title: 'Entry types', items: o.entryTypes.map(u => byUid.et[u] && item(etKey(byUid.et[u]), [perUseNote(byUid.et[u], o.contexts[u])])) },
           { title: 'Pulled in by', items: o.referencedBy.map(f => item(fieldKey(f))) },
           { title: 'Preview targets', items: o.previewTargets.map(p => ({ id: p, name: p, tags: [] })) },
           ...accessGroups(n.key),
@@ -64,8 +63,8 @@ const DiffView = (() => {
         props: [['Handle', o.handle], ['Kind', KIND[o.kind].label], ['Title field', yes(o.hasTitleField)], ['Tabs', o.tabs.map(t => t.name).join(', ')], ['GraphQL type', o.gql]],
         groups: [
           { title: 'Lives in', items: [
-            ...o.sections.map(s => item(keyOf('section', s.uid), [quoted(s.contexts[o.uid], o.name)])),
-            ...o.builders.map(b => item(fieldKey(b.field), [quoted(b.context, o.name), b.group])),
+            ...o.sections.map(s => item(keyOf('section', s.uid), [perUseNote(o, s.contexts[o.uid])])),
+            ...o.builders.map(b => item(fieldKey(b.field), [perUseNote(o, b.context), b.group])),
           ] },
           { title: 'Fields', items: fieldItems(o.tabs) },
           ...accessGroups(n.key),
@@ -78,18 +77,18 @@ const DiffView = (() => {
       if (o.sources) props.push(['Sources', o.allSources ? 'All sections' : null], ['Max relations', o.max]);
       const groups = [];
       if (o.options) groups.push({ title: 'Options', items: o.options.map(op => ({ id: op.value, name: op.label, tags: [op.value, op.default && 'default'] })) });
-      if (o.blocks) groups.push({ title: 'Blocks', items: o.blocks.map(b => by.et[b.entryType] && item(etKey(by.et[b.entryType]), [quoted(b.context, by.et[b.entryType].name), b.group])) });
+      if (o.blocks) groups.push({ title: 'Blocks', items: o.blocks.map(b => byUid.et[b.entryType] && item(etKey(byUid.et[b.entryType]), [perUseNote(byUid.et[b.entryType], b.context), b.group])) });
       if (o.targets.length) groups.push({ title: 'Pulls from', items: o.targets.map(s => item(keyOf('section', s.uid))) });
       if (o.tabs) groups.push({ title: 'Contains', items: fieldItems(o.tabs) });
       groups.push({ title: 'Used in', items: o.usedIn.map(u => item(useKey(u), [u.el.label && `“${u.el.label}”`, u.el.required && 'required', u.el.conditional && 'conditional'])) });
       return { props, groups: [...groups, ...accessGroups(n.key)] };
     }
-    const sites = { title: 'Sites', items: M.sites.filter(s => o.sites.includes(s.uid)).map(s => item(keyOf('site', s.uid), [n.kind === 'schema' ? 'read' : 'edit'])) };
-    const sections = { title: 'Sections', items: M.sections.filter(s => o.sections[s.uid]).map(s => item(keyOf('section', s.uid), rightTags(o.sections[s.uid]))) };
+    const sites = { title: 'Sites', items: model.sites.filter(s => o.sites.includes(s.uid)).map(s => item(keyOf('site', s.uid), [n.kind === 'schema' ? 'read' : 'edit'])) };
+    const sections = { title: 'Sections', items: model.sections.filter(s => o.sections[s.uid]).map(s => item(keyOf('section', s.uid), rightTags(o.sections[s.uid]))) };
     if (n.kind === 'usergroup') return { props: [['Handle', o.handle], ['Description', o.description]], groups: [sites, sections] };
     return {
       props: [['Public', yes(o.public)], ['Also queries', o.elements.map(e => ELEMENT_SCOPES[e] || e).join(', ')]],
-      groups: [sites, sections, { title: 'Builders', items: M.fields.filter(f => o.fields[f.uid]).map(f => item(fieldKey(f), rightTags(o.fields[f.uid]))) }],
+      groups: [sites, sections, { title: 'Builders', items: model.fields.filter(f => o.fields[f.uid]).map(f => item(fieldKey(f), rightTags(o.fields[f.uid]))) }],
     };
   }
 
@@ -200,9 +199,11 @@ const DiffView = (() => {
     bindGo(body, k => App.go('graph', k));
   }
 
+  const info = () => '<h2>Reading a comparison</h2><p>Each row is something A or B has. <b>Only in A</b> and <b>only in B</b> mark what the other one is missing; <b>differs</b> means both have it, set up differently, and the tags in black are the ones the other side lacks.</p><p>Turn on <b>only differences</b> to hide everything they share. Names lead to the graph, and back brings you here again.</p>';
+
   function mount(root) {
     el = root;
-    el.innerHTML = `<div class="tbl-wrap"><div class="tbl-head" data-bar></div><div class="tbl-body"><div class="scroll" data-body></div>${infoCard(`<h2>Reading a comparison</h2><p>Each row is something A or B has. <b>Only in A</b> and <b>only in B</b> mark what the other one is missing; <b>differs</b> means both have it, set up differently, and the tags in black are the ones the other side lacks.</p><p>Turn on <b>only differences</b> to hide everything they share. Names lead to the graph, and back brings you here again.</p>`)}</div></div>`;
+    el.innerHTML = `<div class="tbl-wrap"><div class="tbl-head" data-bar></div><div class="tbl-body"><div class="scroll" data-body></div>${infoCard(info())}</div></div>`;
     bar = el.querySelector('[data-bar]');
     body = el.querySelector('[data-body]');
   }
@@ -210,6 +211,10 @@ const DiffView = (() => {
   return {
     id: 'diff',
     label: 'Diff',
+    crossLink: 'Compare',
+    // Whatever one of its types holds.
+    kinds: Object.keys(KIND).filter(k => TYPES.some(t => t.index === KIND[k].index)),
+    info,
     mount,
     // keys: "<type>", "<kind>:<uid>" for A, or "<kind>:<uid>/<kind>:<uid>" for A and B
     show(key) {
@@ -221,7 +226,6 @@ const DiffView = (() => {
       drawBar();
       drawBody();
     },
-    escape() {},
     refresh() { drawBody(); },
   };
-})();
+})());

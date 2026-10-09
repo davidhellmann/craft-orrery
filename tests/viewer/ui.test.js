@@ -7,16 +7,16 @@ const { loadViewer } = require('./load');
 const rowWithLabel = (key, label) => new RegExp(`data-go="${key}">(?:(?!data-go).)*“${label}”`);
 
 test('a page’s address is the site’s base URL with the URI', () => {
-  const { by, siteUrl } = loadViewer();
+  const { byUid, siteUrl } = loadViewer();
 
-  assert.equal(siteUrl(by.site['site-de'], 'aktuelles/{slug}'), 'https://museum.test/de/aktuelles/{slug}');
-  assert.equal(siteUrl(by.site['site-shop'], 'products/{slug}'), 'https://shop.museum.test/products/{slug}');
+  assert.equal(siteUrl(byUid.site['site-de'], 'aktuelles/{slug}'), 'https://museum.test/de/aktuelles/{slug}');
+  assert.equal(siteUrl(byUid.site['site-shop'], 'products/{slug}'), 'https://shop.museum.test/products/{slug}');
 });
 
 test('the homepage’s address is the site’s base URL', () => {
-  const { by, siteUrl } = loadViewer();
+  const { byUid, siteUrl } = loadViewer();
 
-  assert.equal(siteUrl(by.site['site-en'], '__home__'), 'https://museum.test/');
+  assert.equal(siteUrl(byUid.site['site-en'], '__home__'), 'https://museum.test/');
 });
 
 test('a site without a base URL shows its name instead', () => {
@@ -72,8 +72,61 @@ test('field layouts outside the graph open in the Layout view', () => {
   });
 });
 
-test('the graph’s legend only shows what is on the map', () => {
-  const { legendHTML } = loadViewer();
+test('a search finds a name or a handle by any part of it, whatever its case', () => {
+  const { byUid, matchesSearch } = loadViewer();
+  const article = byUid.et['et-article'];
 
-  assert.deepEqual([...legendHTML().matchAll(/<\/span>([^<]+)<\/span>/g)].map(m => m[1]), ['Site Groups', 'Sites', 'Sections', 'Pages', 'Builders', 'Blocks', 'Fields']);
+  assert.equal(matchesSearch(article, 'artic'), true);
+  assert.equal(matchesSearch(article, 'page_'), true);
+  assert.equal(matchesSearch(article, 'news'), false);
+  assert.equal(matchesSearch(byUid.fieldlayout.users, 'user'), true);
+});
+
+test('an empty search finds everything', () => {
+  const { byUid, matchesSearch } = loadViewer();
+
+  assert.equal(matchesSearch(byUid.et['et-article'], ''), true);
+});
+
+test('a name of its own that a section or Builder gives an entry type counts only if it differs', () => {
+  const { byUid, perUseName } = loadViewer();
+  const quote = byUid.et['et-quote'];
+
+  assert.equal(perUseName(quote, 'Pull quote'), 'Pull quote');
+  assert.equal(perUseName(quote, 'Quote'), '');
+  assert.equal(perUseName(quote, undefined), '');
+});
+
+test('an entry type with a name of its own somewhere is noted as that name there', () => {
+  const { byUid, perUseNote } = loadViewer();
+  const quote = byUid.et['et-quote'];
+
+  assert.equal(perUseNote(quote, 'Pull quote'), 'as “Pull quote”');
+  assert.equal(perUseNote(quote, 'Quote'), '');
+});
+
+test('a section lists its entry types under the name it gives them, the others with their handle', () => {
+  const { byUid, sectionEntryTypes } = loadViewer();
+  const html = sectionEntryTypes(byUid.section['section-news']);
+
+  assert.match(html, /data-go="page:et-article">(?:(?!data-go).)*<span class="note">as “News article”<\/span>/);
+});
+
+test('a Block’s details name the Builders it is in, under the name it gets there, or its group', () => {
+  const { nodeOf, detailHTML } = loadViewer();
+  const html = detailHTML(nodeOf('block:et-quote'));
+
+  assert.match(html, /data-go="matrix:field-page-builder">(?:(?!data-go).)*<span class="note">as “Pull quote”<\/span>/);
+  assert.match(detailHTML(nodeOf('block:et-text')), /data-go="matrix:field-page-builder">(?:(?!data-go).)*<span class="note">Text<\/span>/);
+});
+
+test('a Builder’s details list its Blocks by group, under the name each gets there', () => {
+  const { nodeOf, detailHTML } = loadViewer();
+  const html = detailHTML(nodeOf('matrix:field-page-builder'));
+  const groups = [...html.matchAll(/<div class="sub-label"[^>]*>([^<]*)<\/div>/g)].map(m => m[1]);
+  const blocks = [...html.slice(html.indexOf('<h3>Blocks')).matchAll(/data-go="(block|page):([^"]+)"/g)].map(m => m[2]);
+
+  assert.deepEqual(groups, ['Text', 'Media', 'Layout']);
+  assert.deepEqual(blocks.slice(0, 6), ['et-text', 'et-quote', 'et-image', 'et-link', 'et-teaser', 'et-columns']);
+  assert.match(html, /data-go="block:et-quote">(?:(?!data-go).)*<span class="note">as “Pull quote”<\/span>/);
 });

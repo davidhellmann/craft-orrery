@@ -1,6 +1,6 @@
 // Graph view: every site group, site, section, entry type and field as one pannable map.
 // Columns run from where content lives (left) to what it's made of (right).
-const GraphView = (() => {
+registerView((() => {
   const COLS = ['group', 'site', 'section', 'page', 'matrix', 'block', 'field'];
   const COL_W = 230, COL_GAP = 110, NODE_H = 30, NODE_GAP = 6, TOP = 70;
   const NS = 'http://www.w3.org/2000/svg';
@@ -10,12 +10,12 @@ const GraphView = (() => {
   // ---- graph: containment edges drive the lineage, relation edges are followed one hop only
   const nodes = {}, edges = [];
   const add = (kind, obj) => { const key = keyOf(kind, obj.uid); nodes[key] = { key, kind, obj, x: 0, y: 0, down: [], up: [], refs: [], refBy: [] }; };
-  M.siteGroups.forEach(g => add('group', g));
-  M.sites.forEach(s => add('site', s));
-  M.sections.forEach(s => add('section', s));
+  model.siteGroups.forEach(g => add('group', g));
+  model.sites.forEach(s => add('site', s));
+  model.sections.forEach(s => add('section', s));
   // Unused entry types hang from nothing, so they stay off the map; Worth a look lists them.
-  M.entryTypes.filter(e => COLS.includes(e.kind)).forEach(e => add(e.kind, e));
-  M.fields.forEach(f => add(f.kind, f));
+  model.entryTypes.filter(e => COLS.includes(e.kind)).forEach(e => add(e.kind, e));
+  model.fields.forEach(f => add(f.kind, f));
   const seen = new Set();
   const link = (a, b, type = 'contain') => {
     if (!nodes[a] || !nodes[b] || a === b || seen.has(a + '>' + b)) return;
@@ -23,14 +23,14 @@ const GraphView = (() => {
     edges.push({ a, b, type });
     if (type === 'contain') { nodes[a].down.push(b); nodes[b].up.push(a); } else { nodes[a].refs.push(b); nodes[b].refBy.push(a); }
   };
-  M.sites.forEach(s => link(keyOf('group', s.group), keyOf('site', s.uid)));
-  M.sections.forEach(s => {
+  model.sites.forEach(s => link(keyOf('group', s.group), keyOf('site', s.uid)));
+  model.sections.forEach(s => {
     s.sites.forEach(ss => link(keyOf('site', ss.site), keyOf('section', s.uid)));
-    s.entryTypes.forEach(u => by.et[u] && link(keyOf('section', s.uid), etKey(by.et[u])));
+    s.entryTypes.forEach(u => byUid.et[u] && link(keyOf('section', s.uid), etKey(byUid.et[u])));
   });
-  M.entryTypes.forEach(e => customElements(e.tabs).forEach(({ f }) => link(etKey(e), fieldKey(f))));
-  M.fields.forEach(f => {
-    (f.blocks || []).forEach(b => by.et[b.entryType] && link(fieldKey(f), etKey(by.et[b.entryType])));
+  model.entryTypes.forEach(e => customElements(e.tabs).forEach(({ f }) => link(etKey(e), fieldKey(f))));
+  model.fields.forEach(f => {
+    (f.blocks || []).forEach(b => byUid.et[b.entryType] && link(fieldKey(f), etKey(byUid.et[b.entryType])));
     customElements(f.tabs).forEach(({ f: inner }) => link(fieldKey(f), fieldKey(inner)));
     f.targets.forEach(s => link(fieldKey(f), keyOf('section', s.uid), 'ref'));
   });
@@ -117,9 +117,9 @@ const GraphView = (() => {
     });
   }
   function edgePath(a, b) {
-    const ax = a.x + COL_W, ay = a.y + NODE_H / 2, bx = b.x, byy = b.y + NODE_H / 2;
+    const ax = a.x + COL_W, ay = a.y + NODE_H / 2, bx = b.x, by = b.y + NODE_H / 2;
     const dx = bx > ax ? Math.max(40, (bx - ax) / 2) : 60 + Math.abs(ax - bx) * 0.08;
-    return `M${ax},${ay} C${ax + dx},${ay} ${bx - dx},${byy} ${bx},${byy}`;
+    return `M${ax},${ay} C${ax + dx},${ay} ${bx - dx},${by} ${bx},${by}`;
   }
   function render() {
     Object.values(nodes).forEach(n => {
@@ -257,18 +257,10 @@ const GraphView = (() => {
     const dx = right > r.width - pad ? r.width - pad - right : left < pad ? pad - left : 0;
     if (dx) { view.x += dx; setView(); }
   }
-  function panel() {
-    side.classList.toggle('closed', !selected);
-    const inner = side.querySelector('.scroll');
-    inner.innerHTML = selected ? `<div class="inner">${closeButton('Close details', 'data-close')}${detailHTML(nodeOf(selected))}${crossLinks(selected, 'graph')}</div>` : '';
-    const close = inner.querySelector('[data-close]');
-    if (close) close.addEventListener('click', () => App.go('graph', null));
-    bindGo(inner, k => App.go('graph', k));
-    inner.scrollTop = 0;
-  }
-  const info = () => infoCard(`
+  const panel = () => showDetails(side, selected, 'graph', k => App.go('graph', k));
+  const info = () => `
     <h2>Reading the map</h2>
-    <div class="legend">${legendHTML()}<span><svg width="22" height="6" aria-hidden="true"><line x1="0" y1="3" x2="22" y2="3" stroke="currentColor" stroke-dasharray="4 3"/></svg>Relation</span></div>
+    <div class="legend">${COLS.map(k => `<span>${glyph(k)}${KIND[k].plural}</span>`).join('')}<span><svg width="22" height="6" aria-hidden="true"><line x1="0" y1="3" x2="22" y2="3" stroke="currentColor" stroke-dasharray="4 3"/></svg>Relation</span></div>
     <p>Left to right is where content lives: site groups have sites, sites have sections, sections hold pages.</p>
     <p>Pages are made of fields. Builders (matrix fields) hold blocks, and blocks are made of fields again. Dashed lines are relations, a field that pulls entries from another section.</p>
     <p>Click anything to light up what it’s connected to. <b>Isolate</b> lays out only that part.</p>
@@ -280,7 +272,7 @@ const GraphView = (() => {
       <div class="row"><span class="grow">Fields not used anywhere</span><b>${unusedFields.length}</b></div>
     </div>
     ${unusedEntryTypes.length ? `<h3>Unused entry types</h3><div class="list">${unusedEntryTypes.map(e => row(etKey(e), note(esc(e.handle)))).join('')}</div>` : ''}
-    ${unusedFields.length ? `<h3>Unused fields</h3><div class="list">${unusedFields.map(f => row(fieldKey(f), typeTag(f))).join('')}</div>` : ''}`);
+    ${unusedFields.length ? `<h3>Unused fields</h3><div class="list">${unusedFields.map(f => row(fieldKey(f), typeTag(f))).join('')}</div>` : ''}`;
 
   function mount(root) {
     el = root;
@@ -289,16 +281,16 @@ const GraphView = (() => {
         <div class="tools">
           <div class="floating toolbar">
             <input type="search" placeholder="Search name or handle  ⏎" aria-label="Search the map">
-            <select aria-label="Site group"><option value="">All site groups</option>${M.siteGroups.map(g => `<option value="${g.uid}">${esc(g.name)}</option>`).join('')}</select>
+            <select aria-label="Site group"><option value="">All site groups</option>${model.siteGroups.map(g => `<option value="${g.uid}">${esc(g.name)}</option>`).join('')}</select>
             <button class="btn" data-isolate title="Lay out only the highlighted part">Isolate</button>
             <button class="btn" data-reset>Reset</button>
           </div>
         </div>
-        ${info()}
+        ${infoCard(info())}
         <div class="zoom"><button class="btn floating" data-zoom="in" aria-label="Zoom in">+</button><button class="btn floating" data-zoom="out" aria-label="Zoom out">−</button><button class="btn floating" data-fit aria-label="Fit to screen" style="font-size:11px">Fit</button></div>
         <svg class="graph-svg"><g class="vp"><g class="cols"></g><g class="edges"></g><g class="nodes"></g></g></svg>
       </div>
-      <aside class="panel"><div class="scroll" style="flex:1"></div></aside>`;
+      ${PANEL_HTML}`;
     wrap = el.querySelector('.map');
     svg = el.querySelector('.graph-svg');
     vp = el.querySelector('.vp');
@@ -350,7 +342,7 @@ const GraphView = (() => {
     svg.addEventListener('pointercancel', () => { drag = null; wrap.classList.remove('panning'); });
 
     const search = el.querySelector('input[type=search]');
-    const matches = q => Object.values(nodes).filter(n => n.obj.name.toLowerCase().includes(q) || (n.obj.handle || '').toLowerCase().includes(q));
+    const matches = q => Object.values(nodes).filter(n => matchesSearch(n.obj, q));
     search.addEventListener('input', () => {
       const q = search.value.trim().toLowerCase();
       const hits = new Set(q ? matches(q) : []);
@@ -391,6 +383,10 @@ const GraphView = (() => {
   return {
     id: 'graph',
     label: 'Graph',
+    crossLink: 'Show in graph',
+    // Whatever has a column, and the user groups and schemas that light up what they reach.
+    kinds: [...COLS, ...ACCESS],
+    info,
     mount,
     show(key, opts = {}) {
       if (!fitted) { fitted = true; requestAnimationFrame(() => { fit(); if (key) centerOn(key); }); }
@@ -399,4 +395,4 @@ const GraphView = (() => {
     escape() { if (selected) App.go('graph', null); },
     refresh() { drawMarks(); panel(); },
   };
-})();
+})());

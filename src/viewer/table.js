@@ -1,19 +1,17 @@
 // Table view: which field sits where. Flip to entry types to read it the other way round.
-const TableView = (() => {
+registerView((() => {
   let el, body, side, countEl;
   const state = { mode: 'fields', q: '', type: '', kind: '', group: '', unused: false, unprefixed: false, sort: 'name', dir: 1, selected: null };
 
-  const fieldTypes = [...new Set(M.fields.map(fieldTypeLabel))].sort();
-  const fieldTypeOf = f => fieldTypeLabel(f);
-  const matchQ = o => !state.q || o.name.toLowerCase().includes(state.q) || (o.handle || '').toLowerCase().includes(state.q);
-  const usedChip = u => chip(useKey(u), u.el.label && u.el.label !== u.owner.name && u.el.label !== (by.field[u.el.field] || {}).name ? ` <em>“${esc(u.el.label)}”</em>` : '');
+  const fieldTypes = [...new Set(model.fields.map(fieldTypeLabel))].sort();
+  const usedChip = u => chip(useKey(u), u.el.label && u.el.label !== u.owner.name && u.el.label !== (byUid.field[u.el.field] || {}).name ? ` <em>“${esc(u.el.label)}”</em>` : '');
   const fieldChip = ({ el: e, f }) => chip(fieldKey(f), e.label && e.label !== f.name ? ` <em>“${esc(e.label)}”</em>` : '');
 
   const COLUMNS = {
     fields: [
       { id: 'name', label: 'Field', sort: f => f.name, w: '20%' },
       { id: 'handle', label: 'Handle', sort: f => f.handle, w: '17%' },
-      { id: 'type', label: 'Type', sort: f => fieldTypeOf(f), w: '120px' },
+      { id: 'type', label: 'Type', sort: f => fieldTypeLabel(f), w: '120px' },
       { id: 'uses', label: 'Uses', sort: f => f.usedIn.length, num: true, w: '64px' },
       { id: 'where', label: 'Used in' },
     ],
@@ -29,9 +27,9 @@ const TableView = (() => {
 
   function rows() {
     if (state.mode === 'fields') {
-      return M.fields.filter(f => matchQ(f) && (!state.type || fieldTypeOf(f) === state.type) && (!state.unused || !f.usedIn.length) && (!state.group || groupsOfField(f).has(state.group)));
+      return model.fields.filter(f => matchesSearch(f, state.q) && (!state.type || fieldTypeLabel(f) === state.type) && (!state.unused || !f.usedIn.length) && (!state.group || groupsOfField(f).has(state.group)));
     }
-    return M.entryTypes.filter(e => matchQ(e) && (!state.kind || e.kind === state.kind) && (!state.unprefixed || !e.conventionOk) && (!state.group || groupsOfEt(e).has(state.group)));
+    return model.entryTypes.filter(e => matchesSearch(e, state.q) && (!state.kind || e.kind === state.kind) && (!state.unprefixed || !e.conventionOk) && (!state.group || groupsOfEt(e).has(state.group)));
   }
   function cells(o) {
     if (state.mode === 'fields') {
@@ -41,7 +39,7 @@ const TableView = (() => {
     const key = etKey(o), els = customElements(o.tabs);
     const lives = o.kind === 'page'
       ? o.sections.map(s => chip(keyOf('section', s.uid))).join('')
-      : o.builders.map(b => chip(fieldKey(b.field), b.context && b.context !== o.name ? ` <em>as “${esc(b.context)}”</em>` : '')).join('');
+      : o.builders.map(b => chip(fieldKey(b.field), perUseName(o, b.context) ? ` <em>${esc(perUseNote(o, b.context))}</em>` : '')).join('');
     return [key, `<td class="name">${glyph(o.kind)} ${esc(o.name)}${accessMarks(key)}</td><td><code class="faint">${esc(o.handle)}</code> ${prefixTag(o)}</td><td><span class="tag">${KIND[o.kind].label}</span></td><td><div class="chips">${lives || '<span class="faint">—</span>'}</div></td><td class="num">${els.length}</td><td><div class="chips">${els.map(fieldChip).join('')}</div></td>`];
   }
 
@@ -65,7 +63,7 @@ const TableView = (() => {
   }
   function filters() {
     const f = el.querySelector('[data-filters]');
-    const groups = `<select data-f="group" aria-label="Site group"><option value="">All site groups</option>${M.siteGroups.map(g => `<option value="${g.uid}" ${g.uid === state.group ? 'selected' : ''}>${esc(g.name)}</option>`).join('')}</select>`;
+    const groups = `<select data-f="group" aria-label="Site group"><option value="">All site groups</option>${model.siteGroups.map(g => `<option value="${g.uid}" ${g.uid === state.group ? 'selected' : ''}>${esc(g.name)}</option>`).join('')}</select>`;
     f.innerHTML = state.mode === 'fields'
       ? `<select data-f="type" aria-label="Field type"><option value="">All types</option>${fieldTypes.map(t => `<option ${t === state.type ? 'selected' : ''}>${esc(t)}</option>`).join('')}</select>
          ${groups}
@@ -83,15 +81,8 @@ const TableView = (() => {
     filters();
     draw();
   }
-  function panel() {
-    side.classList.toggle('closed', !state.selected);
-    const inner = side.querySelector('.scroll');
-    const n = nodeOf(state.selected);
-    inner.innerHTML = n ? `<div class="inner">${closeButton('Close details', 'data-close')}${detailHTML(n)}${crossLinks(n.key, 'table')}</div>` : '';
-    bindGo(inner, k => App.go('table', k));
-    const close = inner.querySelector('[data-close]');
-    if (close) close.addEventListener('click', () => App.go('table', null));
-  }
+  const panel = () => showDetails(side, state.selected, 'table', k => App.go('table', k));
+  const info = () => '<h2>Fields and where they sit</h2><p>Every field with each layout it’s placed in. A label in quotes is what that layout calls the field.</p><p>Switch to <b>Entry types</b> to read it from the other side: each page or block with its fields.</p><p>Click a row or a chip for details.</p>';
 
   function mount(root) {
     el = root;
@@ -107,10 +98,10 @@ const TableView = (() => {
         </div>
         <div class="tbl-body">
           <div class="scroll" data-body></div>
-          ${infoCard(`<h2>Fields and where they sit</h2><p>Every field with each layout it’s placed in. A label in quotes is what that layout calls the field.</p><p>Switch to <b>Entry types</b> to read it from the other side: each page or block with its fields.</p><p>Click a row or a chip for details.</p>`)}
+          ${infoCard(info())}
         </div>
       </div>
-      <aside class="panel"><div class="scroll" style="flex:1"></div></aside>`;
+      ${PANEL_HTML}`;
     body = el.querySelector('[data-body]');
     side = el.querySelector('.panel');
     countEl = el.querySelector('.tbl-count');
@@ -125,6 +116,10 @@ const TableView = (() => {
   return {
     id: 'table',
     label: 'Table',
+    crossLink: 'Show in table',
+    // Fields and whatever holds them in a field layout.
+    kinds: Object.keys(KIND).filter(k => isField(k) || isEntryType(k) || isLayoutOwner(k)),
+    info,
     mount,
     show(key, opts = {}) {
       const n = nodeOf(key);
@@ -142,4 +137,4 @@ const TableView = (() => {
     escape() { if (state.selected) App.go('table', null); },
     refresh() { draw(); panel(); },
   };
-})();
+})());
