@@ -5,36 +5,34 @@ namespace davidhellmann\orrery\tests;
 use PHPUnit\Framework\TestCase;
 
 /**
- * Orrery speaks English and German: `src/translations/en/orrery.php` has every message, by its English, and the German
- * file translates each of them.
+ * Orrery's control panel strings go through Craft's translation, so a project can word them its own way:
+ * `src/translations/en/orrery.php` has every message the code asks for, by its English, and nothing else.
  */
 class TranslationsTest extends TestCase
 {
     private const SRC = __DIR__ . '/../src';
 
     /**
-     * How the code asks for a message: `t('…')` and `tn(n, '…', '…')` in the viewer, `'…'|t('orrery')` in templates,
-     * `Craft::t('orrery', '…')` in PHP.
+     * How the code asks for a message: `'…'|t('orrery')` in templates, `Craft::t('orrery', '…')` in PHP.
      */
     private const ASKS = [
-        'js' => ["/\\bt\\('((?:[^'\\\\]|\\\\.)*)'/", "/\\btn\\([^,()]+, '((?:[^'\\\\]|\\\\.)*)', '((?:[^'\\\\]|\\\\.)*)'/"],
         'twig' => ["/'((?:[^'\\\\]|\\\\.)*)'\\|t\\('orrery'/"],
         'php' => ["/Craft::t\\('orrery', '((?:[^'\\\\]|\\\\.)*)'/"],
     ];
 
     public function testEveryMessageOrreryAsksForIsInEnglish(): void
     {
-        $this->assertSame([], array_values(array_diff($this->askedFor(), array_keys($this->messages('en')))));
+        $this->assertSame([], array_values(array_diff($this->askedFor(), array_keys($this->messages()))));
     }
 
     public function testEnglishHasNoMessageNobodyAsksFor(): void
     {
-        $this->assertSame([], array_values(array_diff(array_keys($this->messages('en')), $this->askedFor())));
+        $this->assertSame([], array_values(array_diff(array_keys($this->messages()), $this->askedFor())));
     }
 
     public function testEnglishMessagesAreTheirOwnEnglish(): void
     {
-        $english = $this->messages('en');
+        $english = $this->messages();
 
         $this->assertSame(array_keys($english), array_values($english));
     }
@@ -44,24 +42,22 @@ class TranslationsTest extends TestCase
      */
     public function testNoTwoMessagesDifferOnlyInCase(): void
     {
-        $english = array_keys($this->messages('en'));
+        $english = array_keys($this->messages());
 
         $this->assertSame([], array_values(array_diff_key($english, array_unique(array_map('mb_strtolower', $english)))));
     }
 
-    public function testGermanHasEveryMessageEnglishHas(): void
+    /**
+     * Orrery is in English only.
+     */
+    public function testEnglishIsTheOnlyLanguage(): void
     {
-        $this->assertSame([], array_values(array_diff(array_keys($this->messages('en')), array_keys($this->messages('de')))));
+        $this->assertSame(['en'], array_values(array_diff(scandir(self::SRC . '/translations'), ['.', '..'])));
     }
 
-    public function testGermanHasNoMessageEnglishLacks(): void
+    private function messages(): array
     {
-        $this->assertSame([], array_values(array_diff(array_keys($this->messages('de')), array_keys($this->messages('en')))));
-    }
-
-    private function messages(string $language): array
-    {
-        return require self::SRC . "/translations/$language/orrery.php";
+        return require self::SRC . '/translations/en/orrery.php';
     }
 
     /**

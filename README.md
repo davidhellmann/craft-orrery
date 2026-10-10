@@ -44,11 +44,7 @@ php craft plugin/install orrery
 
 Orrery adds its own section to the control panel. Use *Fullscreen* for more room, *Open in new tab* for a page of its own, or *Download* to save the whole map as one HTML file that opens without Craft.
 
-Users need the *Access Orrery* permission to see it.
-
-### Languages
-
-Orrery speaks English and German. The viewer follows each user’s control panel language, dates included, and is in English for any other language. A downloaded file keeps the language of whoever downloaded it; the console export is always English.
+Users need the *Access Orrery* permission to see it. The viewer is in English, field types included, whatever language the control panel is in.
 
 ### Export
 
@@ -98,7 +94,7 @@ Then `composer require davidhellmann/craft-orrery` and `php craft plugin/install
 
 The viewer tests read that data as the viewer gets it, with environment values resolved, from a copy in `tests/fixtures/content-model.json`. After changing the project config or what the content model makes of it, `UPDATE_FIXTURES=1 composer test` writes the copy again.
 
-The viewer in `src/viewer/` is plain JavaScript and CSS. Orrery inlines it into one page together with the data and its messages in the user’s language, so there’s no build step. Every message is in `src/translations/en/orrery.php`, keyed by its English, with its German in `de/orrery.php`; `composer test` fails when the code asks for a message English lacks, or German lacks one English has. Each view is one file that registers itself with `registerView()` (see `ui.js`); a new view needs only its file and its name in `Viewer::SCRIPTS`, before `app`.
+The viewer in `src/viewer/` is plain JavaScript and CSS. Orrery inlines it into one page together with the data, so there’s no build step. Each view is one file that registers itself with `registerView()` (see `ui.js`); a new view needs only its file and its name in `Viewer::SCRIPTS`, before `app`.
 
 ## License
 
