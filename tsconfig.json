@@ -5,11 +5,12 @@
     "allowJs": true,
     "checkJs": true,
     "noEmit": true,
+    // TypeScript 7 turns strict on by default, and it would want a type on every parameter of plain JavaScript.
     "strict": false,
     "noUnusedLocals": true,
     "noUnusedParameters": true,
     "target": "es2022",
     "lib": ["es2022", "dom", "dom.iterable"]
   },
-  "include": ["src/viewer/*.js", "tests/viewer/page.d.ts"]
+  "include": ["src/viewer/*.js", "src/viewer/page.d.ts"]
 }

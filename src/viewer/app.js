@@ -20,11 +20,11 @@ const App = (() => {
     return { view: VIEWS.find(v => v.id === view) ? view : VIEWS[0].id, key: rest.join('/') || null };
   };
   // The element matching `selector` that an event happened in, if any.
-  const targetIn = (ev, selector) => (ev.target instanceof Element ? ev.target.closest(selector) : null);
+  const closestTarget = (ev, selector) => (ev.target instanceof Element ? ev.target.closest(selector) : null);
 
   // In-page links (#view/key) go through the viewer's own history.
   document.addEventListener('click', ev => {
-    const a = targetIn(ev, 'a[href^="#"]');
+    const a = closestTarget(ev, 'a[href^="#"]');
     if (!a || ev.metaKey || ev.ctrlKey || ev.shiftKey) return;
     ev.preventDefault();
     const { view, key } = parse(a.getAttribute('href'));
@@ -80,7 +80,7 @@ const App = (() => {
   document.addEventListener('keydown', ev => {
     if (ev.key !== 'Escape') return;
     if (closePickers()) return;
-    if (active && active.escape && !targetIn(ev, 'input, select, textarea')) active.escape();
+    if (active && active.escape && !closestTarget(ev, 'input, select, textarea')) active.escape();
   });
 
   // access pickers: switch user groups and GraphQL schemas on as a layer, remembered per browser
@@ -138,7 +138,7 @@ const App = (() => {
     bindGo(pop, key => { closePickers(); go(active ? active.id : VIEWS[0].id, key); });
     syncPicker(p);
   });
-  document.addEventListener('pointerdown', ev => { if (!targetIn(ev, '.picker')) closePickers(); });
+  document.addEventListener('pointerdown', ev => { if (!closestTarget(ev, '.picker')) closePickers(); });
 
   // header
   const STATS = ['group', 'site', 'section', 'page', 'block', 'matrix', 'field'];
@@ -175,7 +175,7 @@ const App = (() => {
     setInfo(open);
   }
   infoBtn.addEventListener('click', () => toggleInfo(!document.documentElement.classList.contains('show-info')));
-  document.addEventListener('click', ev => { if (targetIn(ev, '[data-info-close]')) toggleInfo(false); });
+  document.addEventListener('click', ev => { if (closestTarget(ev, '[data-info-close]')) toggleInfo(false); });
   let infoOpen = false;
   try { infoOpen = localStorage.getItem('orrery-info') === 'shown'; } catch (e) {}
   setInfo(infoOpen);

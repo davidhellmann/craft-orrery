@@ -13,8 +13,12 @@ const { loadViewer } = require('../viewer/load.js');
 const ROOT = path.join(__dirname, '../..');
 const ORIGIN = 'http://orrery.test';
 const WORKERS = 6;
-const LISTED = 30;
-const SHOWN = 3;
+// How many differing links the summary lists, and for how many of them it shows where the snapshots part.
+const LINKS_LISTED = 30;
+const EXCERPTS_SHOWN = 3;
+// A page is settled once it hasn't changed for QUIET_MS, or after SETTLE_LIMIT_MS at the latest.
+const QUIET_MS = 300;
+const SETTLE_LIMIT_MS = 5000;
 
 async function main(ref = 'HEAD') {
   if (ref === '--help' || ref === '-h') return console.log('Usage: npm run snapshots -- [ref]   (compares the working tree with ref, HEAD by default)'), 0;
@@ -59,9 +63,9 @@ async function main(ref = 'HEAD') {
   if (differ.length) {
     fs.writeFileSync(path.join(out, 'differ.txt'), differ.map(d => `${d.what}\n`).join(''));
     console.log(`\n✗ ${differ.length} differ ("access" = ${passes[1].label}):`);
-    differ.slice(0, LISTED).forEach(d => console.log(`  ${d.what}`));
-    if (differ.length > LISTED) console.log(`  … ${differ.length - LISTED} more, listed in ${path.join(out, 'differ.txt')}`);
-    differ.slice(0, SHOWN).forEach(d => console.log(`\n${d.what}\n${excerpt(d.a, d.b, ref)}`));
+    differ.slice(0, LINKS_LISTED).forEach(d => console.log(`  ${d.what}`));
+    if (differ.length > LINKS_LISTED) console.log(`  … ${differ.length - LINKS_LISTED} more, listed in ${path.join(out, 'differ.txt')}`);
+    differ.slice(0, EXCERPTS_SHOWN).forEach(d => console.log(`\n${d.what}\n${excerpt(d.a, d.b, ref)}`));
   }
   if (errors.length) {
     console.log(`\n✗ ${errors.length} console errors:`);
@@ -95,24 +99,23 @@ function side(label, root, dir) {
   const html = path.join(dir, 'page.html');
   execFileSync('php', [path.join(__dirname, 'page.php'), root, html], { stdio: ['ignore', 'inherit', 'inherit'] });
   const s = { label, dir, html: fs.readFileSync(html), styles: fs.readFileSync(path.join(root, 'src/viewer/viewer.css'), 'utf8'), links: [], access: null, shots: {} };
-  // Viewers older than registerView() can't list their links; the other side's links and access layers then do for both.
-  let scope;
+  // Reading a name that a viewer older than registerView() lacks throws; then the other side's links and access layers
+  // do for both.
+  let VIEWS, ACCESS, ofKind, keyOf;
   try {
-    scope = loadViewer({ root });
-    scope.VIEWS.forEach(() => {});
+    ({ VIEWS, ACCESS, ofKind, keyOf } = loadViewer({ root }));
   } catch (e) {
     console.log(`Note: the links come from the other side only, as the ${label}'s views can't be listed in Node (${e.message}).`);
     return s;
   }
-  const { VIEWS, ACCESS, ofKind } = scope;
   s.links.push('');
   for (const v of VIEWS) {
     s.links.push(`#${v.id}`);
     for (const kind of v.kinds) {
-      const items = ofKind(kind);
-      items.forEach(o => s.links.push(`#${v.id}/${kind}:${o.uid}`));
-      // The Diff also takes two items, A and B.
-      if (v.id === 'diff' && items.length > 1) s.links.push(`#diff/${kind}:${items[0].uid}/${kind}:${items[1].uid}`);
+      const keys = ofKind(kind).map(o => keyOf(kind, o.uid));
+      keys.forEach(key => s.links.push(`#${v.id}/${key}`));
+      // The Diff also takes two items, A and B (docs/viewer.md).
+      if (v.id === 'diff' && keys.length > 1) s.links.push(`#diff/${keys[0]}/${keys[1]}`);
     }
   }
   s.access = Object.fromEntries(ACCESS.map(kind => [kind, ofKind(kind).map(o => o.uid)]));
@@ -148,14 +151,14 @@ async function shoot(browser, s, links, storage) {
 
 // Waits until the page has stopped changing for a moment.
 function settle(page) {
-  return page.evaluate(() => document.fonts.ready.then(() => new Promise(resolve => {
+  return page.evaluate(([quietMs, limitMs]) => document.fonts.ready.then(() => new Promise(resolve => {
     let quiet;
     const done = () => { observer.disconnect(); clearTimeout(quiet); clearTimeout(limit); resolve(); };
-    const observer = new MutationObserver(() => { clearTimeout(quiet); quiet = setTimeout(done, 300); });
+    const observer = new MutationObserver(() => { clearTimeout(quiet); quiet = setTimeout(done, quietMs); });
     observer.observe(document, { subtree: true, childList: true, attributes: true, characterData: true });
-    quiet = setTimeout(done, 300);
-    const limit = setTimeout(done, 5000);
-  })));
+    quiet = setTimeout(done, quietMs);
+    const limit = setTimeout(done, limitMs);
+  })), [QUIET_MS, SETTLE_LIMIT_MS]);
 }
 
 function snapshot(page) {
@@ -181,16 +184,20 @@ function snapshot(page) {
   });
 }
 
-// Where two snapshots part: a little context, then each side's lines up to where they agree again.
+// Where two snapshots part: a little context, then each side's lines up to where they agree again, at most
+// EXCERPT_LINES of them, each cut to EXCERPT_WIDTH characters.
+const EXCERPT_LINES = 12;
+const EXCERPT_WIDTH = 200;
 function excerpt(a, b, ref) {
   const x = a.split('\n'), y = b.split('\n');
   let start = 0, end = 0;
   while (start < x.length && start < y.length && x[start] === y[start]) start++;
   while (end < x.length - start && end < y.length - start && x[x.length - 1 - end] === y[y.length - 1 - end]) end++;
-  const cut = line => (line.length > 200 ? `${line.slice(0, 200)}…` : line);
+  const cut = line => (line.length > EXCERPT_WIDTH ? `${line.slice(0, EXCERPT_WIDTH)}…` : line);
   const changed = (lines, sign) => {
     const own = lines.slice(start, lines.length - end);
-    return [...own.slice(0, 12).map(l => `${sign} ${cut(l)}`), ...(own.length > 12 ? [`${sign} … ${own.length - 12} more lines`] : [])];
+    const more = own.length - EXCERPT_LINES;
+    return [...own.slice(0, EXCERPT_LINES).map(l => `${sign} ${cut(l)}`), ...(more > 0 ? [`${sign} … ${more} more lines`] : [])];
   };
   return [`--- ${ref}`, '+++ working tree', ...x.slice(Math.max(0, start - 2), start).map(l => `  ${cut(l)}`), ...changed(x, '-'), ...changed(y, '+')].join('\n');
 }
@@ -210,14 +217,13 @@ async function launch() {
 function cachedChromium() {
   const home = os.homedir();
   const cache = process.env.PLAYWRIGHT_BROWSERS_PATH
-    || { darwin: path.join(home, 'Library/Caches/ms-playwright'), win32: path.join(process.env.LOCALAPPDATA || home, 'ms-playwright') }[process.platform]
-    || path.join(home, '.cache/ms-playwright');
+    || path.join(home, process.platform === 'darwin' ? 'Library/Caches/ms-playwright' : '.cache/ms-playwright');
   if (!fs.existsSync(cache)) return null;
   const shells = fs.readdirSync(cache).filter(d => d.startsWith('chromium_headless_shell-')).sort((a, b) => b.split('-')[1] - a.split('-')[1]);
   for (const shell of shells) {
     for (const sub of fs.readdirSync(path.join(cache, shell))) {
-      const exe = ['chrome-headless-shell', 'chrome-headless-shell.exe'].map(name => path.join(cache, shell, sub, name)).find(f => fs.existsSync(f));
-      if (exe) return exe;
+      const exe = path.join(cache, shell, sub, 'chrome-headless-shell');
+      if (fs.existsSync(exe)) return exe;
     }
   }
   return null;

@@ -5,18 +5,21 @@ namespace davidhellmann\orrery\tests;
 use craft\web\Controller;
 use PHPUnit\Framework\Attributes\DataProvider;
 use PHPUnit\Framework\TestCase;
+use RecursiveDirectoryIterator;
+use RecursiveIteratorIterator;
 use ReflectionMethod;
 
 /**
  * Craft checks a plugin's permission for its control panel templates, but not for its controller actions, which anyone
  * logged in could reach through `actions/…` or `?action=`. So every web controller of the plugin turns other requests
  * away itself, before any action runs: in its own `beforeAction()`, after Craft's checks, it requires a control panel
- * request and *Access Orrery*. A running Craft would be needed to send it requests, so this test reads the code.
+ * request and *Access Orrery*, in either order. A running Craft would be needed to send it requests, so this test reads
+ * the code.
  */
 class WebControllersTest extends TestCase
 {
-    private const CHECKS = [
-        'parent::beforeAction(',
+    private const CRAFT_CHECK = 'parent::beforeAction(';
+    private const PLUGIN_CHECKS = [
         '$this->requireCpRequest()',
         "\$this->requirePermission('accessPlugin-orrery')",
     ];
@@ -26,10 +29,11 @@ class WebControllersTest extends TestCase
      */
     public static function webControllers(): array
     {
+        $dir = dirname(__DIR__) . '/src/controllers';
         $controllers = [];
-        foreach (glob(dirname(__DIR__) . '/src/controllers/*.php') ?: [] as $file) {
-            $class = 'davidhellmann\\orrery\\controllers\\' . basename($file, '.php');
-            if (is_subclass_of($class, Controller::class)) {
+        foreach (new RecursiveIteratorIterator(new RecursiveDirectoryIterator($dir, RecursiveDirectoryIterator::SKIP_DOTS)) as $file) {
+            $class = 'davidhellmann\\orrery\\controllers\\' . str_replace('/', '\\', substr($file->getPathname(), strlen($dir) + 1, -4));
+            if ($file->getExtension() === 'php' && is_subclass_of($class, Controller::class)) {
                 $controllers[$class] = [$class];
             }
         }
@@ -47,12 +51,12 @@ class WebControllersTest extends TestCase
         $this->assertSame($class, $method->getDeclaringClass()->getName(), "$class has no beforeAction() of its own, so it doesn't check access.");
 
         $code = $this->code($method);
-        $at = -1;
-        foreach (self::CHECKS as $check) {
+        $craft = strpos($code, self::CRAFT_CHECK);
+        $this->assertNotFalse($craft, "$class::beforeAction() skips Craft's own checks (`" . self::CRAFT_CHECK . '`).');
+        foreach (self::PLUGIN_CHECKS as $check) {
             $found = strpos($code, $check);
-            $this->assertNotFalse($found, "$class::beforeAction() lacks `$check`. Its checks: " . implode(', then ', self::CHECKS) . '.');
-            $this->assertGreaterThan($at, $found, "$class::beforeAction() runs `$check` too early. Its checks: " . implode(', then ', self::CHECKS) . '.');
-            $at = $found;
+            $this->assertNotFalse($found, "$class::beforeAction() lacks `$check`.");
+            $this->assertGreaterThan($craft, $found, "$class::beforeAction() runs `$check` before Craft's own checks.");
         }
     }
 

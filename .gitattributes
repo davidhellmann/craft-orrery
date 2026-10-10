@@ -15,6 +15,7 @@ package.json export-ignore
 phpstan.neon export-ignore
 phpunit.xml.dist export-ignore
 resources/ export-ignore
+src/viewer/page.d.ts export-ignore
 tests/ export-ignore
 tsconfig.json export-ignore
 
