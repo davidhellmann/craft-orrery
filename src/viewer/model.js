@@ -42,6 +42,7 @@ const fieldTypeLabel = f => f.typeLabel || f.type;
 const PREFIX = model.prefixes;
 const checksHandles = PREFIX.page.length > 0 || PREFIX.block.length > 0;
 
+/** @type {Record<string, Record<string, any>>} */
 const byUid = Object.fromEntries(Object.values(KIND).map(k => [k.index, {}]));
 model.siteGroups.forEach(g => { byUid.group[g.uid] = g; g.kind = 'group'; g.sites = []; });
 model.sites.forEach(s => { byUid.site[s.uid] = s; s.kind = 'site'; s.sections = []; if (byUid.group[s.group]) byUid.group[s.group].sites.push(s); });
@@ -86,7 +87,7 @@ function blockGroups(f) {
 }
 
 // The custom fields in a field layout's tabs, each with the field it places and the tab it's on.
-const customElements = tabs => (tabs || []).flatMap(tab => tab.elements.filter(el => el.kind === 'CustomField' && byUid.field[el.field]).map(el => ({ el, f: byUid.field[el.field], tab })));
+const layoutFields = tabs => (tabs || []).flatMap(tab => tab.elements.filter(el => el.kind === 'CustomField' && byUid.field[el.field]).map(el => ({ el, f: byUid.field[el.field], tab })));
 
 model.entryTypes.forEach(e => {
   e.kind = e.sections.length ? 'page' : e.builders.length ? 'block' : 'unused';
@@ -98,7 +99,7 @@ model.entryTypes.forEach(e => {
 // Whatever has a field layout uses the fields in it: entry types, ContentBlocks (and field types built on them), and
 // the field layouts outside the graph.
 [...model.entryTypes, ...model.fields, ...Object.keys(KIND).filter(isLayoutOwner).flatMap(kind => KIND[kind].layoutOwners)]
-  .forEach(owner => customElements(owner.tabs).forEach(({ el, f }) => f.usedIn.push({ owner, ownerKind: owner.kind, el })));
+  .forEach(owner => layoutFields(owner.tabs).forEach(({ el, f }) => f.usedIn.push({ owner, ownerKind: owner.kind, el })));
 
 // Craft's own fields in a field layout, and the UI elements between them, by the names Craft gives them. TextField and
 // TextareaField are the plain text fields Craft's own build on. An element a plugin adds goes by its class name.
@@ -153,7 +154,7 @@ const groupsOfField = f => new Set(ownersOfField(f).flatMap(e => [...groupsOfEt(
 function pullsFrom(e, depth = 0) {
   const out = new Set();
   if (depth > 3) return out;
-  customElements(e.tabs).forEach(({ f }) => {
+  layoutFields(e.tabs).forEach(({ f }) => {
     f.targets.forEach(s => out.add(s));
     (f.blocks || []).forEach(b => byUid.et[b.entryType] && pullsFrom(byUid.et[b.entryType], depth + 1).forEach(s => out.add(s)));
   });
@@ -167,7 +168,7 @@ const byName = (a, b) => a.name.localeCompare(b.name);
 
 // Field layouts that belong to neither a Page nor a Block, by kind and name, as far as `keep` lets them through.
 const OTHER_LAYOUTS = ['unused', ...Object.keys(KIND).filter(isLayoutOwner)];
-const otherLayouts = (keep = () => true) => OTHER_LAYOUTS.map(kind => [kind, ofKind(kind).filter(keep).sort(byName)]).filter(([, list]) => list.length);
+const otherLayouts = (keep = () => true) => OTHER_LAYOUTS.map(kind => /** @type {[string, any[]]} */ ([kind, ofKind(kind).filter(keep).sort(byName)])).filter(([, list]) => list.length);
 
 // ---- access: user groups and GraphQL schemas, a layer the header pickers switch on over every view
 const ACCESS = ['usergroup', 'schema'];

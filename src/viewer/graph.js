@@ -28,10 +28,10 @@ registerView((() => {
     s.sites.forEach(ss => link(keyOf('site', ss.site), keyOf('section', s.uid)));
     s.entryTypes.forEach(u => byUid.et[u] && link(keyOf('section', s.uid), etKey(byUid.et[u])));
   });
-  model.entryTypes.forEach(e => customElements(e.tabs).forEach(({ f }) => link(etKey(e), fieldKey(f))));
+  model.entryTypes.forEach(e => layoutFields(e.tabs).forEach(({ f }) => link(etKey(e), fieldKey(f))));
   model.fields.forEach(f => {
     (f.blocks || []).forEach(b => byUid.et[b.entryType] && link(fieldKey(f), etKey(byUid.et[b.entryType])));
-    customElements(f.tabs).forEach(({ f: inner }) => link(fieldKey(f), fieldKey(inner)));
+    layoutFields(f.tabs).forEach(({ f: inner }) => link(fieldKey(f), fieldKey(inner)));
     f.targets.forEach(s => link(fieldKey(f), keyOf('section', s.uid), 'ref'));
   });
 
@@ -226,7 +226,7 @@ registerView((() => {
   // map, like an unused entry type or a global set, what it's made of
   function reach(key) {
     const n = nodeOf(key);
-    if (!KIND[n.kind].layer) return new Set(customElements(n.obj.tabs).flatMap(({ f }) => [...subtree(fieldKey(f))]));
+    if (!KIND[n.kind].layer) return new Set(layoutFields(n.obj.tabs).flatMap(({ f }) => [...subtree(fieldKey(f))]));
     return new Set(Object.keys(nodes).filter(k => rightsOn(n.obj, n.kind, k)));
   }
   function highlight() {

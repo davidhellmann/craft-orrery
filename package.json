@@ -6,9 +6,11 @@
   },
   "scripts": {
     "test": "node --test tests/viewer/*.test.js",
+    "check": "tsc -p .",
     "snapshots": "node tests/snapshots/compare.js"
   },
   "devDependencies": {
-    "playwright-core": "^1.64.0"
+    "playwright-core": "^1.64.0",
+    "typescript": "^7.0.2"
   }
 }

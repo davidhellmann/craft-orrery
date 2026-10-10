@@ -8,6 +8,8 @@ What the code doesn't say by itself. For what it does say, read the code: each s
 
 The Node tests load the scripts the same way. `tests/viewer/load.js` reads the order from `Viewer::SCRIPTS`, so a new script is listed once, there.
 
+`npm run check` type-checks the scripts as one scope too, with TypeScript on the plain JavaScript (`tsconfig.json`). It doesn't know their order: a script that uses a later one's name while it loads passes the check and breaks the page. Where the checker can't tell an element's type, a JSDoc cast says it (`/** @type {HTMLInputElement} */ (ev.target)`).
+
 ## Where things go
 
 - **Something every kind has** (its name, its index, what it reaches, what owns a field layout) goes into the `KIND` map in `model.js`. Code that treats a group of kinds alike asks the map (`isEntryType`, `isField`, `isLayoutOwner`) instead of listing kind names, so a new kind is one entry there and lands in its group everywhere.

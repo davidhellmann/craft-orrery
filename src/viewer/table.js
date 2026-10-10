@@ -22,7 +22,7 @@ registerView((() => {
       { id: 'handle', label: 'Handle', sort: e => e.handle, w: '16%' },
       { id: 'kind', label: 'Kind', sort: e => e.kind, w: '76px' },
       { id: 'lives', label: 'Lives in', w: '22%' },
-      { id: 'uses', label: '#', sort: e => customElements(e.tabs).length, num: true, w: '52px' },
+      { id: 'uses', label: '#', sort: e => layoutFields(e.tabs).length, num: true, w: '52px' },
       { id: 'where', label: 'Fields' },
     ] },
   };
@@ -38,7 +38,7 @@ registerView((() => {
       const key = fieldKey(o);
       return [key, `<td class="name">${glyph(o.kind)} ${esc(o.name)}${accessMarks(key)}</td><td><code class="faint">${esc(o.handle)}</code></td><td>${typeTag(o)}</td><td class="num ${o.usedIn.length ? '' : 'zero'}">${o.usedIn.length}</td><td><div class="chips">${o.usedIn.map(usedChip).join('') || '<span class="faint">not used</span>'}</div></td>`];
     }
-    const key = etKey(o), els = customElements(o.tabs);
+    const key = etKey(o), els = layoutFields(o.tabs);
     const lives = o.kind === 'page'
       ? o.sections.map(s => chip(keyOf('section', s.uid))).join('')
       : o.builders.map(b => chip(fieldKey(b.field), perUseName(o, b.context) ? ` <em>${esc(perUseNote(o, b.context))}</em>` : '')).join('');

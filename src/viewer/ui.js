@@ -73,7 +73,7 @@ function fieldDetail(f) {
     }).join('')}</div>`).join('')}`;
   }
   if (f.tabs) {
-    return `<h3>Contains</h3><div class="list">${customElements(f.tabs).map(({ el, f: inner }) => row(fieldKey(inner), `${note(esc(layoutLabel(el, inner)))}${reqTag(el)}`)).join('')}</div>`;
+    return `<h3>Contains</h3><div class="list">${layoutFields(f.tabs).map(({ el, f: inner }) => row(fieldKey(inner), `${note(esc(layoutLabel(el, inner)))}${reqTag(el)}`)).join('')}</div>`;
   }
   return '';
 }
@@ -105,7 +105,7 @@ function accessDetail(n) {
 
 // The fields of a field layout, with the label each gets there.
 function layoutFieldsHTML(o) {
-  const els = customElements(o.tabs);
+  const els = layoutFields(o.tabs);
   return `<h3>Fields (${els.length})</h3><div class="list">${els.map(({ el, f }) => row(fieldKey(f), `${note(esc(layoutLabel(el, f)))}${reqTag(el)}${typeTag(f)}`)).join('')}</div>`;
 }
 

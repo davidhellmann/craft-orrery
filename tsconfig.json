@@ -1,0 +1,15 @@
+{
+  // `npm run check`: TypeScript's checker on the viewer's plain JavaScript. The files have no imports or exports, so
+  // they're scripts that share one scope, as on the page (docs/viewer.md).
+  "compilerOptions": {
+    "allowJs": true,
+    "checkJs": true,
+    "noEmit": true,
+    "strict": false,
+    "noUnusedLocals": true,
+    "noUnusedParameters": true,
+    "target": "es2022",
+    "lib": ["es2022", "dom", "dom.iterable"]
+  },
+  "include": ["src/viewer/*.js", "tests/viewer/page.d.ts"]
+}

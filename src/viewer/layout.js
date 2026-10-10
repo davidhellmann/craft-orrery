@@ -80,7 +80,7 @@ registerView((() => {
         return `<span class="blockchip" data-go="${etKey(e)}"><b>${esc(name || e.name)}</b>${name ? esc(e.name) : ''}</span>`;
       }).join('')}`).join('')}</div>`;
     }
-    if (f.tabs) return `<div class="ctl">${customElements(f.tabs).map(({ f: inner }) => chip(fieldKey(inner))).join('')}</div>`;
+    if (f.tabs) return `<div class="ctl">${layoutFields(f.tabs).map(({ f: inner }) => chip(fieldKey(inner))).join('')}</div>`;
     if (f.role === 'relation') return `<div class="ctl">→ ${f.allSources ? 'any section' : f.targets.map(s => chip(keyOf('section', s.uid))).join(' ')}${f.max ? ` <span>max ${f.max}</span>` : ''}</div>`;
     if (f.options) return `<div class="ctl">${f.options.map(o => `<span>${esc(o.label)}${o.default ? ' ●' : ''}</span>`).join('<span>·</span>')}</div>`;
     return `<div class="ctl">${esc(fieldTypeLabel(f))}</div>`;
@@ -141,7 +141,7 @@ registerView((() => {
         const pulls = [...pullsFrom(e)];
         const inner = e.tabs.flatMap(tab => tab.elements).map(x => wfItem(x, byUid.field[x.field], depth)).join('');
         const name = perUseName(e, b.context);
-        h += `<div class="blk"><div class="bh"><span class="caret"></span>${glyph('block')}<div><div class="bn">${esc(name || e.name)}</div><div class="bs">${name ? `${esc(e.name)} · ` : ''}${count(customElements(e.tabs).length, 'field', 'fields')}</div></div><span class="sp"></span>${pulls.map(s => `<span class="chip link" data-go="${keyOf('section', s.uid)}">from ${esc(s.name)}</span>`).join('')}<span class="chip link" data-go="${etKey(e)}">open</span></div><div class="bb"><div class="wf" style="margin-top:12px">${inner}</div></div></div>`;
+        h += `<div class="blk"><div class="bh"><span class="caret"></span>${glyph('block')}<div><div class="bn">${esc(name || e.name)}</div><div class="bs">${name ? `${esc(e.name)} · ` : ''}${count(layoutFields(e.tabs).length, 'field', 'fields')}</div></div><span class="sp"></span>${pulls.map(s => `<span class="chip link" data-go="${keyOf('section', s.uid)}">from ${esc(s.name)}</span>`).join('')}<span class="chip link" data-go="${etKey(e)}">open</span></div><div class="bb"><div class="wf" style="margin-top:12px">${inner}</div></div></div>`;
       });
     });
     return h + '</div>';
@@ -152,7 +152,7 @@ registerView((() => {
       : `<span class="url none">${esc(byUid.site[x.site].name)} · no URL</span>`)));
     const where = e.kind === 'block' ? e.builders.map(b => `<span class="url none">inside ${esc(b.field.name)}${perUseName(e, b.context) ? ` ${esc(perUseNote(e, b.context))}` : ''}</span>`) : [];
     const zones = e.tabs.map(tab => {
-      const hasBuilder = customElements([tab]).some(({ f }) => f.blocks);
+      const hasBuilder = layoutFields([tab]).some(({ f }) => f.blocks);
       return `<div class="zone"><span class="zl">${esc(tab.name)}${hasBuilder ? ' · content builder' : ''}</span><div class="wf">${tab.elements.map(x => wfItem(x, byUid.field[x.field], 0)).join('')}</div></div>`;
     }).join('');
     return `<div class="browser"><div class="chrome"><div class="lights"><i></i><i></i><i></i></div><div class="urls">${[...urls, ...where].join('')}</div></div><div class="pagebody">${zones || '<p class="muted">No field layout.</p>'}</div></div>`;

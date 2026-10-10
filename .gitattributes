@@ -15,6 +15,7 @@ phpstan.neon export-ignore
 phpunit.xml.dist export-ignore
 resources/ export-ignore
 tests/ export-ignore
+tsconfig.json export-ignore
 
 # Auto-detect text files and perform LF normalization
 * text=auto

@@ -19,9 +19,12 @@ const App = (() => {
     const [view, ...rest] = hash.replace(/^#/, '').split('/');
     return { view: VIEWS.find(v => v.id === view) ? view : VIEWS[0].id, key: rest.join('/') || null };
   };
+  // The element matching `selector` that an event happened in, if any.
+  const targetIn = (ev, selector) => (ev.target instanceof Element ? ev.target.closest(selector) : null);
+
   // In-page links (#view/key) go through the viewer's own history.
   document.addEventListener('click', ev => {
-    const a = ev.target.closest && ev.target.closest('a[href^="#"]');
+    const a = targetIn(ev, 'a[href^="#"]');
     if (!a || ev.metaKey || ev.ctrlKey || ev.shiftKey) return;
     ev.preventDefault();
     const { view, key } = parse(a.getAttribute('href'));
@@ -42,7 +45,8 @@ const App = (() => {
   // History: each navigation is a browser history entry that knows its position, so back never leaves
   // the viewer and the header buttons agree with the browser's. The page embedding the viewer listens
   // for "orrery:navigate", as pushState fires no hashchange.
-  const back = document.getElementById('back'), forward = document.getElementById('forward');
+  const back = /** @type {HTMLButtonElement} */ (document.getElementById('back'));
+  const forward = /** @type {HTMLButtonElement} */ (document.getElementById('forward'));
   let pos = history.state && Number.isInteger(history.state.orrery) ? history.state.orrery : 0, last = pos;
   history.replaceState({ orrery: pos }, '');
   function navigated() {
@@ -76,7 +80,7 @@ const App = (() => {
   document.addEventListener('keydown', ev => {
     if (ev.key !== 'Escape') return;
     if (closePickers()) return;
-    if (active && active.escape && !(ev.target.closest && ev.target.closest('input, select, textarea'))) active.escape();
+    if (active && active.escape && !targetIn(ev, 'input, select, textarea')) active.escape();
   });
 
   // access pickers: switch user groups and GraphQL schemas on as a layer, remembered per browser
@@ -110,30 +114,31 @@ const App = (() => {
     VIEWS.forEach(v => mounted.has(v.id) && v.refresh && v.refresh());
   }
   function closePickers() {
-    const open = accessEl.querySelectorAll('.pop:not([hidden])');
+    const open = /** @type {NodeListOf<HTMLElement>} */ (accessEl.querySelectorAll('.pop:not([hidden])'));
     open.forEach(pop => { pop.hidden = true; pop.previousElementSibling.setAttribute('aria-expanded', 'false'); });
     return open.length > 0;
   }
-  accessEl.querySelectorAll('.picker').forEach(p => {
-    const kind = p.dataset.kind, pop = p.querySelector('.pop'), btn = p.querySelector('.pick');
+  /** @type {NodeListOf<HTMLElement>} */ (accessEl.querySelectorAll('.picker')).forEach(p => {
+    const kind = p.dataset.kind, pop = /** @type {HTMLElement} */ (p.querySelector('.pop')), btn = p.querySelector('.pick');
     btn.addEventListener('click', () => {
       const opening = pop.hidden;
       closePickers();
       pop.hidden = !opening;
       btn.setAttribute('aria-expanded', String(opening));
     });
-    p.querySelectorAll('input[value]').forEach(i => i.addEventListener('change', () => {
+    /** @type {NodeListOf<HTMLInputElement>} */ (p.querySelectorAll('input[value]')).forEach(i => i.addEventListener('change', () => {
       if (i.checked) shownAccess[kind].add(i.value); else shownAccess[kind].delete(i.value);
       accessChanged();
     }));
     p.querySelector('[data-all]').addEventListener('change', ev => {
-      ofKind(kind).forEach(a => (ev.target.checked ? shownAccess[kind].add(a.uid) : shownAccess[kind].delete(a.uid)));
+      const all = /** @type {HTMLInputElement} */ (ev.target).checked;
+      ofKind(kind).forEach(a => (all ? shownAccess[kind].add(a.uid) : shownAccess[kind].delete(a.uid)));
       accessChanged();
     });
     bindGo(pop, key => { closePickers(); go(active ? active.id : VIEWS[0].id, key); });
     syncPicker(p);
   });
-  document.addEventListener('pointerdown', ev => { if (!(ev.target.closest && ev.target.closest('.picker'))) closePickers(); });
+  document.addEventListener('pointerdown', ev => { if (!targetIn(ev, '.picker')) closePickers(); });
 
   // header
   const STATS = ['group', 'site', 'section', 'page', 'block', 'matrix', 'field'];
@@ -170,7 +175,7 @@ const App = (() => {
     setInfo(open);
   }
   infoBtn.addEventListener('click', () => toggleInfo(!document.documentElement.classList.contains('show-info')));
-  document.addEventListener('click', ev => { if (ev.target.closest && ev.target.closest('[data-info-close]')) toggleInfo(false); });
+  document.addEventListener('click', ev => { if (targetIn(ev, '[data-info-close]')) toggleInfo(false); });
   let infoOpen = false;
   try { infoOpen = localStorage.getItem('orrery-info') === 'shown'; } catch (e) {}
   setInfo(infoOpen);

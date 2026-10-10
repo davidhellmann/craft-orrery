@@ -15,7 +15,7 @@ registerView((() => {
     const n = nodeOf(key);
     return n ? { id, key, name: n.obj.name, tags: tags.filter(Boolean) } : null;
   }
-  const fieldItems = tabs => customElements(tabs).map(({ el, f, tab }) => {
+  const fieldItems = tabs => layoutFields(tabs).map(({ el, f, tab }) => {
     const handle = el.handle && el.handle !== f.handle ? el.handle : null;
     return item(fieldKey(f), [tab.name, el.label && `“${el.label}”`, handle && `handle ${handle}`, el.required && 'required', el.conditional && 'conditional', el.width !== 100 && `${el.width}%`], handle ? `${fieldKey(f)}#${handle}` : fieldKey(f));
   });
