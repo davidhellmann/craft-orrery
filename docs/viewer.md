@@ -25,3 +25,7 @@ The Node tests load the scripts the same way. `tests/viewer/load.js` reads the o
 ## Links
 
 A link is `#<view>/<kind>:<uid>`, for example `#graph/page:<uid>`. The Diff takes two keys (`#diff/<key>/<key>`). People share and bookmark these links, so view ids and kind keys stay as they are, even where the UI says something else: the kind `matrix` is labelled Builder, and `fieldlayout` is labelled Element Type. A new name goes into the label.
+
+## Before and after
+
+`npm run snapshots -- <ref>` compares what the viewer shows in the working tree with what it showed at `<ref>` (`HEAD` by default): every view, and a deep link to every item in each view that has a place for it, plain and with every access layer on, in headless Chromium. It fails on any difference and on any console error. Run it after a change to the viewer: a refactor should leave it green, and a change that's meant to show should differ only where it's meant to. If it finds no Chromium, `npx playwright-core install chromium-headless-shell` gets one.

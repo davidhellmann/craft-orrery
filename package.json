@@ -1,10 +1,14 @@
 {
   "private": true,
-  "description": "Only for running the viewer tests. Orrery itself needs no Node.",
+  "description": "Only for the viewer's tests and tools. Orrery itself needs no Node.",
   "engines": {
     "node": ">=22"
   },
   "scripts": {
-    "test": "node --test tests/viewer/*.test.js"
+    "test": "node --test tests/viewer/*.test.js",
+    "snapshots": "node tests/snapshots/compare.js"
+  },
+  "devDependencies": {
+    "playwright-core": "^1.64.0"
   }
 }
