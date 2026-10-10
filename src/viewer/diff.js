@@ -1,19 +1,7 @@
 // Diff view: pick what to compare, then two of them, and see where they differ.
 registerView((() => {
-  // What can be compared: the kinds that share an index, so Pages with Blocks and Builders with Fields.
-  const kindsOf = type => Object.keys(KIND).filter(k => KIND[k].index === type.index);
-  const listOf = type => kindsOf(type).flatMap(ofKind);
-  const TYPES = [
-    { id: 'site', label: t('Sites'), pick: t('pick a site'), compare: t('Compare two sites'), index: 'site' },
-    { id: 'section', label: t('Sections'), pick: t('pick a section'), compare: t('Compare two sections'), index: 'section' },
-    { id: 'entrytype', label: t('Entry types'), pick: t('pick an entry type'), compare: t('Compare two entry types'), index: 'et' },
-    { id: 'field', label: t('Fields'), pick: t('pick a field'), compare: t('Compare two fields'), index: 'field' },
-    { id: 'usergroup', label: t('User groups'), pick: t('pick a user group'), compare: t('Compare two user groups'), index: 'usergroup' },
-    { id: 'schema', label: t('GraphQL schemas'), pick: t('pick a GraphQL schema'), compare: t('Compare two GraphQL schemas'), index: 'schema' },
-  ].filter(type => listOf(type).length);
-  const typeOf = key => { const n = nodeOf(key); return n ? TYPES.find(type => type.index === KIND[n.kind].index) : null; };
-
-  // ---- what each kind of thing is made of: properties compared as values, groups compared item by item
+  // ---- what each type of thing is made of: properties compared as values, groups compared item by item. Each has a
+  // key of its own, so two the language words alike stay apart.
   const yes = v => (v ? t('Yes') : t('No'));
   const RIGHTS = {
     ...RIGHT_LABELS,
@@ -22,97 +10,102 @@ registerView((() => {
   };
   const rightTags = rights => rights.map(r => RIGHTS[r] || r);
   // How a Matrix field shows its entries.
-  const VIEW_MODES = { cards: t('cards'), blocks: t('blocks'), index: t('index') };
+  const VIEW_MODES = { cards: t('Cards'), blocks: t('Blocks'), index: t('Index') };
   function item(key, tags = [], id = key) {
     const n = nodeOf(key);
     return n ? { id, key, name: n.obj.name, tags: tags.filter(Boolean) } : null;
   }
-  const fieldItems = tabs => tabs.flatMap(tab => tab.elements.filter(el => el.kind === 'CustomField' && byUid.field[el.field]).map(el => {
-    const f = byUid.field[el.field];
+  const fieldItems = tabs => customElements(tabs).map(({ el, f, tab }) => {
     const handle = el.handle && el.handle !== f.handle ? el.handle : null;
     return item(fieldKey(f), [tab.name, el.label && quoted(el.label), handle && t('handle {handle}', { handle }), el.required && t('required'), el.conditional && t('conditional'), el.width !== 100 && `${el.width}%`], handle ? `${fieldKey(f)}#${handle}` : fieldKey(f));
-  }));
+  });
   const accessGroups = key => ACCESS.filter(kind => ofKind(kind).length && accessApplies(kind, nodeOf(key).kind)).map(kind => ({
+    key: kind,
     title: KIND[kind].plural,
     items: ofKind(kind).map(a => { const r = rightsOn(a, kind, key); return r && item(keyOf(kind, a.uid), rightTags(r)); }),
   }));
+  // The sites and sections a user group or schema reaches, with what it may do there.
+  const reachGroups = (a, kind) => [
+    { key: 'sites', title: t('Sites'), items: model.sites.filter(s => a.sites.includes(s.uid)).map(s => item(keyOf('site', s.uid), rightTags([KIND[kind].siteRight]))) },
+    { key: 'sections', title: t('Sections'), items: model.sections.filter(s => a.sections[s.uid]).map(s => item(keyOf('section', s.uid), rightTags(a.sections[s.uid]))) },
+  ];
 
-  function describe(n) {
-    const o = n.obj;
-    if (n.kind === 'site') {
-      return {
-        props: [[t('Handle'), o.handle], [t('Site group'), (byUid.group[o.group] || {}).name], [t('Language'), o.language], [t('Base URL'), o.baseUrl], [t('Primary'), yes(o.primary)]],
-        groups: [
-          { title: t('Sections'), items: o.sections.map(s => { const ss = s.sites.find(x => x.site === o.uid); return item(keyOf('section', s.uid), [sectionType(s), ss && ss.hasUrls ? ss.uriFormat : t('no URLs')]); }) },
-          ...accessGroups(n.key),
-        ],
-      };
-    }
-    if (n.kind === 'section') {
-      return {
-        props: [[t('Handle'), o.handle], [t('Type'), sectionType(o)]],
-        groups: [
-          { title: t('Sites'), items: o.sites.map(ss => item(keyOf('site', ss.site), [ss.hasUrls ? ss.uriFormat : t('no URLs')])) },
-          { title: t('Entry types'), items: o.entryTypes.map(u => byUid.et[u] && item(etKey(byUid.et[u]), [perUseNote(byUid.et[u], o.contexts[u])])) },
-          { title: t('Pulled in by'), items: o.referencedBy.map(f => item(fieldKey(f))) },
-          { title: t('Preview targets'), items: o.previewTargets.map(p => ({ id: p, name: p, tags: [] })) },
-          ...accessGroups(n.key),
-        ],
-      };
-    }
-    if (isEntryType(n.kind)) {
-      return {
-        props: [[t('Handle'), o.handle], [t('Kind'), KIND[o.kind].label], [t('Title field'), yes(o.hasTitleField)], [t('Tabs'), o.tabs.map(tab => tab.name).join(', ')], [t('GraphQL type'), o.gql]],
-        groups: [
-          { title: t('Lives in'), items: [
-            ...o.sections.map(s => item(keyOf('section', s.uid), [perUseNote(o, s.contexts[o.uid])])),
-            ...o.builders.map(b => item(fieldKey(b.field), [perUseNote(o, b.context), b.group])),
-          ] },
-          { title: t('Fields'), items: fieldItems(o.tabs) },
-          ...accessGroups(n.key),
-        ],
-      };
-    }
-    if (isField(n.kind)) {
-      const props = [[t('Handle'), o.handle], [t('Type'), fieldTypeLabel(o)], [t('Instructions'), o.instructions]];
-      if (o.blocks) props.push([t('View mode'), VIEW_MODES[o.viewMode] || o.viewMode], [t('Min entries'), o.min], [t('Max entries'), o.max]);
-      if (o.sources) props.push([t('Sources'), o.allSources ? t('All sections') : null], [t('Max relations'), o.max]);
+  // What can be compared: the kinds that share an index, so Pages with Blocks and Builders with Fields. Each type
+  // describes its things as properties, [key, label, value], and groups of items.
+  const kindsOf = type => Object.keys(KIND).filter(k => KIND[k].index === type.index);
+  const listOf = type => kindsOf(type).flatMap(ofKind);
+  const TYPES = [
+    { id: 'site', label: KIND.site.plural, pick: t('pick a site'), compare: t('Compare two sites'), index: 'site', describe: (o, key) => ({
+      props: [['handle', t('Handle'), o.handle], ['group', KIND.group.label, (byUid.group[o.group] || {}).name], ['language', t('Language'), o.language], ['baseUrl', t('Base URL'), o.baseUrl], ['primary', t('Primary'), yes(o.primary)]],
+      groups: [
+        { key: 'sections', title: t('Sections'), items: o.sections.map(s => { const ss = s.sites.find(x => x.site === o.uid); return item(keyOf('section', s.uid), [sectionType(s), ss && ss.hasUrls ? ss.uriFormat : t('no URLs')]); }) },
+        ...accessGroups(key),
+      ],
+    }) },
+    { id: 'section', label: KIND.section.plural, pick: t('pick a section'), compare: t('Compare two sections'), index: 'section', describe: (o, key) => ({
+      props: [['handle', t('Handle'), o.handle], ['type', t('Type'), sectionType(o)]],
+      groups: [
+        { key: 'sites', title: t('Sites'), items: o.sites.map(ss => item(keyOf('site', ss.site), [ss.hasUrls ? ss.uriFormat : t('no URLs')])) },
+        { key: 'entryTypes', title: t('Entry types'), items: o.entryTypes.map(u => byUid.et[u] && item(etKey(byUid.et[u]), [perUseNote(byUid.et[u], o.contexts[u])])) },
+        { key: 'pulledInBy', title: t('Pulled in by'), items: o.referencedBy.map(f => item(fieldKey(f))) },
+        { key: 'previewTargets', title: t('Preview targets'), items: o.previewTargets.map(p => ({ id: p, name: p, tags: [] })) },
+        ...accessGroups(key),
+      ],
+    }) },
+    { id: 'entrytype', label: t('Entry types'), pick: t('pick an entry type'), compare: t('Compare two entry types'), index: 'et', describe: (o, key) => ({
+      props: [['handle', t('Handle'), o.handle], ['kind', t('Kind'), KIND[o.kind].label], ['hasTitleField', t('Title field'), yes(o.hasTitleField)], ['tabs', t('Tabs'), o.tabs.map(tab => tab.name).join(', ')], ['gql', t('GraphQL type'), o.gql]],
+      groups: [
+        { key: 'livesIn', title: t('Lives in'), items: [
+          ...o.sections.map(s => item(keyOf('section', s.uid), [perUseNote(o, s.contexts[o.uid])])),
+          ...o.builders.map(b => item(fieldKey(b.field), [perUseNote(o, b.context), b.group])),
+        ] },
+        { key: 'fields', title: t('Fields'), items: fieldItems(o.tabs) },
+        ...accessGroups(key),
+      ],
+    }) },
+    { id: 'field', label: t('Fields'), pick: t('pick a field'), compare: t('Compare two fields'), index: 'field', describe: (o, key) => {
+      const props = [['handle', t('Handle'), o.handle], ['type', t('Type'), fieldTypeLabel(o)], ['instructions', t('Instructions'), o.instructions]];
+      if (o.blocks) props.push(['viewMode', t('View mode'), VIEW_MODES[o.viewMode] || o.viewMode], ['minEntries', t('Min entries'), o.min], ['maxEntries', t('Max entries'), o.max]);
+      if (o.sources) props.push(['sources', t('Sources'), o.allSources ? t('All sections') : null], ['maxRelations', t('Max relations'), o.max]);
       const groups = [];
-      if (o.options) groups.push({ title: t('Options'), items: o.options.map(op => ({ id: op.value, name: op.label, tags: [op.value, op.default && t('default')].filter(Boolean) })) });
-      if (o.blocks) groups.push({ title: t('Blocks'), items: o.blocks.map(b => byUid.et[b.entryType] && item(etKey(byUid.et[b.entryType]), [perUseNote(byUid.et[b.entryType], b.context), b.group])) });
-      if (o.targets.length) groups.push({ title: t('Pulls from'), items: o.targets.map(s => item(keyOf('section', s.uid))) });
-      if (o.tabs) groups.push({ title: t('Contains'), items: fieldItems(o.tabs) });
-      groups.push({ title: t('Used in'), items: o.usedIn.map(u => item(useKey(u), [u.el.label && quoted(u.el.label), u.el.required && t('required'), u.el.conditional && t('conditional')])) });
-      return { props, groups: [...groups, ...accessGroups(n.key)] };
-    }
-    const sites = { title: t('Sites'), items: model.sites.filter(s => o.sites.includes(s.uid)).map(s => item(keyOf('site', s.uid), rightTags([n.kind === 'schema' ? 'read' : 'edit']))) };
-    const sections = { title: t('Sections'), items: model.sections.filter(s => o.sections[s.uid]).map(s => item(keyOf('section', s.uid), rightTags(o.sections[s.uid]))) };
-    if (n.kind === 'usergroup') return { props: [[t('Handle'), o.handle], [t('Description'), o.description]], groups: [sites, sections] };
-    return {
-      props: [[t('Public'), yes(o.public)], [t('Also queries'), o.elements.map(e => ELEMENT_SCOPES[e] || e).join(', ')]],
-      groups: [sites, sections, { title: t('Builders'), items: model.fields.filter(f => o.fields[f.uid]).map(f => item(fieldKey(f), rightTags(o.fields[f.uid]))) }],
-    };
-  }
+      if (o.options) groups.push({ key: 'options', title: t('Options'), items: o.options.map(op => ({ id: op.value, name: op.label, tags: [op.value, op.default && t('default')].filter(Boolean) })) });
+      if (o.blocks) groups.push({ key: 'blocks', title: t('Blocks'), items: o.blocks.map(b => byUid.et[b.entryType] && item(etKey(byUid.et[b.entryType]), [perUseNote(byUid.et[b.entryType], b.context), b.group])) });
+      if (o.targets.length) groups.push({ key: 'pullsFrom', title: t('Pulls from'), items: o.targets.map(s => item(keyOf('section', s.uid))) });
+      if (o.tabs) groups.push({ key: 'contains', title: t('Contains'), items: fieldItems(o.tabs) });
+      groups.push({ key: 'usedIn', title: t('Used in'), items: o.usedIn.map(u => item(useKey(u), [u.el.label && quoted(u.el.label), u.el.required && t('required'), u.el.conditional && t('conditional')])) });
+      return { props, groups: [...groups, ...accessGroups(key)] };
+    } },
+    { id: 'usergroup', label: KIND.usergroup.plural, pick: t('pick a user group'), compare: t('Compare two user groups'), index: 'usergroup', describe: o => ({
+      props: [['handle', t('Handle'), o.handle], ['description', t('Description'), o.description]],
+      groups: reachGroups(o, 'usergroup'),
+    }) },
+    { id: 'schema', label: KIND.schema.plural, pick: t('pick a GraphQL schema'), compare: t('Compare two GraphQL schemas'), index: 'schema', describe: o => ({
+      props: [['public', t('Public'), yes(o.public)], ['elements', t('Also queries'), o.elements.map(e => ELEMENT_SCOPES[e] || e).join(', ')]],
+      groups: [...reachGroups(o, 'schema'), { key: 'builders', title: t('Builders'), items: model.fields.filter(f => o.fields[f.uid]).map(f => item(fieldKey(f), rightTags(o.fields[f.uid]))) }],
+    }) },
+  ].filter(type => listOf(type).length);
+  const typeOf = key => { const n = nodeOf(key); return n ? TYPES.find(type => type.index === KIND[n.kind].index) : null; };
 
-  // ---- comparison: rows are 'same', 'changed', or only on one side ('a', 'b')
+  // ---- comparison: rows are 'same', 'changed', or only on one side ('a', 'b'), in the order A and B have them
   const sameTags = (x, y) => x.length === y.length && x.every(tag => y.includes(tag));
-  function compare(a, b) {
-    const da = describe(a), db = describe(b);
-    const value = (d, label) => { const p = d.props.find(x => x[0] === label); return p && p[1] != null && p[1] !== '' ? String(p[1]) : null; };
-    const labels = [...new Set([...da.props, ...db.props].map(p => p[0]))];
-    const props = labels.map(label => {
-      const x = value(da, label), y = value(db, label);
-      return { label, x, y, status: x === y ? 'same' : 'changed' };
+  const keysOf = (xs, ys) => [...new Map([...xs, ...ys].map(x => [x.key, x])).values()];
+  function compare(keyA, keyB) {
+    const da = typeOf(keyA).describe(nodeOf(keyA).obj, keyA), db = typeOf(keyB).describe(nodeOf(keyB).obj, keyB);
+    const asProp = ([key, label, value]) => ({ key, label, value: value != null && value !== '' ? String(value) : null });
+    const pa = da.props.map(asProp), pb = db.props.map(asProp);
+    const valueOf = (list, key) => { const p = list.find(x => x.key === key); return p ? p.value : null; };
+    const props = keysOf(pa, pb).map(({ key, label }) => {
+      const x = valueOf(pa, key), y = valueOf(pb, key);
+      return { key, label, x, y, status: x === y ? 'same' : 'changed' };
     });
-    const titles = [...new Set([...da.groups, ...db.groups].map(g => g.title))];
-    const groups = titles.map(title => {
-      const list = d => ((d.groups.find(g => g.title === title) || {}).items || []).filter(Boolean);
+    const groups = keysOf(da.groups, db.groups).map(({ key, title }) => {
+      const list = d => ((d.groups.find(g => g.key === key) || {}).items || []).filter(Boolean);
       const ia = new Map(list(da).map(i => [i.id, i])), ib = new Map(list(db).map(i => [i.id, i]));
       const rows = [...new Set([...ia.keys(), ...ib.keys()])].map(id => {
         const x = ia.get(id), y = ib.get(id);
         return { x, y, ref: x || y, status: !y ? 'a' : !x ? 'b' : sameTags(x.tags, y.tags) ? 'same' : 'changed' };
       });
-      return { title, rows };
+      return { key, title, rows };
     });
     return { props, groups };
   }
@@ -121,7 +114,8 @@ registerView((() => {
   let el, bar, body, countEl;
   const state = { type: TYPES.find(type => type.id === 'entrytype') || TYPES[0], a: null, b: null, onlyDiff: false };
   const STATUS = { a: t('only in A'), b: t('only in B'), changed: t('differs') };
-  const CODE = [t('Handle'), t('GraphQL type'), t('Base URL'), t('Language')];
+  // Properties shown as code.
+  const CODE = ['handle', 'gql', 'baseUrl', 'language'];
 
   const diffKey = () => (state.a && state.b ? `${state.a}/${state.b}` : state.a || state.type.id);
   function pick(changes) {
@@ -173,9 +167,8 @@ registerView((() => {
       body.innerHTML = `<div class="diff-empty"><h2>${esc(state.type.compare)}</h2><p class="muted">${t('Pick one on each side to see what they share and where they differ. Anything with a <b>Compare</b> button in its details can start a comparison too.')}</p></div>`;
       return;
     }
-    const a = nodeOf(state.a), b = nodeOf(state.b);
-    const { props, groups } = compare(a, b);
-    const differs = [...props, ...groups.flatMap(g => g.rows)].filter(r => r.status !== 'same').length;
+    const { props, groups } = compare(state.a, state.b);
+    const differs =[...props, ...groups.flatMap(g => g.rows)].filter(r => r.status !== 'same').length;
     countEl.textContent = differs ? tn(differs, '{n} difference', '{n} differences') : t('No differences');
     const show = r => !state.onlyDiff || r.status !== 'same';
 
@@ -184,7 +177,7 @@ registerView((() => {
     const shownProps = props.filter(show);
     if (shownProps.length) {
       h += `<tr class="grp"><td colspan="4">${t('Properties')}</td></tr>`;
-      const val = (p, v) => (v == null ? missing : CODE.includes(p.label) ? `<code>${esc(v)}</code>` : esc(v));
+      const val = (p, v) => (v == null ? missing : CODE.includes(p.key) ? `<code>${esc(v)}</code>` : esc(v));
       h += shownProps.map(p => `<tr class="${p.status}"><td class="lbl">${esc(p.label)}</td><td>${val(p, p.x)}</td><td>${val(p, p.y)}</td>${statusCell(p.status)}</tr>`).join('');
     }
     groups.forEach(g => {
@@ -228,5 +221,7 @@ registerView((() => {
       drawBody();
     },
     refresh() { drawBody(); },
+    // What A and B have, row by row, as the view draws it.
+    compare,
   };
 })());

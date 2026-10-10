@@ -4,25 +4,27 @@ registerView((() => {
   const state = { mode: 'fields', q: '', type: '', kind: '', group: '', unused: false, unprefixed: false, sort: 'name', dir: 1, selected: null };
 
   const fieldTypes = [...new Set(model.fields.map(fieldTypeLabel))].sort();
-  const usedChip = u => chip(useKey(u), u.el.label && u.el.label !== u.owner.name && u.el.label !== (byUid.field[u.el.field] || {}).name ? ` <em>${quoted(esc(u.el.label))}</em>` : '');
-  const fieldChip = ({ el: e, f }) => chip(fieldKey(f), e.label && e.label !== f.name ? ` <em>${quoted(esc(e.label))}</em>` : '');
+  const labelled = label => (label ? ` <em>${esc(label)}</em>` : '');
+  const usedChip = u => chip(useKey(u), labelled(u.el.label !== u.owner.name && layoutLabel(u.el, byUid.field[u.el.field])));
+  const fieldChip = ({ el, f }) => chip(fieldKey(f), labelled(layoutLabel(el, f)));
 
-  const COLUMNS = {
-    fields: [
+  // The table's two modes, each with the index of the things it lists and its columns.
+  const MODES = {
+    fields: { index: 'field', columns: [
       { id: 'name', label: t('Field'), sort: f => f.name, w: '20%' },
       { id: 'handle', label: t('Handle'), sort: f => f.handle, w: '17%' },
       { id: 'type', label: t('Type'), sort: f => fieldTypeLabel(f), w: '120px' },
       { id: 'uses', label: t('Uses'), sort: f => f.usedIn.length, num: true, w: '64px' },
       { id: 'where', label: t('Used in') },
-    ],
-    entryTypes: [
+    ] },
+    entryTypes: { index: 'et', columns: [
       { id: 'name', label: t('Entry type'), sort: e => e.name, w: '18%' },
       { id: 'handle', label: t('Handle'), sort: e => e.handle, w: '16%' },
       { id: 'kind', label: t('Kind'), sort: e => e.kind, w: '76px' },
       { id: 'lives', label: t('Lives in'), w: '22%' },
       { id: 'uses', label: '#', sort: e => customElements(e.tabs).length, num: true, w: '52px' },
       { id: 'where', label: t('Fields') },
-    ],
+    ] },
   };
 
   function rows() {
@@ -44,7 +46,7 @@ registerView((() => {
   }
 
   function draw() {
-    const cols = COLUMNS[state.mode];
+    const cols = MODES[state.mode].columns;
     const sortCol = cols.find(c => c.id === state.sort && c.sort) || cols[0];
     const list = rows().sort((a, b) => {
       const x = sortCol.sort(a), y = sortCol.sort(b);
@@ -63,7 +65,7 @@ registerView((() => {
   }
   function filters() {
     const f = el.querySelector('[data-filters]');
-    const groups = `<select data-f="group" aria-label="${t('Site group')}"><option value="">${t('All site groups')}</option>${model.siteGroups.map(g => `<option value="${g.uid}" ${g.uid === state.group ? 'selected' : ''}>${esc(g.name)}</option>`).join('')}</select>`;
+    const groups = `<select data-f="group" aria-label="${KIND.group.label}"><option value="">${t('All site groups')}</option>${model.siteGroups.map(g => `<option value="${g.uid}" ${g.uid === state.group ? 'selected' : ''}>${esc(g.name)}</option>`).join('')}</select>`;
     f.innerHTML = state.mode === 'fields'
       ? `<select data-f="type" aria-label="${t('Field type')}"><option value="">${t('All types')}</option>${fieldTypes.map(type => `<option ${type === state.type ? 'selected' : ''}>${esc(type)}</option>`).join('')}</select>
          ${groups}
@@ -125,7 +127,7 @@ registerView((() => {
       const n = nodeOf(key);
       // a deep link to an entry type opens the entry type table, a field the field table
       if (n && opts.fromHash) {
-        const mode = isEntryType(n.kind) ? 'entryTypes' : isField(n.kind) ? 'fields' : state.mode;
+        const mode = Object.keys(MODES).find(id => MODES[id].index === KIND[n.kind].index) || state.mode;
         if (mode !== state.mode) setMode(mode);
       }
       state.selected = n ? key : null;

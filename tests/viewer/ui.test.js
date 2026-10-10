@@ -39,7 +39,7 @@ test('the users’ field layout has details of its own', () => {
   const { nodeOf, detailHTML } = loadViewer();
   const html = detailHTML(nodeOf('fieldlayout:users'));
 
-  assert.match(html, /Field Layout<\/span>/);
+  assert.match(html, /Element Type<\/span>/);
   assert.match(html, /<h2>Users<\/h2>/);
   assert.match(html, rowWithLabel('field:field-notes', 'Bio'));
 });
@@ -59,7 +59,7 @@ test('a field layout that isn’t on the graph says what it is wherever it’s l
 
   assert.match(chip('globalset:global-footer'), /Footer <span class="faint">· Global Set<\/span>/);
   assert.match(row('volume:volume-images'), /Images <span class="faint">· Volume<\/span>/);
-  assert.match(chip('fieldlayout:addresses'), /Addresses <span class="faint">· Field Layout<\/span>/);
+  assert.match(chip('fieldlayout:addresses'), /Addresses <span class="faint">· Element Type<\/span>/);
   assert.doesNotMatch(chip('page:et-article'), /faint/);
 });
 

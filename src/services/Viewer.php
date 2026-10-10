@@ -5,6 +5,7 @@ namespace davidhellmann\orrery\services;
 use Craft;
 use craft\helpers\Json;
 use craft\web\View;
+use davidhellmann\orrery\helpers\Language;
 use davidhellmann\orrery\Plugin;
 use yii\base\Component;
 
@@ -54,10 +55,8 @@ class Viewer extends Component
 
         // The page speaks the viewer's language throughout, also where it isn't the app's: field types name
         // themselves in the app's language, and the template's messages are in it too.
-        $appLanguage = Craft::$app->language;
-        Craft::$app->language = $language;
-        try {
-            $data = $plugin->contentModel->getData(resolved: true) + [
+        return Language::during($language, function() use ($plugin, $settings, $language) {
+            $data = $plugin->contentModel->getData(forViewer: true) + [
                 'prefixes' => [
                     'page' => $settings->prefixes('pageHandlePrefix'),
                     'block' => $settings->prefixes('blockHandlePrefix'),
@@ -72,9 +71,7 @@ class Viewer extends Component
                 'i18n' => Json::htmlEncode(['language' => $language, 'messages' => $this->messages($language)]),
                 'script' => $this->script(),
             ], View::TEMPLATE_MODE_CP);
-        } finally {
-            Craft::$app->language = $appLanguage;
-        }
+        });
     }
 
     private function script(): string

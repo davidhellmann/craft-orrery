@@ -32,6 +32,22 @@ class Settings extends Model
         return array_values(array_filter($prefixes, fn(string $prefix) => $prefix !== ''));
     }
 
+    /**
+     * The settings a config file overrides, each with the value the project config stores for it, or its default.
+     * The settings form shows them read-only and posts these values along: Craft saves only the settings a form posts,
+     * so without them saving the form would drop what the project config has.
+     *
+     * @param array $fileConfig The settings `config/orrery.php` sets.
+     * @param array $stored The settings the project config stores.
+     * @return array<string, string|string[]>
+     */
+    public function storedOverrides(array $fileConfig, array $stored): array
+    {
+        $overridden = array_intersect_key((new self())->getAttributes(), $fileConfig);
+
+        return array_intersect_key($stored, $overridden) + $overridden;
+    }
+
     protected function defineRules(): array
     {
         return [

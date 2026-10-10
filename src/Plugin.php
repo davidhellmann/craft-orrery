@@ -60,10 +60,13 @@ class Plugin extends BasePlugin
     protected function settingsHtml(): ?string
     {
         $config = Craft::$app->getConfig()->getConfigFromFile($this->handle);
+        $config = is_array($config) ? $config : [];
+        $stored = Craft::$app->getPlugins()->getStoredPluginInfo($this->handle)['settings'] ?? [];
 
         return Craft::$app->getView()->renderTemplate('orrery/_settings.twig', [
             'settings' => $this->getSettings(),
-            'overrides' => is_array($config) ? array_keys($config) : [],
+            'config' => $config,
+            'overrides' => $this->getSettings()->storedOverrides($config, $stored),
         ]);
     }
 }

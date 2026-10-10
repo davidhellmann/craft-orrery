@@ -281,7 +281,7 @@ registerView((() => {
         <div class="tools">
           <div class="floating toolbar">
             <input type="search" placeholder="${t('Search name or handle')}  ⏎" aria-label="${t('Search the map')}">
-            <select aria-label="${t('Site group')}"><option value="">${t('All site groups')}</option>${model.siteGroups.map(g => `<option value="${g.uid}">${esc(g.name)}</option>`).join('')}</select>
+            <select aria-label="${KIND.group.label}"><option value="">${t('All site groups')}</option>${model.siteGroups.map(g => `<option value="${g.uid}">${esc(g.name)}</option>`).join('')}</select>
             <button class="btn" data-isolate title="${t('Lay out only the highlighted part')}">${t('Isolate')}</button>
             <button class="btn" data-reset>${t('Reset')}</button>
           </div>

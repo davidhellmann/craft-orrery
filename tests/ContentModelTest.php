@@ -3,6 +3,7 @@
 namespace davidhellmann\orrery\tests;
 
 use Craft;
+use craft\fieldlayoutelements\Html;
 use craft\helpers\Json;
 use davidhellmann\orrery\services\ContentModel;
 use PHPUnit\Framework\TestCase;
@@ -51,9 +52,9 @@ class ContentModelTest extends TestCase
         $this->assertSame($this->data, (new ContentModel())->fromConfig($config));
     }
 
-    public function testResolvedDataSaysWhenTheConfigLastChanged(): void
+    public function testDataForTheViewerSaysWhenTheConfigLastChanged(): void
     {
-        $this->assertSame(1767225600, (new ContentModel())->fromConfig($this->config, resolved: true)['dateModified']);
+        $this->assertSame(1767225600, (new ContentModel())->fromConfig($this->config, forViewer: true)['dateModified']);
     }
 
     public function testSiteGroupsWithRawConfigValues(): void
@@ -100,9 +101,9 @@ class ContentModelTest extends TestCase
         ], $this->data['sites']);
     }
 
-    public function testResolvedSiteGroupsAndSites(): void
+    public function testSiteGroupsAndSitesForTheViewerAreResolved(): void
     {
-        $data = (new ContentModel())->fromConfig($this->config, resolved: true);
+        $data = (new ContentModel())->fromConfig($this->config, forViewer: true);
 
         $this->assertSame(['Museum', 'Shop'], array_column($data['siteGroups'], 'name'));
         $this->assertSame([
@@ -157,7 +158,7 @@ class ContentModelTest extends TestCase
                     'name' => 'Content',
                     'conditional' => false,
                     'elements' => [
-                        ['kind' => 'Title', 'width' => 100, 'label' => 'Headline', 'required' => true],
+                        ['kind' => 'Title', 'width' => 100, 'label' => 'Headline', 'required' => true, 'conditional' => false],
                         [
                             'kind' => 'CustomField',
                             'width' => 50,
@@ -346,10 +347,10 @@ class ContentModelTest extends TestCase
         ], array_column($data['fields'], 'typeLabel', 'handle'));
     }
 
-    public function testResolvedFieldTypeLabelsInTheAppLanguage(): void
+    public function testFieldTypeLabelsForTheViewerInTheAppLanguage(): void
     {
         Craft::$app->language = 'de';
-        $data = (new ContentModel())->fromConfig($this->config, resolved: true);
+        $data = (new ContentModel())->fromConfig($this->config, forViewer: true);
         $labels = array_column($data['fields'], 'typeLabel', 'handle');
 
         $this->assertSame(['Reiner Text', 'Einträge', 'Inhaltsblock'], [$labels['body'], $labels['relatedNews'], $labels['seo']]);
@@ -389,8 +390,8 @@ class ContentModelTest extends TestCase
                     'name' => 'Content',
                     'conditional' => false,
                     'elements' => [
-                        ['kind' => 'Title', 'width' => 100, 'required' => true],
-                        ['kind' => 'AltField', 'width' => 100],
+                        ['kind' => 'Title', 'width' => 100, 'required' => true, 'conditional' => false],
+                        ['kind' => 'AltField', 'width' => 100, 'required' => false, 'conditional' => false],
                         ['kind' => 'CustomField', 'width' => 100, 'field' => 'field-notes', 'label' => 'Caption', 'required' => false, 'conditional' => false],
                     ],
                 ],
@@ -403,15 +404,17 @@ class ContentModelTest extends TestCase
         $topics = $this->item('categoryGroups', 'catgroup-topics');
         $this->assertSame(['Topics', 'topics'], [$topics['name'], $topics['handle']]);
         $this->assertSame([
-            ['kind' => 'Title', 'width' => 100, 'required' => true],
+            ['kind' => 'Title', 'width' => 100, 'required' => true, 'conditional' => false],
             ['kind' => 'CustomField', 'width' => 100, 'field' => 'field-notes', 'label' => 'Description', 'required' => false, 'conditional' => false],
         ], $topics['tabs'][0]['elements']);
 
         $keywords = $this->item('tagGroups', 'taggroup-keywords');
         $this->assertSame(['Keywords', 'keywords'], [$keywords['name'], $keywords['handle']]);
         $this->assertSame([
-            ['kind' => 'Title', 'width' => 100, 'required' => true],
+            ['kind' => 'Title', 'width' => 100, 'required' => true, 'conditional' => false],
             ['kind' => 'CustomField', 'width' => 100, 'field' => 'field-notes', 'required' => false, 'conditional' => false],
+            ['kind' => 'TextField', 'width' => 50, 'required' => false, 'conditional' => false],
+            ['kind' => 'TextareaField', 'width' => 50, 'label' => 'How to use it', 'required' => true, 'conditional' => false],
         ], $keywords['tabs'][0]['elements']);
     }
 
@@ -426,21 +429,63 @@ class ContentModelTest extends TestCase
                     'name' => 'Profile',
                     'conditional' => false,
                     'elements' => [
-                        ['kind' => 'UsernameField', 'width' => 100],
-                        ['kind' => 'FullNameField', 'width' => 100],
-                        ['kind' => 'PhotoField', 'width' => 100],
-                        ['kind' => 'EmailField', 'width' => 100],
+                        ['kind' => 'UsernameField', 'width' => 100, 'required' => false, 'conditional' => false],
+                        ['kind' => 'FullNameField', 'width' => 100, 'required' => false, 'conditional' => false],
+                        ['kind' => 'PhotoField', 'width' => 50, 'label' => 'Portrait', 'required' => false, 'conditional' => false],
+                        ['kind' => 'EmailField', 'width' => 50, 'required' => true, 'conditional' => false],
+                        ['kind' => 'AffiliatedSiteField', 'width' => 100, 'required' => false, 'conditional' => true],
+                        ['kind' => 'Markdown', 'width' => 100],
+                        ['kind' => 'LineBreak', 'width' => 100],
                         ['kind' => 'CustomField', 'width' => 100, 'field' => 'field-notes', 'label' => 'Bio', 'required' => false, 'conditional' => false],
                     ],
                 ],
             ],
         ], $this->data['users']);
         $this->assertSame([
-            ['kind' => 'Title', 'width' => 100, 'required' => false],
-            ['kind' => 'CountryCodeField', 'width' => 100],
-            ['kind' => 'AddressField', 'width' => 100],
+            ['kind' => 'Title', 'width' => 100, 'required' => false, 'conditional' => false],
+            ['kind' => 'CountryCodeField', 'width' => 100, 'required' => false, 'conditional' => false],
+            ['kind' => 'AddressField', 'width' => 100, 'required' => false, 'conditional' => false],
+            ['kind' => 'FullNameField', 'width' => 100, 'required' => false, 'conditional' => false],
+            ['kind' => 'OrganizationField', 'width' => 50, 'label' => 'Company', 'required' => false, 'conditional' => true],
+            ['kind' => 'OrganizationTaxIdField', 'width' => 50, 'required' => false, 'conditional' => false],
+            ['kind' => 'LatLongField', 'width' => 100, 'required' => false, 'conditional' => false],
+            ['kind' => 'Template', 'width' => 100],
             ['kind' => 'CustomField', 'width' => 50, 'field' => 'field-notes', 'label' => 'Directions', 'required' => false, 'conditional' => false],
         ], $this->data['addresses']['tabs'][0]['elements']);
+    }
+
+    /**
+     * Like a custom field, each of Craft's own fields can get a label, be required and show only under a condition.
+     */
+    public function testCraftsOwnFieldsCarryTheLabelRequiredAndConditionTheLayoutGivesThem(): void
+    {
+        $elements = array_column($this->data['users']['tabs'][0]['elements'], null, 'kind');
+
+        $this->assertSame([
+            ['Portrait', false, false],
+            [null, true, false],
+            [null, false, true],
+        ], array_map(fn(array $el) => [$el['label'] ?? null, $el['required'], $el['conditional']], [$elements['PhotoField'], $elements['EmailField'], $elements['AffiliatedSiteField']]));
+    }
+
+    /**
+     * The viewer names every element of a field layout, so the fixture holds every one Craft ships, but `Html`: that
+     * one is only for code, and Craft can't store it in a field layout.
+     */
+    public function testTheFixtureHoldsEveryLayoutElementCraftShips(): void
+    {
+        $dir = dirname(__DIR__) . '/vendor/craftcms/cms/src/fieldlayoutelements';
+        $files = new \RecursiveIteratorIterator(new \RecursiveDirectoryIterator($dir, \FilesystemIterator::SKIP_DOTS));
+        $elements = [];
+        foreach ($files as $file) {
+            $class = 'craft\\fieldlayoutelements\\' . str_replace(['/', '.php'], ['\\', ''], substr($file->getPathname(), strlen($dir) + 1));
+            if (!(new \ReflectionClass($class))->isAbstract() && $class !== Html::class) {
+                $elements[] = $class;
+            }
+        }
+        preg_match_all('/type: (craft\\\\fieldlayoutelements\\\\\S+)/', file_get_contents(__DIR__ . '/fixtures/project.yaml'), $matches);
+
+        $this->assertSame([], array_values(array_diff($elements, $matches[1])));
     }
 
     public function testUsersAndAddressesWithoutFieldLayouts(): void
@@ -574,13 +619,13 @@ class ContentModelTest extends TestCase
     }
 
     /**
-     * The viewer tests run on the data of this fixture, so it's kept as the viewer gets it: resolved. After a change
-     * to the fixture or the data, `UPDATE_FIXTURES=1 composer test` writes it again.
+     * The viewer tests run on the data of this fixture, so it's kept as the viewer gets it. After a change to the
+     * fixture or the data, `UPDATE_FIXTURES=1 composer test` writes it again.
      */
     public function testViewerFixtureIsTheDataOfTheProjectFixture(): void
     {
         $file = __DIR__ . '/fixtures/content-model.json';
-        $data = (new ContentModel())->fromConfig($this->config, resolved: true);
+        $data = (new ContentModel())->fromConfig($this->config, forViewer: true);
         $json = Json::encode($data, JSON_PRETTY_PRINT | JSON_UNESCAPED_SLASHES | JSON_UNESCAPED_UNICODE) . "\n";
         if (getenv('UPDATE_FIXTURES')) {
             file_put_contents($file, $json);

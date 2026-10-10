@@ -154,20 +154,33 @@ test('a search in those field layouts leaves out the kinds with nothing that mat
   assert.deepEqual(otherLayouts(o => o.handle === 'footer').map(([kind, list]) => [kind, list.map(o => o.name)]), [['globalset', ['Footer']]]);
 });
 
-test('Craft’s own fields in a field layout go by the names Craft gives them, the address title field as Label', () => {
-  const { byUid, nativeName } = loadViewer();
-  const names = o => o.tabs.flatMap(t => t.elements).filter(el => el.kind !== 'CustomField').map(el => nativeName(el, o));
+test('Craft’s own elements in a field layout go by the names Craft gives them, the address title field as Label', () => {
+  const { byUid, elementName } = loadViewer();
+  const names = o => o.tabs.flatMap(t => t.elements).filter(el => el.kind !== 'CustomField').map(el => elementName(el, o));
 
-  assert.deepEqual(names(byUid.fieldlayout.users), ['Username', 'Full Name', 'Photo', 'Email']);
+  assert.deepEqual(names(byUid.fieldlayout.users), ['Username', 'Full Name', 'Portrait', 'Email', 'Affiliated Site', 'Markdown', 'Line Break']);
   assert.deepEqual(names(byUid.volume['volume-images']), ['Title', 'Alternative Text']);
-  assert.deepEqual(names(byUid.fieldlayout.addresses), ['Label', 'Country', 'Address']);
+  assert.deepEqual(names(byUid.fieldlayout.addresses), ['Label', 'Country', 'Address', 'Full Name', 'Company', 'Organization Tax ID', 'Latitude/Longitude', 'Template']);
 });
 
-test('a title the layout renames goes by that name, and an element Craft doesn’t name by its class', () => {
-  const { byUid, nativeName } = loadViewer();
+test('every element Craft ships goes by a name in the viewer’s language, unless the layout gives it one', () => {
+  // Every message comes back marked, so a name without the marks didn't come from the translations.
+  const messages = new Proxy({}, { get: (_, message) => `«${message}»` });
+  const { model, KIND, isLayoutOwner, ofKind, elementName } = loadViewer({ language: 'de', messages });
+  const layouts = [...model.entryTypes, ...model.fields.filter(f => f.tabs), ...Object.keys(KIND).filter(isLayoutOwner).flatMap(ofKind)];
+  const named = layouts.flatMap(o => o.tabs.flatMap(t => t.elements).filter(el => el.kind !== 'CustomField').map(el => [el.kind, el.label, elementName(el, o)]));
 
-  assert.equal(nativeName(byUid.et['et-person'].tabs[0].elements[0], byUid.et['et-person']), 'Name');
-  assert.equal(nativeName({ kind: 'Markdown', width: 100 }, byUid.et['et-person']), 'Markdown');
+  assert.deepEqual(named.filter(([, label, name]) => (label ? name !== label : !/^«.+»$/.test(name))), []);
+  // The fixture holds every element Craft ships (ContentModelTest checks), among them these that once went by their class.
+  ['LineBreak', 'Markdown', 'Template', 'TextField', 'TextareaField'].forEach(kind => assert.ok(named.some(([k]) => k === kind), kind));
+});
+
+test('a title the layout renames goes by that name, and an element Craft doesn’t ship by its class', () => {
+  const { byUid, elementName } = loadViewer();
+
+  assert.equal(elementName(byUid.et['et-person'].tabs[0].elements[0], byUid.et['et-person']), 'Name');
+  assert.equal(elementName({ kind: 'Html', width: 100 }, byUid.et['et-person']), 'HTML');
+  assert.equal(elementName({ kind: 'ProductTypeField', width: 100 }, byUid.et['et-person']), 'ProductTypeField');
 });
 
 test('fields that no field layout holds are unused', () => {

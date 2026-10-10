@@ -4,6 +4,7 @@ namespace davidhellmann\orrery\services;
 
 use Craft;
 use craft\base\FieldInterface;
+use craft\fieldlayoutelements\BaseField;
 use craft\fieldlayoutelements\CustomField;
 use craft\fieldlayoutelements\Heading;
 use craft\fieldlayoutelements\Tip;
@@ -15,6 +16,7 @@ use craft\fields\Entries;
 use craft\fields\Matrix;
 use craft\helpers\App;
 use craft\helpers\ProjectConfig as ProjectConfigHelper;
+use davidhellmann\orrery\helpers\Language;
 use yii\base\Component;
 
 /**
@@ -42,30 +44,30 @@ class ContentModel extends Component
 
     private const SCHEMA_ACTIONS = ['read', 'create', 'save', 'delete'];
 
-    public function getData(bool $resolved = false): array
+    public function getData(bool $forViewer = false): array
     {
-        return $this->fromConfig(Craft::$app->getProjectConfig()->get(), $resolved);
+        return $this->fromConfig(Craft::$app->getProjectConfig()->get(), $forViewer);
     }
 
     /**
      * The content model of a project config, given as `ProjectConfig::get()` returns it.
      *
      * By default it's what the JSON export writes: raw config values, with references like `$PRIMARY_SITE_URL` or
-     * `@web` as written, and field type labels in English, so it stays the same across runs and machines as long as
-     * the content model does. `$resolved` gives what the viewer shows: those references resolved, labels in the app's
-     * language, and when the config last changed.
+     * `@web` as written, field type labels in English and no timestamp, so it stays the same across runs and machines
+     * as long as the content model does. `$forViewer` gives what the viewer shows instead: those references resolved,
+     * field type labels in the app's language, and when the config last changed.
      */
-    public function fromConfig(array $config, bool $resolved = false): array
+    public function fromConfig(array $config, bool $forViewer = false): array
     {
         $config = ProjectConfigHelper::unpackAssociativeArrays($config);
-        $data = $resolved ? ['dateModified' => $config['dateModified'] ?? null] : [];
+        $data = $forViewer ? ['dateModified' => $config['dateModified'] ?? null] : [];
 
         return $data + [
-            'siteGroups' => $this->siteGroups($config['siteGroups'] ?? [], $resolved),
-            'sites' => $this->sites($config['sites'] ?? [], $resolved),
+            'siteGroups' => $this->siteGroups($config['siteGroups'] ?? [], resolveEnv: $forViewer),
+            'sites' => $this->sites($config['sites'] ?? [], resolveEnv: $forViewer),
             'sections' => $this->sections($config['sections'] ?? []),
             'entryTypes' => $this->entryTypes($config['entryTypes'] ?? []),
-            'fields' => $this->fields($config['fields'] ?? [], $resolved),
+            'fields' => $this->fields($config['fields'] ?? [], labelsInAppLanguage: $forViewer),
             'globalSets' => $this->layoutOwners($config['globalSets'] ?? []),
             'volumes' => $this->layoutOwners($config['volumes'] ?? []),
             'categoryGroups' => $this->layoutOwners($config['categoryGroups'] ?? []),
@@ -150,30 +152,30 @@ class ContentModel extends Component
         return $this->sortBy($data, 'name');
     }
 
-    private function siteGroups(array $siteGroups, bool $resolved): array
+    private function siteGroups(array $siteGroups, bool $resolveEnv): array
     {
         $data = [];
         foreach ($siteGroups as $uid => $group) {
             $data[] = [
                 'uid' => $uid,
-                'name' => $this->value($group['name'] ?? '', $resolved),
+                'name' => $this->envSetting($group['name'] ?? '', $resolveEnv),
             ];
         }
 
         return $this->sortBy($data, 'name');
     }
 
-    private function sites(array $sites, bool $resolved): array
+    private function sites(array $sites, bool $resolveEnv): array
     {
         $data = [];
         foreach ($sites as $uid => $site) {
             $data[] = [
                 'uid' => $uid,
-                'name' => $this->value($site['name'] ?? '', $resolved),
+                'name' => $this->envSetting($site['name'] ?? '', $resolveEnv),
                 'handle' => $site['handle'] ?? '',
                 'group' => $site['siteGroup'] ?? null,
-                'baseUrl' => $this->value($site['baseUrl'] ?? null, $resolved),
-                'language' => $this->value($site['language'] ?? '', $resolved),
+                'baseUrl' => $this->envSetting($site['baseUrl'] ?? null, $resolveEnv),
+                'language' => $this->envSetting($site['language'] ?? '', $resolveEnv),
                 'primary' => (bool)($site['primary'] ?? false),
                 'sortOrder' => (int)($site['sortOrder'] ?? 0),
             ];
@@ -230,7 +232,7 @@ class ContentModel extends Component
         return $this->sortBy($data, 'handle');
     }
 
-    private function fields(array $fields, bool $resolved): array
+    private function fields(array $fields, bool $labelsInAppLanguage): array
     {
         $data = [];
         foreach ($fields as $uid => $field) {
@@ -242,7 +244,7 @@ class ContentModel extends Component
                 'handle' => $field['handle'] ?? '',
                 'type' => $this->shortName($type),
                 'typeClass' => $type,
-                'typeLabel' => $this->typeLabel($type, $resolved),
+                'typeLabel' => $this->typeLabel($type, $labelsInAppLanguage),
                 'role' => $this->role($type),
                 'instructions' => $this->nullIfEmpty($field, 'instructions'),
             ];
@@ -336,12 +338,17 @@ class ContentModel extends Component
             ]);
         }
 
-        if (is_a($type, TitleField::class, true)) {
+        // Craft's own fields, like an entry's title or a user's email, by their class name. Title fields, the address
+        // Label field among them, all count as the title, which is required unless the layout says otherwise.
+        if (is_a($type, BaseField::class, true)) {
+            $isTitle = is_a($type, TitleField::class, true);
+
             return $this->withoutNulls([
                 ...$base,
-                'kind' => 'Title',
+                'kind' => $isTitle ? 'Title' : $base['kind'],
                 'label' => $this->nullIfEmpty($element, 'label'),
-                'required' => ($element['required'] ?? true) !== false,
+                'required' => (bool)($element['required'] ?? $isTitle),
+                'conditional' => $this->isConditional($element),
             ]);
         }
 
@@ -369,11 +376,12 @@ class ContentModel extends Component
     }
 
     /**
-     * A setting that may refer to an environment variable or alias, as written or resolved.
+     * A setting that may refer to an environment variable or alias, like `$PRIMARY_SITE_URL`: resolved with
+     * `App::parseEnv()`, or as written.
      */
-    private function value(?string $value, bool $resolved): bool|string|null
+    private function envSetting(?string $value, bool $resolve): bool|string|null
     {
-        return $resolved ? App::parseEnv($value) : $value;
+        return $resolve ? App::parseEnv($value) : $value;
     }
 
     /**
@@ -390,26 +398,16 @@ class ContentModel extends Component
     }
 
     /**
-     * Field types name themselves in the app's language. Raw, they're asked in Craft's source language, English, so
-     * the JSON export reads the same whoever runs it.
+     * Field types name themselves in the app's language. Otherwise they're asked in Craft's source language, English,
+     * so the JSON export reads the same whoever runs it.
      */
-    private function typeLabel(string $type, bool $resolved): string
+    private function typeLabel(string $type, bool $inAppLanguage): string
     {
         if (!is_subclass_of($type, FieldInterface::class)) {
             return $this->shortName($type);
         }
 
-        if ($resolved) {
-            return $type::displayName();
-        }
-
-        $language = Craft::$app->language;
-        Craft::$app->language = Craft::$app->sourceLanguage;
-        try {
-            return $type::displayName();
-        } finally {
-            Craft::$app->language = $language;
-        }
+        return $inAppLanguage ? $type::displayName() : Language::during(Craft::$app->sourceLanguage, fn() => $type::displayName());
     }
 
     private function shortName(string $class): string
