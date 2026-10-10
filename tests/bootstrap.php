@@ -2,8 +2,8 @@
 
 /**
  * Loads Craft's classes without booting Craft: no database, no request. The app is just enough for `Craft::t()` to
- * translate Craft's own messages and Orrery's, so field types name themselves in the app's language: `en-US`, as in a
- * console request, unless a test changes it.
+ * translate Craft's own messages, so field types name themselves in the app's language: `en-US`, as in a console
+ * request, unless a test changes it.
  */
 
 use craft\console\Application;
@@ -25,13 +25,6 @@ Craft::$app = new class() extends Application {
                     'class' => PhpMessageSource::class,
                     'sourceLanguage' => 'en-US',
                     'basePath' => dirname(__DIR__) . '/vendor/craftcms/cms/src/translations',
-                    'forceTranslation' => true,
-                ],
-                // Orrery's own, the way Craft registers them for a plugin.
-                'orrery' => [
-                    'class' => PhpMessageSource::class,
-                    'sourceLanguage' => 'en-US',
-                    'basePath' => dirname(__DIR__) . '/src/translations',
                     'forceTranslation' => true,
                 ],
             ],

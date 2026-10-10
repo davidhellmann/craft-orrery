@@ -347,13 +347,15 @@ class ContentModelTest extends TestCase
         ], array_column($data['fields'], 'typeLabel', 'handle'));
     }
 
-    public function testFieldTypeLabelsForTheViewerInTheAppLanguage(): void
+    public function testFieldTypeLabelsForTheViewerInEnglishWhateverTheAppLanguage(): void
     {
-        Craft::$app->language = 'de';
-        $data = (new ContentModel())->fromConfig($this->config, forViewer: true);
-        $labels = array_column($data['fields'], 'typeLabel', 'handle');
+        foreach (['de', 'fr'] as $language) {
+            Craft::$app->language = $language;
+            $labels = array_column((new ContentModel())->fromConfig($this->config, forViewer: true)['fields'], 'typeLabel', 'handle');
 
-        $this->assertSame(['Reiner Text', 'Einträge', 'Inhaltsblock'], [$labels['body'], $labels['relatedNews'], $labels['seo']]);
+            $this->assertSame(['Plain Text', 'Entries', 'Content Block'], [$labels['body'], $labels['relatedNews'], $labels['seo']]);
+            $this->assertSame($language, Craft::$app->language);
+        }
     }
 
     public function testGlobalSetWithItsTabs(): void

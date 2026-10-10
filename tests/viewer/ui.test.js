@@ -130,3 +130,10 @@ test('a Builder’s details list its Blocks by group, under the name each gets t
   assert.deepEqual(blocks.slice(0, 6), ['et-text', 'et-quote', 'et-image', 'et-link', 'et-teaser', 'et-columns']);
   assert.match(html, /data-go="block:et-quote">(?:(?!data-go).)*<span class="note">as “Pull quote”<\/span>/);
 });
+
+test('a count agrees with its number', () => {
+  const { count } = loadViewer();
+
+  assert.deepEqual([0, 1, 2].map(n => count(n, 'field', 'fields')), ['0 fields', '1 field', '2 fields']);
+  assert.equal(count(1, 'differs', 'differ'), '1 differs');
+});

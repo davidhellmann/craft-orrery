@@ -81,7 +81,7 @@ const App = (() => {
 
   // access pickers: switch user groups and GraphQL schemas on as a layer, remembered per browser
   const accessEl = document.getElementById('access');
-  const PICKER = { usergroup: { label: KIND.usergroup.plural, all: t('All user groups') }, schema: { label: 'GraphQL', all: t('All GraphQL schemas') } };
+  const PICKER = { usergroup: { label: KIND.usergroup.plural, all: 'All user groups' }, schema: { label: 'GraphQL', all: 'All GraphQL schemas' } };
   try {
     const saved = JSON.parse(localStorage.getItem('orrery-access') || '{}');
     ACCESS.forEach(kind => (saved[kind] || []).forEach(uid => nodeOf(keyOf(kind, uid)) && shownAccess[kind].add(uid)));
@@ -91,7 +91,7 @@ const App = (() => {
       <button class="pick" type="button" aria-haspopup="true" aria-expanded="false">${glyph(kind)}<span class="pick-label">${PICKER[kind].label}</span><span class="pick-count"></span></button>
       <div class="pop floating" hidden>
         <div class="opt all"><label><input type="checkbox" data-all>${PICKER[kind].all}</label></div>
-        ${ofKind(kind).map(a => `<div class="opt"><label><input type="checkbox" value="${a.uid}">${esc(a.name)}</label><button class="opt-go" type="button" data-go="${keyOf(kind, a.uid)}" title="${t('Show what {name} can reach', { name: esc(a.name) })}">→</button></div>`).join('')}
+        ${ofKind(kind).map(a => `<div class="opt"><label><input type="checkbox" value="${a.uid}">${esc(a.name)}</label><button class="opt-go" type="button" data-go="${keyOf(kind, a.uid)}" title="Show what ${esc(a.name)} can reach">→</button></div>`).join('')}
       </div>
     </div>`).join('');
 
@@ -101,7 +101,7 @@ const App = (() => {
     const all = p.querySelector('[data-all]');
     all.checked = on.size === total;
     all.indeterminate = on.size > 0 && on.size < total;
-    p.querySelector('.pick-count').textContent = on.size === total ? t('All') : on.size || '';
+    p.querySelector('.pick-count').textContent = on.size === total ? 'All' : on.size || '';
     p.classList.toggle('on', on.size > 0);
   }
   function accessChanged() {
@@ -138,7 +138,7 @@ const App = (() => {
   // header
   const STATS = ['group', 'site', 'section', 'page', 'block', 'matrix', 'field'];
   document.getElementById('stats').innerHTML = STATS.map(k => `<span class="stat">${glyph(k)}<b>${ofKind(k).length}</b>${KIND[k].plural}</span>`).join('');
-  if (model.dateModified) document.getElementById('meta').textContent = t('Config updated {date}', { date: formatDate(model.dateModified) });
+  if (model.dateModified) document.getElementById('meta').textContent = `Config updated ${new Date(model.dateModified * 1000).toLocaleString()}`;
 
   // theme: light or dark, starts from the system's and is remembered per browser once switched
   const themeBtn = document.getElementById('theme');
@@ -147,7 +147,7 @@ const App = (() => {
   function setTheme(theme) {
     document.documentElement.dataset.theme = theme;
     themeBtn.innerHTML = theme === 'dark' ? SUN : MOON;
-    themeBtn.title = theme === 'dark' ? t('Switch to light theme') : t('Switch to dark theme');
+    themeBtn.title = theme === 'dark' ? 'Switch to light theme' : 'Switch to dark theme';
     themeBtn.setAttribute('aria-label', themeBtn.title);
   }
   themeBtn.addEventListener('click', () => {
@@ -162,7 +162,7 @@ const App = (() => {
   function setInfo(open) {
     document.documentElement.classList.toggle('show-info', open);
     infoBtn.setAttribute('aria-pressed', String(open));
-    infoBtn.title = open ? t('Hide info') : t('Show info');
+    infoBtn.title = open ? 'Hide info' : 'Show info';
     infoBtn.setAttribute('aria-label', infoBtn.title);
   }
   function toggleInfo(open) {

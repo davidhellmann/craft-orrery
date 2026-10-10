@@ -16,7 +16,6 @@ use craft\fields\Entries;
 use craft\fields\Matrix;
 use craft\helpers\App;
 use craft\helpers\ProjectConfig as ProjectConfigHelper;
-use davidhellmann\orrery\helpers\Language;
 use yii\base\Component;
 
 /**
@@ -53,9 +52,9 @@ class ContentModel extends Component
      * The content model of a project config, given as `ProjectConfig::get()` returns it.
      *
      * By default it's what the JSON export writes: raw config values, with references like `$PRIMARY_SITE_URL` or
-     * `@web` as written, field type labels in English and no timestamp, so it stays the same across runs and machines
-     * as long as the content model does. `$forViewer` gives what the viewer shows instead: those references resolved,
-     * field type labels in the app's language, and when the config last changed.
+     * `@web` as written, and no timestamp, so it stays the same across runs and machines as long as the content model
+     * does. `$forViewer` gives what the viewer shows instead: those references resolved, and when the config last
+     * changed. Field types are named in English either way.
      */
     public function fromConfig(array $config, bool $forViewer = false): array
     {
@@ -67,7 +66,7 @@ class ContentModel extends Component
             'sites' => $this->sites($config['sites'] ?? [], resolveEnv: $forViewer),
             'sections' => $this->sections($config['sections'] ?? []),
             'entryTypes' => $this->entryTypes($config['entryTypes'] ?? []),
-            'fields' => $this->fields($config['fields'] ?? [], labelsInAppLanguage: $forViewer),
+            'fields' => $this->fields($config['fields'] ?? []),
             'globalSets' => $this->layoutOwners($config['globalSets'] ?? []),
             'volumes' => $this->layoutOwners($config['volumes'] ?? []),
             'categoryGroups' => $this->layoutOwners($config['categoryGroups'] ?? []),
@@ -232,7 +231,7 @@ class ContentModel extends Component
         return $this->sortBy($data, 'handle');
     }
 
-    private function fields(array $fields, bool $labelsInAppLanguage): array
+    private function fields(array $fields): array
     {
         $data = [];
         foreach ($fields as $uid => $field) {
@@ -244,7 +243,7 @@ class ContentModel extends Component
                 'handle' => $field['handle'] ?? '',
                 'type' => $this->shortName($type),
                 'typeClass' => $type,
-                'typeLabel' => $this->typeLabel($type, $labelsInAppLanguage),
+                'typeLabel' => $this->typeLabel($type),
                 'role' => $this->role($type),
                 'instructions' => $this->nullIfEmpty($field, 'instructions'),
             ];
@@ -398,16 +397,22 @@ class ContentModel extends Component
     }
 
     /**
-     * Field types name themselves in the app's language. Otherwise they're asked in Craft's source language, English,
-     * so the JSON export reads the same whoever runs it.
+     * Field types name themselves in the app's language, so they're asked in Craft's source language, English: Orrery
+     * is in English, and the JSON export reads the same whoever runs it.
      */
-    private function typeLabel(string $type, bool $inAppLanguage): string
+    private function typeLabel(string $type): string
     {
         if (!is_subclass_of($type, FieldInterface::class)) {
             return $this->shortName($type);
         }
 
-        return $inAppLanguage ? $type::displayName() : Language::during(Craft::$app->sourceLanguage, fn() => $type::displayName());
+        $language = Craft::$app->language;
+        Craft::$app->language = Craft::$app->sourceLanguage;
+        try {
+            return $type::displayName();
+        } finally {
+            Craft::$app->language = $language;
+        }
     }
 
     private function shortName(string $class): string

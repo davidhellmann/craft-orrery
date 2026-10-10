@@ -16,16 +16,3 @@ test('two sites compare property by property', () => {
     ['Primary', 'Yes', 'No', 'changed'],
   ]);
 });
-
-// A language may say two things with one word, like German "Volumen" for one volume and for several.
-test('properties stay apart when the language words them alike', () => {
-  const { props } = compare(loadViewer({ language: 'de', messages: { Handle: 'Kennung', Language: 'Kennung' } }), 'site:site-en', 'site:site-de');
-
-  assert.deepEqual(props.slice(0, 3).map(p => [p.label, p.x, p.y]), [['Kennung', 'en', 'de'], ['Site Group', 'Museum', 'Museum'], ['Kennung', 'en-GB', 'de-DE']]);
-});
-
-test('groups stay apart when the language words them alike', () => {
-  const { groups } = compare(loadViewer({ language: 'de', messages: { 'Lives in': 'Inhalt', Fields: 'Inhalt' } }), 'page:et-article', 'page:et-person');
-
-  assert.deepEqual(groups.slice(0, 2).map(g => [g.title, g.rows.length]), [['Inhalt', 3], ['Inhalt', 4]]);
-});

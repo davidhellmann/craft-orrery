@@ -163,14 +163,17 @@ test('Craft’s own elements in a field layout go by the names Craft gives them,
   assert.deepEqual(names(byUid.fieldlayout.addresses), ['Label', 'Country', 'Address', 'Full Name', 'Company', 'Organization Tax ID', 'Latitude/Longitude', 'Template']);
 });
 
-test('every element Craft ships goes by a name in the viewer’s language, unless the layout gives it one', () => {
-  // Every message comes back marked, so a name without the marks didn't come from the translations.
-  const messages = new Proxy({}, { get: (_, message) => `«${message}»` });
-  const { model, KIND, isLayoutOwner, ofKind, elementName } = loadViewer({ language: 'de', messages });
+test('every element Craft ships goes by the name Craft gives it, unless the layout gives it one', () => {
+  const { model, KIND, isLayoutOwner, ofKind, elementName } = loadViewer();
   const layouts = [...model.entryTypes, ...model.fields.filter(f => f.tabs), ...Object.keys(KIND).filter(isLayoutOwner).flatMap(ofKind)];
-  const named = layouts.flatMap(o => o.tabs.flatMap(t => t.elements).filter(el => el.kind !== 'CustomField').map(el => [el.kind, el.label, elementName(el, o)]));
+  const named = layouts.flatMap(o => o.tabs.flatMap(t => t.elements).filter(el => !['CustomField', 'Title'].includes(el.kind)).map(el => [el.kind, el.label, elementName(el, o)]));
+  const CRAFT_NAMES = {
+    UsernameField: 'Username', FullNameField: 'Full Name', EmailField: 'Email', AffiliatedSiteField: 'Affiliated Site', AltField: 'Alternative Text',
+    OrganizationTaxIdField: 'Organization Tax ID', CountryCodeField: 'Country', AddressField: 'Address', LatLongField: 'Latitude/Longitude', TextField: 'Text',
+    Heading: 'Heading', Tip: 'Tip', HorizontalRule: 'Horizontal Rule', LineBreak: 'Line Break', Markdown: 'Markdown', Template: 'Template',
+  };
 
-  assert.deepEqual(named.filter(([, label, name]) => (label ? name !== label : !/^«.+»$/.test(name))), []);
+  assert.deepEqual(named.filter(([kind, label, name]) => name !== (label || CRAFT_NAMES[kind])), []);
   // The fixture holds every element Craft ships (ContentModelTest checks), among them these that once went by their class.
   ['LineBreak', 'Markdown', 'Template', 'TextField', 'TextareaField'].forEach(kind => assert.ok(named.some(([k]) => k === kind), kind));
 });
