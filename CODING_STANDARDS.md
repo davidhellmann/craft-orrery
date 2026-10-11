@@ -6,7 +6,7 @@ What a reviewer judges, because no tool can. What a tool can check belongs in a 
 
 What differs between kinds belongs in the `KIND` map (`src/viewer/model.js`) or in a view's `registerView()` entry, not in another chain of `kind === '…'` checks.
 
-*Why:* a new kind should be one entry, not a hunt through every view. Review-fixes 04 removed such chains, and new ones crept back in.
+*Why:* a new kind should be one entry, not a hunt through every view. Such chains were cleared out once, and new ones crept back in.
 *Follows it:* the Table's `kinds`, `Object.keys(KIND).filter(k => isField(k) || isEntryType(k) || isLayoutOwner(k))`, which picks up any new field, entry type or layout owner by itself.
 
 ## One meaning, one wording

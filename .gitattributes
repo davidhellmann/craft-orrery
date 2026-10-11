@@ -2,7 +2,6 @@
 .gitattributes export-ignore
 .github/ export-ignore
 .gitignore export-ignore
-.scratch/ export-ignore
 CHANGELOG.md export-ignore
 CLAUDE.md export-ignore
 CODING_STANDARDS.md export-ignore
