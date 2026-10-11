@@ -1,5 +1,6 @@
 *.DS_Store
 *.idea/*
+/.phpactor.json
 *.log
 *Thumbs.db
 .phpunit.cache
