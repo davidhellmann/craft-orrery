@@ -11,10 +11,8 @@
 use Twig\Environment;
 use Twig\Loader\FilesystemLoader;
 use Twig\TwigFilter;
-use yii\helpers\Json;
 
 require dirname(__DIR__, 2) . '/vendor/autoload.php';
-require_once dirname(__DIR__, 2) . '/vendor/yiisoft/yii2/Yii.php';
 
 [, $root, $out] = $_SERVER['argv'] + [null, null, null];
 if (!$root || !$out) {
@@ -28,7 +26,7 @@ preg_match_all("/'([^']+)'/", $list[1] ?? '', $names);
 $sources = array_map(fn(string $name) => file_get_contents("$root/src/viewer/$name.js"), $names[1]);
 $script = str_ireplace('</script', '<\/script', "(() => {\n'use strict';\n" . implode("\n", $sources) . "\n})();");
 
-$data = Json::decode((string)file_get_contents("$root/tests/fixtures/content-model.json")) + [
+$data = json_decode((string)file_get_contents("$root/tests/fixtures/content-model.json"), true) + [
     // Some handles of the fixture project have these prefixes and some don't, so both show.
     'prefixes' => ['page' => ['page_', 'single_'], 'block' => ['block_']],
 ];
@@ -40,6 +38,7 @@ $twig->addFilter(new TwigFilter('t', fn(string $message) => $message));
 file_put_contents($out, $twig->render('_viewer.twig', [
     'title' => 'Orrery',
     'styles' => file_get_contents("$root/src/viewer/viewer.css"),
-    'data' => Json::htmlEncode($data),
+    // As `Viewer::JSON_FLAGS` encodes it.
+    'data' => json_encode($data, JSON_UNESCAPED_UNICODE | JSON_HEX_QUOT | JSON_HEX_TAG | JSON_HEX_AMP | JSON_HEX_APOS),
     'script' => $script,
 ]));

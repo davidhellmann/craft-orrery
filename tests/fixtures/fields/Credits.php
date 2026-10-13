@@ -2,7 +2,7 @@
 
 namespace davidhellmann\orrery\tests\fixtures\fields;
 
-use craft\fields\ContentBlock;
+use CraftCms\Cms\Field\ContentBlock;
 
 /**
  * A plugin's field type built on ContentBlock, for the fixture project config.

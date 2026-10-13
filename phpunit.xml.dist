@@ -1,7 +1,7 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <phpunit xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
          xsi:noNamespaceSchemaLocation="vendor/phpunit/phpunit/phpunit.xsd"
-         bootstrap="tests/bootstrap.php"
+         bootstrap="vendor/autoload.php"
          cacheDirectory=".phpunit.cache"
          colors="true"
          failOnWarning="true"
@@ -9,6 +9,8 @@
     <testsuites>
         <testsuite name="Orrery">
             <directory>tests</directory>
+            <exclude>tests/fixtures</exclude>
+            <exclude>tests/snapshots</exclude>
         </testsuite>
     </testsuites>
     <source ignoreIndirectDeprecations="true">
@@ -16,4 +18,16 @@
             <directory>src</directory>
         </include>
     </source>
+    <php>
+        <env name="APP_ENV" value="testing"/>
+        <env name="APP_KEY" value="base64:6BDzvwO4hrN7Twv6/gaQ6oZMB/CvpUArZXho189U75E="/>
+        <env name="AUTH_MODEL" value="\CraftCms\Cms\User\Models\User"/>
+        <env name="BCRYPT_ROUNDS" value="4"/>
+        <env name="CACHE_STORE" value="array"/>
+        <env name="DB_CONNECTION" value="sqlite"/>
+        <env name="DB_DATABASE" value=":memory:"/>
+        <env name="MAIL_MAILER" value="array"/>
+        <env name="QUEUE_CONNECTION" value="sync"/>
+        <env name="SESSION_DRIVER" value="array"/>
+    </php>
 </phpunit>

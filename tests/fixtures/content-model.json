@@ -574,7 +574,7 @@
             "name": "Body",
             "handle": "body",
             "type": "PlainText",
-            "typeClass": "craft\\fields\\PlainText",
+            "typeClass": "CraftCms\\Cms\\Field\\PlainText",
             "typeLabel": "Plain Text",
             "role": "field",
             "instructions": "Plain text, no formatting."
@@ -584,7 +584,7 @@
             "name": "Columns",
             "handle": "columns",
             "type": "Matrix",
-            "typeClass": "craft\\fields\\Matrix",
+            "typeClass": "CraftCms\\Cms\\Field\\Matrix",
             "typeLabel": "Matrix",
             "role": "builder",
             "blocks": [
@@ -603,7 +603,7 @@
             "name": "Copyright",
             "handle": "copyright",
             "type": "PlainText",
-            "typeClass": "craft\\fields\\PlainText",
+            "typeClass": "CraftCms\\Cms\\Field\\PlainText",
             "typeLabel": "Plain Text",
             "role": "field"
         },
@@ -636,7 +636,7 @@
             "name": "Curators",
             "handle": "curators",
             "type": "Entries",
-            "typeClass": "craft\\fields\\Entries",
+            "typeClass": "CraftCms\\Cms\\Field\\Entries",
             "typeLabel": "Entries",
             "role": "relation",
             "sources": [
@@ -649,7 +649,7 @@
             "name": "Featured",
             "handle": "featured",
             "type": "Entries",
-            "typeClass": "craft\\fields\\Entries",
+            "typeClass": "CraftCms\\Cms\\Field\\Entries",
             "typeLabel": "Entries",
             "role": "relation",
             "sources": [
@@ -677,7 +677,7 @@
             "name": "Image",
             "handle": "image",
             "type": "Assets",
-            "typeClass": "craft\\fields\\Assets",
+            "typeClass": "CraftCms\\Cms\\Field\\Assets",
             "typeLabel": "Assets",
             "role": "field",
             "sources": [
@@ -690,7 +690,7 @@
             "name": "Layout",
             "handle": "layoutStyle",
             "type": "Dropdown",
-            "typeClass": "craft\\fields\\Dropdown",
+            "typeClass": "CraftCms\\Cms\\Field\\Dropdown",
             "typeLabel": "Dropdown",
             "role": "field",
             "options": [
@@ -711,7 +711,7 @@
             "name": "Notes",
             "handle": "notes",
             "type": "PlainText",
-            "typeClass": "craft\\fields\\PlainText",
+            "typeClass": "CraftCms\\Cms\\Field\\PlainText",
             "typeLabel": "Plain Text",
             "role": "field"
         },
@@ -720,7 +720,7 @@
             "name": "Old teaser",
             "handle": "oldTeaser",
             "type": "PlainText",
-            "typeClass": "craft\\fields\\PlainText",
+            "typeClass": "CraftCms\\Cms\\Field\\PlainText",
             "typeLabel": "Plain Text",
             "role": "field"
         },
@@ -729,7 +729,7 @@
             "name": "Page builder",
             "handle": "pageBuilder",
             "type": "Matrix",
-            "typeClass": "craft\\fields\\Matrix",
+            "typeClass": "CraftCms\\Cms\\Field\\Matrix",
             "typeLabel": "Matrix",
             "role": "builder",
             "blocks": [
@@ -767,7 +767,7 @@
             "name": "Photographer",
             "handle": "photographer",
             "type": "PlainText",
-            "typeClass": "craft\\fields\\PlainText",
+            "typeClass": "CraftCms\\Cms\\Field\\PlainText",
             "typeLabel": "Plain Text",
             "role": "field"
         },
@@ -776,7 +776,7 @@
             "name": "Related news",
             "handle": "relatedNews",
             "type": "Entries",
-            "typeClass": "craft\\fields\\Entries",
+            "typeClass": "CraftCms\\Cms\\Field\\Entries",
             "typeLabel": "Entries",
             "role": "relation",
             "sources": [
@@ -789,7 +789,7 @@
             "name": "SEO",
             "handle": "seo",
             "type": "ContentBlock",
-            "typeClass": "craft\\fields\\ContentBlock",
+            "typeClass": "CraftCms\\Cms\\Field\\ContentBlock",
             "typeLabel": "Content Block",
             "role": "builder",
             "tabs": [
@@ -823,7 +823,7 @@
             "name": "Summary",
             "handle": "summary",
             "type": "PlainText",
-            "typeClass": "craft\\fields\\PlainText",
+            "typeClass": "CraftCms\\Cms\\Field\\PlainText",
             "typeLabel": "Plain Text",
             "role": "field"
         }

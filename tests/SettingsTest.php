@@ -6,7 +6,7 @@ use davidhellmann\orrery\models\Settings;
 use PHPUnit\Framework\TestCase;
 
 /**
- * What saving the settings form keeps of the settings `config/orrery.php` overrides.
+ * What saving the settings form keeps of the settings `config/craft/orrery.php` overrides.
  */
 class SettingsTest extends TestCase
 {

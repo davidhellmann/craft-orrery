@@ -27,14 +27,15 @@
         "rss": "https://github.com/davidhellmann/craft-orrery/releases.atom"
     },
     "require": {
-        "php": ">=8.2",
-        "craftcms/cms": "^5.0.0"
+        "php": "^8.5",
+        "craftcms/cms": "^6.0.0-alpha.20"
     },
     "require-dev": {
-        "craftcms/ecs": "dev-main",
-        "craftcms/phpstan": "dev-main",
+        "larastan/larastan": "^3.13",
+        "laravel/pint": "^1.22",
+        "orchestra/testbench": "^11.0",
         "phpstan/phpstan": "^2.1",
-        "phpunit/phpunit": "^11.5"
+        "phpunit/phpunit": "^12.0"
     },
     "autoload": {
         "psr-4": {
@@ -51,22 +52,24 @@
         "name": "Orrery",
         "developer": "David Hellmann",
         "developerUrl": "https://davidhellmann.com",
-        "documentationUrl": "https://github.com/davidhellmann/craft-orrery"
+        "documentationUrl": "https://github.com/davidhellmann/craft-orrery",
+        "class": "davidhellmann\\orrery\\Plugin"
     },
     "scripts": {
-        "check-cs": "ecs check --ansi",
-        "fix-cs": "ecs check --ansi --fix",
+        "check-cs": "pint --test",
+        "fix-cs": "pint",
         "phpstan": "phpstan --memory-limit=1G",
         "test": "phpunit"
     },
     "config": {
         "sort-packages": true,
         "platform": {
-            "php": "8.2"
+            "php": "8.5"
         },
         "allow-plugins": {
-            "yiisoft/yii2-composer": true,
             "craftcms/plugin-installer": true
         }
-    }
+    },
+    "minimum-stability": "alpha",
+    "prefer-stable": true
 }

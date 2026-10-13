@@ -2,11 +2,11 @@
 
 namespace davidhellmann\orrery\tests;
 
-use Craft;
-use craft\fieldlayoutelements\Html;
-use craft\helpers\Json;
+use CraftCms\Aliases\Aliases;
+use CraftCms\Cms\FieldLayout\LayoutElements\Html;
+use CraftCms\Cms\FieldLayout\LayoutElements\Missing;
+use CraftCms\Cms\Support\Json;
 use davidhellmann\orrery\services\ContentModel;
-use PHPUnit\Framework\TestCase;
 use Symfony\Component\Yaml\Yaml;
 
 /**
@@ -29,8 +29,9 @@ class ContentModelTest extends TestCase
 
     protected function setUp(): void
     {
+        parent::setUp();
         $_SERVER = self::ENV + $_SERVER;
-        Craft::setAlias('@web', 'https://shop.museum.test');
+        Aliases::set('@web', 'https://shop.museum.test');
         $this->config = Yaml::parseFile(__DIR__ . '/fixtures/project.yaml');
         $this->data = (new ContentModel())->fromConfig($this->config);
     }
@@ -38,8 +39,7 @@ class ContentModelTest extends TestCase
     protected function tearDown(): void
     {
         $_SERVER = array_diff_key($_SERVER, self::ENV);
-        Craft::setAlias('@web', null);
-        Craft::$app->language = 'en-US';
+        parent::tearDown();
     }
 
     public function testUnrelatedConfigChangesLeaveTheDataAsItIs(): void
@@ -213,7 +213,7 @@ class ContentModelTest extends TestCase
             'name' => 'Body',
             'handle' => 'body',
             'type' => 'PlainText',
-            'typeClass' => 'craft\fields\PlainText',
+            'typeClass' => 'CraftCms\Cms\Field\PlainText',
             'typeLabel' => 'Plain Text',
             'role' => 'field',
             'instructions' => 'Plain text, no formatting.',
@@ -227,7 +227,7 @@ class ContentModelTest extends TestCase
             'name' => 'Page builder',
             'handle' => 'pageBuilder',
             'type' => 'Matrix',
-            'typeClass' => 'craft\fields\Matrix',
+            'typeClass' => 'CraftCms\Cms\Field\Matrix',
             'typeLabel' => 'Matrix',
             'role' => 'builder',
             'blocks' => [
@@ -251,7 +251,7 @@ class ContentModelTest extends TestCase
             'name' => 'SEO',
             'handle' => 'seo',
             'type' => 'ContentBlock',
-            'typeClass' => 'craft\fields\ContentBlock',
+            'typeClass' => 'CraftCms\Cms\Field\ContentBlock',
             'typeLabel' => 'Content Block',
             'role' => 'builder',
             'tabs' => [
@@ -282,7 +282,7 @@ class ContentModelTest extends TestCase
             'name' => 'Related news',
             'handle' => 'relatedNews',
             'type' => 'Entries',
-            'typeClass' => 'craft\fields\Entries',
+            'typeClass' => 'CraftCms\Cms\Field\Entries',
             'typeLabel' => 'Entries',
             'role' => 'relation',
             'sources' => ['section:section-news'],
@@ -324,7 +324,7 @@ class ContentModelTest extends TestCase
 
     public function testFieldTypeLabelsInEnglishWhateverTheAppLanguage(): void
     {
-        Craft::$app->language = 'de';
+        app()->setLocale('de');
         $data = (new ContentModel())->fromConfig($this->config);
 
         $this->assertSame([
@@ -350,11 +350,11 @@ class ContentModelTest extends TestCase
     public function testFieldTypeLabelsForTheViewerInEnglishWhateverTheAppLanguage(): void
     {
         foreach (['de', 'fr'] as $language) {
-            Craft::$app->language = $language;
+            app()->setLocale($language);
             $labels = array_column((new ContentModel())->fromConfig($this->config, forViewer: true)['fields'], 'typeLabel', 'handle');
 
             $this->assertSame(['Plain Text', 'Entries', 'Content Block'], [$labels['body'], $labels['relatedNews'], $labels['seo']]);
-            $this->assertSame($language, Craft::$app->language);
+            $this->assertSame($language, app()->getLocale());
         }
     }
 
@@ -471,21 +471,22 @@ class ContentModelTest extends TestCase
     }
 
     /**
-     * The viewer names every element of a field layout, so the fixture holds every one Craft ships, but `Html`: that
-     * one is only for code, and Craft can't store it in a field layout.
+     * The viewer names every element of a field layout, so the fixture holds every one Craft ships, but `Html` and
+     * `Missing`: `Html` is only for code, and `Missing` stands in for an element whose class is gone. Craft stores
+     * neither in a field layout.
      */
     public function testTheFixtureHoldsEveryLayoutElementCraftShips(): void
     {
-        $dir = dirname(__DIR__) . '/vendor/craftcms/cms/src/fieldlayoutelements';
+        $dir = dirname(__DIR__) . '/vendor/craftcms/cms/src/FieldLayout/LayoutElements';
         $files = new \RecursiveIteratorIterator(new \RecursiveDirectoryIterator($dir, \FilesystemIterator::SKIP_DOTS));
         $elements = [];
         foreach ($files as $file) {
-            $class = 'craft\\fieldlayoutelements\\' . str_replace(['/', '.php'], ['\\', ''], substr($file->getPathname(), strlen($dir) + 1));
-            if (!(new \ReflectionClass($class))->isAbstract() && $class !== Html::class) {
+            $class = 'CraftCms\\Cms\\FieldLayout\\LayoutElements\\' . str_replace(['/', '.php'], ['\\', ''], substr($file->getPathname(), strlen($dir) + 1));
+            if (!(new \ReflectionClass($class))->isAbstract() && !in_array($class, [Html::class, Missing::class], true)) {
                 $elements[] = $class;
             }
         }
-        preg_match_all('/type: (craft\\\\fieldlayoutelements\\\\\S+)/', file_get_contents(__DIR__ . '/fixtures/project.yaml'), $matches);
+        preg_match_all('/type: (CraftCms\\\\Cms\\\\FieldLayout\\\\LayoutElements\\\\\S+)/', file_get_contents(__DIR__ . '/fixtures/project.yaml'), $matches);
 
         $this->assertSame([], array_values(array_diff($elements, $matches[1])));
     }
@@ -512,6 +513,30 @@ class ContentModelTest extends TestCase
                 'section-home' => ['view', 'save'],
             ],
         ], $this->item('userGroups', 'ug-editors'));
+    }
+
+    /**
+     * Craft 5 stored permissions lowercased, Craft 6 stores them as Craft names them. Both read the same.
+     */
+    public function testUserGroupRightsAsCraft6StoresThem(): void
+    {
+        $data = (new ContentModel())->fromConfig([
+            'sites' => ['site-en' => ['handle' => 'en'], 'site-de' => ['handle' => 'de']],
+            'users' => [
+                'groups' => [
+                    'ug-editors' => ['handle' => 'editors', 'name' => 'Editors', 'permissions' => [
+                        'accessCp',
+                        'editSite:site-de',
+                        'viewEntries:section-news',
+                        'savePeerEntries:section-news',
+                        'deletePeerEntryDrafts:section-news',
+                    ]],
+                ],
+            ],
+        ]);
+
+        $this->assertSame(['site-de'], $data['userGroups'][0]['sites']);
+        $this->assertSame(['section-news' => ['view', 'savePeer', 'deletePeerDrafts']], $data['userGroups'][0]['sections']);
     }
 
     public function testUserGroupWithoutRights(): void

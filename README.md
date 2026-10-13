@@ -27,7 +27,7 @@ Every view has shareable links, like `#graph/page:<uid>`, `#table/field:<uid>` o
 
 ## Requirements
 
-Craft CMS 5.0 or later, PHP 8.2 or later.
+Craft CMS 6, PHP 8.5 or later. For Craft CMS 5, use Orrery 1.x.
 
 ## Installation
 
@@ -37,7 +37,7 @@ With Composer:
 
 ```bash
 composer require davidhellmann/craft-orrery
-php craft plugin/install orrery
+php artisan craft:plugin:install orrery
 ```
 
 ## Usage
@@ -51,15 +51,15 @@ Users need the *Access Orrery* permission to see it. The viewer is in English, f
 The same file, or the raw data as JSON, from the command line:
 
 ```bash
-php craft orrery/export                                # content-model.html in the current directory
-php craft orrery/export @storage/content-model.json    # .json writes the data instead
+php artisan orrery:export                                # content-model.html in the current directory
+php artisan orrery:export @storage/content-model.json    # .json writes the data instead
 ```
 
 The JSON holds the raw config values: names, base URLs and languages set through environment variables or aliases, like `$PRIMARY_SITE_URL` or `@web`, stay as written, so no resolved environment value ends up in the file. Field types are named in English, and there’s no timestamp. Two exports are the same file as long as the content model is, on any machine, so committing it lets you review content model changes in a pull request. The viewer and the HTML file show the resolved values. Mind where you write it: the export lists every section, entry type and field.
 
 ## Settings
 
-Projects that prefix entry type handles, like `page_` and `block_`, can have Orrery flag the ones that don’t. Nothing gets renamed; they’re only marked in the viewer. Set one prefix each under *Settings → Plugins → Orrery*, or use `config/orrery.php`, where an array allows several:
+Projects that prefix entry type handles, like `page_` and `block_`, can have Orrery flag the ones that don’t. Nothing gets renamed; they’re only marked in the viewer. Set one prefix each under *Settings → Plugins → Orrery*, or use `config/craft/orrery.php`, where an array allows several:
 
 ```php
 <?php
@@ -70,7 +70,7 @@ return [
 ];
 ```
 
-A handle passes if it starts with any of its prefixes. Leave a prefix blank to skip that check. Anything set in `config/orrery.php` wins over the control panel, where it then shows read-only.
+A handle passes if it starts with any of its prefixes. Leave a prefix blank to skip that check. Anything set in `config/craft/orrery.php` wins over the control panel, where it then shows disabled, and saving the form leaves what the project config has for it.
 
 ## Local development
 
@@ -86,10 +86,10 @@ Point a Craft project at a local copy with a path repository in its `composer.js
 }
 ```
 
-Then `composer require davidhellmann/craft-orrery` and `php craft plugin/install orrery`. In the plugin folder:
+Then `composer require davidhellmann/craft-orrery` and `php artisan craft:plugin:install orrery`. In the plugin folder:
 
 - `composer check-cs` and `composer phpstan` run the checks.
-- `composer test` runs the PHP tests. They read a made-up project config, `tests/fixtures/project.yaml`, into the content model, with no database and no Craft install.
+- `composer test` runs the PHP tests. They boot Craft with Orrery installed on an in-memory SQLite database, so they need no Craft project, and read a made-up project config, `tests/fixtures/project.yaml`, into the content model.
 - `npm test` runs the viewer tests in Node, on the data of that project config. There’s nothing to install for it.
 
 The viewer tests read that data as the viewer gets it, with environment values resolved, from a copy in `tests/fixtures/content-model.json`. After changing the project config or what the content model makes of it, `UPDATE_FIXTURES=1 composer test` writes the copy again.

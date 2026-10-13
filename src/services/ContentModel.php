@@ -2,29 +2,29 @@
 
 namespace davidhellmann\orrery\services;
 
-use Craft;
-use craft\base\FieldInterface;
-use craft\fieldlayoutelements\BaseField;
-use craft\fieldlayoutelements\CustomField;
-use craft\fieldlayoutelements\Heading;
-use craft\fieldlayoutelements\Tip;
-use craft\fieldlayoutelements\TitleField;
-use craft\fields\BaseOptionsField;
-use craft\fields\BaseRelationField;
-use craft\fields\ContentBlock;
-use craft\fields\Entries;
-use craft\fields\Matrix;
-use craft\helpers\App;
-use craft\helpers\ProjectConfig as ProjectConfigHelper;
-use yii\base\Component;
+use CraftCms\Cms\Field\BaseOptionsField;
+use CraftCms\Cms\Field\BaseRelationField;
+use CraftCms\Cms\Field\ContentBlock;
+use CraftCms\Cms\Field\Contracts\FieldInterface;
+use CraftCms\Cms\Field\Entries;
+use CraftCms\Cms\Field\Matrix;
+use CraftCms\Cms\FieldLayout\LayoutElements\BaseField;
+use CraftCms\Cms\FieldLayout\LayoutElements\CustomField;
+use CraftCms\Cms\FieldLayout\LayoutElements\Heading;
+use CraftCms\Cms\FieldLayout\LayoutElements\Tip;
+use CraftCms\Cms\FieldLayout\LayoutElements\TitleField;
+use CraftCms\Cms\ProjectConfig\ProjectConfig;
+use CraftCms\Cms\ProjectConfig\ProjectConfigHelper;
+use CraftCms\Cms\Support\Env;
 
 /**
  * Reads the project config into the plain data the viewer renders and the JSON export writes.
  */
-class ContentModel extends Component
+class ContentModel
 {
     /**
-     * User permissions that concern entries, keyed by how they're stored in the project config.
+     * User permissions that concern entries, keyed by their lowercased names. Craft 5 stored permissions lowercased,
+     * Craft 6 stores them as Craft names them, like `viewEntries`, so they're compared without case.
      */
     private const ENTRY_PERMISSIONS = [
         'viewentries' => 'view',
@@ -43,9 +43,14 @@ class ContentModel extends Component
 
     private const SCHEMA_ACTIONS = ['read', 'create', 'save', 'delete'];
 
+    /**
+     * The language Craft's own messages are written in.
+     */
+    private const SOURCE_LOCALE = 'en-US';
+
     public function getData(bool $forViewer = false): array
     {
-        return $this->fromConfig(Craft::$app->getProjectConfig()->get(), $forViewer);
+        return $this->fromConfig(app(ProjectConfig::class)->get(), $forViewer);
     }
 
     /**
@@ -89,7 +94,7 @@ class ContentModel extends Component
         $singleSite = count($siteUids) === 1;
         $data = [];
         foreach ($groups as $uid => $group) {
-            $permissions = $group['permissions'] ?? [];
+            $permissions = array_map('strtolower', $group['permissions'] ?? []);
             $sites = $singleSite && in_array('accesscp', $permissions, true) ? $siteUids : [];
             $sections = [];
             foreach ($permissions as $permission) {
@@ -376,11 +381,11 @@ class ContentModel extends Component
 
     /**
      * A setting that may refer to an environment variable or alias, like `$PRIMARY_SITE_URL`: resolved with
-     * `App::parseEnv()`, or as written.
+     * `Env::parse()`, or as written.
      */
-    private function envSetting(?string $value, bool $resolve): bool|string|null
+    private function envSetting(?string $value, bool $resolve): ?string
     {
-        return $resolve ? App::parseEnv($value) : $value;
+        return $resolve ? Env::parse($value) : $value;
     }
 
     /**
@@ -406,12 +411,12 @@ class ContentModel extends Component
             return $this->shortName($type);
         }
 
-        $language = Craft::$app->language;
-        Craft::$app->language = Craft::$app->sourceLanguage;
+        $locale = app()->getLocale();
+        app()->setLocale(self::SOURCE_LOCALE);
         try {
             return $type::displayName();
         } finally {
-            Craft::$app->language = $language;
+            app()->setLocale($locale);
         }
     }
 

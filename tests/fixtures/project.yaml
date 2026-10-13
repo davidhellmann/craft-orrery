@@ -166,7 +166,7 @@ entryTypes:
                 instructions: null
                 label: null
                 required: true
-                type: craft\fieldlayoutelements\CustomField
+                type: CraftCms\Cms\FieldLayout\LayoutElements\CustomField
                 uid: el-text-body
                 userCondition: null
                 width: 100
@@ -176,7 +176,7 @@ entryTypes:
                 instructions: null
                 label: null
                 required: false
-                type: craft\fieldlayoutelements\CustomField
+                type: CraftCms\Cms\FieldLayout\LayoutElements\CustomField
                 uid: el-text-layout-style
                 userCondition: null
                 width: 50
@@ -200,7 +200,7 @@ entryTypes:
               - elementCondition: null
                 label: Headline
                 required: true
-                type: craft\fieldlayoutelements\entries\EntryTitleField
+                type: CraftCms\Cms\FieldLayout\LayoutElements\Entries\EntryTitleField
                 uid: el-article-title
                 userCondition: null
                 width: 100
@@ -210,13 +210,13 @@ entryTypes:
                 instructions: 'Two sentences at most.'
                 label: Introduction
                 required: true
-                type: craft\fieldlayoutelements\CustomField
+                type: CraftCms\Cms\FieldLayout\LayoutElements\CustomField
                 uid: el-article-intro
                 userCondition: null
                 width: 50
               - elementCondition: null
                 heading: Story
-                type: craft\fieldlayoutelements\Heading
+                type: CraftCms\Cms\FieldLayout\LayoutElements\Heading
                 uid: el-article-heading
                 userCondition: null
               - elementCondition: null
@@ -225,7 +225,7 @@ entryTypes:
                 instructions: null
                 label: null
                 required: false
-                type: craft\fieldlayoutelements\CustomField
+                type: CraftCms\Cms\FieldLayout\LayoutElements\CustomField
                 uid: el-article-builder
                 userCondition: null
                 width: 100
@@ -237,7 +237,7 @@ entryTypes:
               - elementCondition: null
                 style: warning
                 tip: 'Search engines show the summary under the title.'
-                type: craft\fieldlayoutelements\Tip
+                type: CraftCms\Cms\FieldLayout\LayoutElements\Tip
                 uid: el-article-tip
                 userCondition: null
               - elementCondition: null
@@ -246,25 +246,25 @@ entryTypes:
                 instructions: null
                 label: null
                 required: false
-                type: craft\fieldlayoutelements\CustomField
+                type: CraftCms\Cms\FieldLayout\LayoutElements\CustomField
                 uid: el-article-seo
                 userCondition: null
                 width: 100
               - elementCondition: null
-                type: craft\fieldlayoutelements\HorizontalRule
+                type: CraftCms\Cms\FieldLayout\LayoutElements\HorizontalRule
                 uid: el-article-rule
                 userCondition: null
             name: SEO
             uid: tab-article-seo
             userCondition:
-              class: craft\elements\conditions\users\UserCondition
+              class: CraftCms\Cms\User\Conditions\UserCondition
               conditionRules:
-                - class: craft\elements\conditions\users\GroupConditionRule
+                - class: CraftCms\Cms\User\Conditions\GroupConditionRule
                   operator: in
                   uid: rule-article-seo-group
                   values:
                     - ug-editors
-              elementType: craft\elements\User
+              elementType: CraftCms\Cms\User\Elements\User
               fieldContext: global
     handle: page_article
     hasTitleField: true
@@ -286,7 +286,7 @@ entryTypes:
                 instructions: null
                 label: Quote
                 required: true
-                type: craft\fieldlayoutelements\CustomField
+                type: CraftCms\Cms\FieldLayout\LayoutElements\CustomField
                 uid: el-quote-body
                 userCondition: null
                 width: 100
@@ -310,7 +310,7 @@ entryTypes:
               - elementCondition: null
                 label: null
                 required: true
-                type: craft\fieldlayoutelements\entries\EntryTitleField
+                type: CraftCms\Cms\FieldLayout\LayoutElements\Entries\EntryTitleField
                 uid: el-home-title
                 userCondition: null
                 width: 100
@@ -320,7 +320,7 @@ entryTypes:
                 instructions: null
                 label: null
                 required: false
-                type: craft\fieldlayoutelements\CustomField
+                type: CraftCms\Cms\FieldLayout\LayoutElements\CustomField
                 uid: el-home-featured
                 userCondition: null
                 width: 100
@@ -330,7 +330,7 @@ entryTypes:
                 instructions: null
                 label: null
                 required: false
-                type: craft\fieldlayoutelements\CustomField
+                type: CraftCms\Cms\FieldLayout\LayoutElements\CustomField
                 uid: el-home-builder
                 userCondition: null
                 width: 100
@@ -357,7 +357,7 @@ entryTypes:
                 instructions: null
                 label: null
                 required: true
-                type: craft\fieldlayoutelements\CustomField
+                type: CraftCms\Cms\FieldLayout\LayoutElements\CustomField
                 uid: el-image-image
                 userCondition: null
                 width: 100
@@ -367,7 +367,7 @@ entryTypes:
                 instructions: null
                 label: null
                 required: false
-                type: craft\fieldlayoutelements\CustomField
+                type: CraftCms\Cms\FieldLayout\LayoutElements\CustomField
                 uid: el-image-layout-style
                 userCondition: null
                 width: 50
@@ -377,7 +377,7 @@ entryTypes:
                 instructions: null
                 label: null
                 required: false
-                type: craft\fieldlayoutelements\CustomField
+                type: CraftCms\Cms\FieldLayout\LayoutElements\CustomField
                 uid: el-image-credits
                 userCondition: null
                 width: 100
@@ -401,7 +401,7 @@ entryTypes:
               - elementCondition: null
                 label: null
                 required: true
-                type: craft\fieldlayoutelements\entries\EntryTitleField
+                type: CraftCms\Cms\FieldLayout\LayoutElements\Entries\EntryTitleField
                 uid: el-exhibition-title
                 userCondition: null
                 width: 100
@@ -411,25 +411,25 @@ entryTypes:
                 instructions: null
                 label: null
                 required: false
-                type: craft\fieldlayoutelements\CustomField
+                type: CraftCms\Cms\FieldLayout\LayoutElements\CustomField
                 uid: el-exhibition-curators
                 userCondition: null
                 width: 50
               - elementCondition:
-                  class: craft\elements\conditions\entries\EntryCondition
+                  class: CraftCms\Cms\Entry\Conditions\EntryCondition
                   conditionRules:
-                    - class: craft\fields\conditions\RelationalFieldConditionRule
+                    - class: CraftCms\Cms\Field\Conditions\RelationalFieldConditionRule
                       fieldUid: field-curators
                       operator: notempty
                       uid: rule-exhibition-body
-                  elementType: craft\elements\Entry
+                  elementType: CraftCms\Cms\Entry\Elements\Entry
                   fieldContext: global
                 fieldUid: field-body
                 handle: null
                 instructions: null
                 label: Description
                 required: false
-                type: craft\fieldlayoutelements\CustomField
+                type: CraftCms\Cms\FieldLayout\LayoutElements\CustomField
                 uid: el-exhibition-body
                 userCondition: null
                 width: 100
@@ -439,7 +439,7 @@ entryTypes:
                 instructions: null
                 label: null
                 required: false
-                type: craft\fieldlayoutelements\CustomField
+                type: CraftCms\Cms\FieldLayout\LayoutElements\CustomField
                 uid: el-exhibition-seo
                 userCondition: null
                 width: 100
@@ -449,7 +449,7 @@ entryTypes:
                 instructions: null
                 label: null
                 required: false
-                type: craft\fieldlayoutelements\CustomField
+                type: CraftCms\Cms\FieldLayout\LayoutElements\CustomField
                 uid: el-exhibition-gallery
                 userCondition: null
                 width: 100
@@ -476,7 +476,7 @@ entryTypes:
                 instructions: null
                 label: Note
                 required: false
-                type: craft\fieldlayoutelements\CustomField
+                type: CraftCms\Cms\FieldLayout\LayoutElements\CustomField
                 uid: el-link-body
                 userCondition: null
                 width: 100
@@ -503,7 +503,7 @@ entryTypes:
                 instructions: null
                 label: null
                 required: true
-                type: craft\fieldlayoutelements\CustomField
+                type: CraftCms\Cms\FieldLayout\LayoutElements\CustomField
                 uid: el-teaser-related
                 userCondition: null
                 width: 100
@@ -528,7 +528,7 @@ entryTypes:
               - elementCondition: null
                 label: null
                 required: true
-                type: craft\fieldlayoutelements\entries\EntryTitleField
+                type: CraftCms\Cms\FieldLayout\LayoutElements\Entries\EntryTitleField
                 uid: el-promo-title
                 userCondition: null
                 width: 100
@@ -538,7 +538,7 @@ entryTypes:
                 instructions: null
                 label: Visual
                 required: false
-                type: craft\fieldlayoutelements\CustomField
+                type: CraftCms\Cms\FieldLayout\LayoutElements\CustomField
                 uid: el-promo-image
                 userCondition: null
                 width: 50
@@ -548,7 +548,7 @@ entryTypes:
                 instructions: null
                 label: null
                 required: false
-                type: craft\fieldlayoutelements\CustomField
+                type: CraftCms\Cms\FieldLayout\LayoutElements\CustomField
                 uid: el-promo-featured
                 userCondition: null
                 width: 50
@@ -572,7 +572,7 @@ entryTypes:
               - elementCondition: null
                 label: null
                 required: true
-                type: craft\fieldlayoutelements\entries\EntryTitleField
+                type: CraftCms\Cms\FieldLayout\LayoutElements\Entries\EntryTitleField
                 uid: el-product-title
                 userCondition: null
                 width: 100
@@ -582,7 +582,7 @@ entryTypes:
                 instructions: null
                 label: null
                 required: false
-                type: craft\fieldlayoutelements\CustomField
+                type: CraftCms\Cms\FieldLayout\LayoutElements\CustomField
                 uid: el-product-image
                 userCondition: null
                 width: 50
@@ -592,7 +592,7 @@ entryTypes:
                 instructions: null
                 label: null
                 required: false
-                type: craft\fieldlayoutelements\CustomField
+                type: CraftCms\Cms\FieldLayout\LayoutElements\CustomField
                 uid: el-product-body
                 userCondition: null
                 width: 50
@@ -619,7 +619,7 @@ entryTypes:
                 instructions: null
                 label: null
                 required: true
-                type: craft\fieldlayoutelements\CustomField
+                type: CraftCms\Cms\FieldLayout\LayoutElements\CustomField
                 uid: el-columns-columns
                 userCondition: null
                 width: 100
@@ -643,7 +643,7 @@ entryTypes:
               - elementCondition: null
                 label: Name
                 required: true
-                type: craft\fieldlayoutelements\entries\EntryTitleField
+                type: CraftCms\Cms\FieldLayout\LayoutElements\Entries\EntryTitleField
                 uid: el-person-title
                 userCondition: null
                 width: 100
@@ -653,7 +653,7 @@ entryTypes:
                 instructions: null
                 label: Portrait
                 required: false
-                type: craft\fieldlayoutelements\CustomField
+                type: CraftCms\Cms\FieldLayout\LayoutElements\CustomField
                 uid: el-person-image
                 userCondition: null
                 width: 50
@@ -715,7 +715,7 @@ fields:
                                   - true
                                 -
                                   - type
-                                  - craft\fieldlayoutelements\CustomField
+                                  - CraftCms\Cms\FieldLayout\LayoutElements\CustomField
                                 -
                                   - uid
                                   - el-seo-summary
@@ -747,7 +747,7 @@ fields:
                                   - false
                                 -
                                   - type
-                                  - craft\fieldlayoutelements\CustomField
+                                  - CraftCms\Cms\FieldLayout\LayoutElements\CustomField
                                 -
                                   - uid
                                   - el-seo-image
@@ -769,7 +769,7 @@ fields:
       viewMode: grouped
     translationKeyFormat: null
     translationMethod: none
-    type: craft\fields\ContentBlock
+    type: CraftCms\Cms\Field\ContentBlock
   field-body:
     columnSuffix: null
     handle: body
@@ -786,7 +786,7 @@ fields:
       uiMode: normal
     translationKeyFormat: null
     translationMethod: none
-    type: craft\fields\PlainText
+    type: CraftCms\Cms\Field\PlainText
   field-page-builder:
     columnSuffix: null
     handle: pageBuilder
@@ -856,7 +856,7 @@ fields:
       viewMode: blocks
     translationKeyFormat: null
     translationMethod: site
-    type: craft\fields\Matrix
+    type: CraftCms\Cms\Field\Matrix
   field-columns:
     columnSuffix: null
     handle: columns
@@ -888,7 +888,7 @@ fields:
       viewMode: cards
     translationKeyFormat: null
     translationMethod: site
-    type: craft\fields\Matrix
+    type: CraftCms\Cms\Field\Matrix
   field-layout-style:
     columnSuffix: null
     handle: layoutStyle
@@ -932,7 +932,7 @@ fields:
               - narrow
     translationKeyFormat: null
     translationMethod: none
-    type: craft\fields\Dropdown
+    type: CraftCms\Cms\Field\Dropdown
   field-related-news:
     columnSuffix: null
     handle: relatedNews
@@ -955,7 +955,7 @@ fields:
       viewMode: list
     translationKeyFormat: null
     translationMethod: none
-    type: craft\fields\Entries
+    type: CraftCms\Cms\Field\Entries
   field-curators:
     columnSuffix: null
     handle: curators
@@ -980,7 +980,7 @@ fields:
       viewMode: list
     translationKeyFormat: null
     translationMethod: none
-    type: craft\fields\Entries
+    type: CraftCms\Cms\Field\Entries
   field-featured:
     columnSuffix: null
     handle: featured
@@ -1002,7 +1002,7 @@ fields:
       viewMode: cards
     translationKeyFormat: null
     translationMethod: none
-    type: craft\fields\Entries
+    type: CraftCms\Cms\Field\Entries
   field-image:
     columnSuffix: null
     handle: image
@@ -1030,7 +1030,7 @@ fields:
       viewMode: large
     translationKeyFormat: null
     translationMethod: none
-    type: craft\fields\Assets
+    type: CraftCms\Cms\Field\Assets
   field-summary:
     columnSuffix: null
     handle: summary
@@ -1047,7 +1047,7 @@ fields:
       uiMode: normal
     translationKeyFormat: null
     translationMethod: site
-    type: craft\fields\PlainText
+    type: CraftCms\Cms\Field\PlainText
   field-old-teaser:
     columnSuffix: null
     handle: oldTeaser
@@ -1064,7 +1064,7 @@ fields:
       uiMode: normal
     translationKeyFormat: null
     translationMethod: none
-    type: craft\fields\PlainText
+    type: CraftCms\Cms\Field\PlainText
   # A plugin's field type built on Matrix.
   field-gallery:
     columnSuffix: null
@@ -1140,7 +1140,7 @@ fields:
                                   - false
                                 -
                                   - type
-                                  - craft\fieldlayoutelements\CustomField
+                                  - CraftCms\Cms\FieldLayout\LayoutElements\CustomField
                                 -
                                   - uid
                                   - el-credits-photographer
@@ -1180,7 +1180,7 @@ fields:
       uiMode: normal
     translationKeyFormat: null
     translationMethod: none
-    type: craft\fields\PlainText
+    type: CraftCms\Cms\Field\PlainText
   # Used only in the Footer global set.
   field-copyright:
     columnSuffix: null
@@ -1198,7 +1198,7 @@ fields:
       uiMode: normal
     translationKeyFormat: null
     translationMethod: site
-    type: craft\fields\PlainText
+    type: CraftCms\Cms\Field\PlainText
   # Used only outside entry types: in a volume, a category group, a tag group, and the users' and addresses' layouts.
   field-notes:
     columnSuffix: null
@@ -1216,7 +1216,7 @@ fields:
       uiMode: normal
     translationKeyFormat: null
     translationMethod: none
-    type: craft\fields\PlainText
+    type: CraftCms\Cms\Field\PlainText
 globalSets:
   global-footer:
     fieldLayouts:
@@ -1230,7 +1230,7 @@ globalSets:
                 instructions: null
                 label: 'Copyright line'
                 required: false
-                type: craft\fieldlayoutelements\CustomField
+                type: CraftCms\Cms\FieldLayout\LayoutElements\CustomField
                 uid: el-footer-copyright
                 userCondition: null
                 width: 100
@@ -1257,14 +1257,14 @@ volumes:
               - elementCondition: null
                 label: null
                 required: true
-                type: craft\fieldlayoutelements\assets\AssetTitleField
+                type: CraftCms\Cms\FieldLayout\LayoutElements\Assets\AssetTitleField
                 uid: el-images-title
                 userCondition: null
                 width: 100
               - elementCondition: null
                 label: null
                 required: false
-                type: craft\fieldlayoutelements\assets\AltField
+                type: CraftCms\Cms\FieldLayout\LayoutElements\Assets\AltField
                 uid: el-images-alt
                 userCondition: null
                 width: 100
@@ -1274,7 +1274,7 @@ volumes:
                 instructions: null
                 label: Caption
                 required: false
-                type: craft\fieldlayoutelements\CustomField
+                type: CraftCms\Cms\FieldLayout\LayoutElements\CustomField
                 uid: el-images-notes
                 userCondition: null
                 width: 100
@@ -1301,7 +1301,7 @@ categoryGroups:
               - elementCondition: null
                 label: null
                 required: true
-                type: craft\fieldlayoutelements\TitleField
+                type: CraftCms\Cms\FieldLayout\LayoutElements\TitleField
                 uid: el-topics-title
                 userCondition: null
                 width: 100
@@ -1311,7 +1311,7 @@ categoryGroups:
                 instructions: null
                 label: Description
                 required: false
-                type: craft\fieldlayoutelements\CustomField
+                type: CraftCms\Cms\FieldLayout\LayoutElements\CustomField
                 uid: el-topics-notes
                 userCondition: null
                 width: 100
@@ -1338,7 +1338,7 @@ tagGroups:
               - elementCondition: null
                 label: null
                 required: true
-                type: craft\fieldlayoutelements\TitleField
+                type: CraftCms\Cms\FieldLayout\LayoutElements\TitleField
                 uid: el-keywords-title
                 userCondition: null
                 width: 100
@@ -1348,7 +1348,7 @@ tagGroups:
                 instructions: null
                 label: null
                 required: false
-                type: craft\fieldlayoutelements\CustomField
+                type: CraftCms\Cms\FieldLayout\LayoutElements\CustomField
                 uid: el-keywords-notes
                 userCondition: null
                 width: 100
@@ -1357,7 +1357,7 @@ tagGroups:
                 elementCondition: null
                 label: null
                 required: false
-                type: craft\fieldlayoutelements\TextField
+                type: CraftCms\Cms\FieldLayout\LayoutElements\TextField
                 uid: el-keywords-synonyms
                 userCondition: null
                 width: 50
@@ -1365,7 +1365,7 @@ tagGroups:
                 elementCondition: null
                 label: 'How to use it'
                 required: true
-                type: craft\fieldlayoutelements\TextareaField
+                type: CraftCms\Cms\FieldLayout\LayoutElements\TextareaField
                 uid: el-keywords-usage
                 userCondition: null
                 width: 50
@@ -1383,42 +1383,42 @@ users:
         - elementCondition: null
           elements:
             - elementCondition: null
-              type: craft\fieldlayoutelements\users\UsernameField
+              type: CraftCms\Cms\FieldLayout\LayoutElements\Users\UsernameField
               uid: el-users-username
               userCondition: null
               width: 100
             - elementCondition: null
-              type: craft\fieldlayoutelements\users\FullNameField
+              type: CraftCms\Cms\FieldLayout\LayoutElements\Users\FullNameField
               uid: el-users-full-name
               userCondition: null
               width: 100
             - elementCondition: null
               label: Portrait
               required: false
-              type: craft\fieldlayoutelements\users\PhotoField
+              type: CraftCms\Cms\FieldLayout\LayoutElements\Users\PhotoField
               uid: el-users-photo
               userCondition: null
               width: 50
             - elementCondition: null
               required: true
-              type: craft\fieldlayoutelements\users\EmailField
+              type: CraftCms\Cms\FieldLayout\LayoutElements\Users\EmailField
               uid: el-users-email
               userCondition: null
               width: 50
             - elementCondition: null
-              type: craft\fieldlayoutelements\users\AffiliatedSiteField
+              type: CraftCms\Cms\FieldLayout\LayoutElements\Users\AffiliatedSiteField
               uid: el-users-affiliated-site
               userCondition:
-                class: craft\elements\conditions\users\UserCondition
+                class: CraftCms\Cms\User\Conditions\UserCondition
               width: 100
             - content: 'Shown on the team page.'
               displayInPane: true
               elementCondition: null
-              type: craft\fieldlayoutelements\Markdown
+              type: CraftCms\Cms\FieldLayout\LayoutElements\Markdown
               uid: el-users-markdown
               userCondition: null
             - elementCondition: null
-              type: craft\fieldlayoutelements\LineBreak
+              type: CraftCms\Cms\FieldLayout\LayoutElements\LineBreak
               uid: el-users-line-break
               userCondition: null
             - elementCondition: null
@@ -1427,7 +1427,7 @@ users:
               instructions: null
               label: Bio
               required: false
-              type: craft\fieldlayoutelements\CustomField
+              type: CraftCms\Cms\FieldLayout\LayoutElements\CustomField
               uid: el-users-notes
               userCondition: null
               width: 100
@@ -1486,51 +1486,51 @@ addresses:
             - elementCondition: null
               label: null
               required: false
-              type: craft\fieldlayoutelements\addresses\LabelField
+              type: CraftCms\Cms\FieldLayout\LayoutElements\Addresses\LabelField
               uid: el-addresses-label
               userCondition: null
               width: 100
             - elementCondition: null
-              type: craft\fieldlayoutelements\addresses\CountryCodeField
+              type: CraftCms\Cms\FieldLayout\LayoutElements\Addresses\CountryCodeField
               uid: el-addresses-country
               userCondition: null
               width: 100
             - elementCondition: null
-              type: craft\fieldlayoutelements\addresses\AddressField
+              type: CraftCms\Cms\FieldLayout\LayoutElements\Addresses\AddressField
               uid: el-addresses-address
               userCondition: null
               width: 100
             - elementCondition: null
               label: null
               required: false
-              type: craft\fieldlayoutelements\FullNameField
+              type: CraftCms\Cms\FieldLayout\LayoutElements\FullNameField
               uid: el-addresses-full-name
               userCondition: null
               width: 100
             - elementCondition:
-                class: craft\elements\conditions\addresses\AddressCondition
+                class: CraftCms\Cms\Address\Conditions\AddressCondition
               label: Company
               required: false
-              type: craft\fieldlayoutelements\addresses\OrganizationField
+              type: CraftCms\Cms\FieldLayout\LayoutElements\Addresses\OrganizationField
               uid: el-addresses-organization
               userCondition: null
               width: 50
             - elementCondition: null
               label: null
               required: false
-              type: craft\fieldlayoutelements\addresses\OrganizationTaxIdField
+              type: CraftCms\Cms\FieldLayout\LayoutElements\Addresses\OrganizationTaxIdField
               uid: el-addresses-tax-id
               userCondition: null
               width: 50
             - elementCondition: null
-              type: craft\fieldlayoutelements\addresses\LatLongField
+              type: CraftCms\Cms\FieldLayout\LayoutElements\Addresses\LatLongField
               uid: el-addresses-lat-long
               userCondition: null
               width: 100
             - elementCondition: null
               template: _addresses/map
               templateMode: site
-              type: craft\fieldlayoutelements\Template
+              type: CraftCms\Cms\FieldLayout\LayoutElements\Template
               uid: el-addresses-template
               userCondition: null
             - elementCondition: null
@@ -1539,7 +1539,7 @@ addresses:
               instructions: null
               label: Directions
               required: false
-              type: craft\fieldlayoutelements\CustomField
+              type: CraftCms\Cms\FieldLayout\LayoutElements\CustomField
               uid: el-addresses-notes
               userCondition: null
               width: 50

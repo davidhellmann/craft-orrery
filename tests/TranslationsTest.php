@@ -13,11 +13,11 @@ class TranslationsTest extends TestCase
     private const SRC = __DIR__ . '/../src';
 
     /**
-     * How the code asks for a message: `'…'|t('orrery')` in templates, `Craft::t('orrery', '…')` in PHP.
+     * How the code asks for a message: `'…'|t('orrery')` in templates, `t('…', category: 'orrery')` in PHP.
      */
     private const ASKS = [
         'twig' => ["/'((?:[^'\\\\]|\\\\.)*)'\\|t\\('orrery'/"],
-        'php' => ["/Craft::t\\('orrery', '((?:[^'\\\\]|\\\\.)*)'/"],
+        'php' => ["/\\bt\\('((?:[^'\\\\]|\\\\.)*)', category: 'orrery'/"],
     ];
 
     public function testEveryMessageOrreryAsksForIsInEnglish(): void

@@ -2,43 +2,35 @@
 
 namespace davidhellmann\orrery\controllers;
 
-use Craft;
-use craft\helpers\StringHelper;
-use craft\web\Controller;
-use davidhellmann\orrery\Plugin;
-use yii\web\Response;
+use CraftCms\Cms\Cms;
+use CraftCms\Cms\Support\Str;
+use CraftCms\Cms\View\TemplateMode;
+use davidhellmann\orrery\services\Viewer;
+use Illuminate\Http\Request;
+use Illuminate\Http\Response;
+use Symfony\Component\HttpFoundation\HeaderUtils;
+
+use function CraftCms\Cms\pageTemplate;
 
 /**
- * Serves the bare viewer page that the control panel section embeds.
+ * The control panel section, and the bare viewer page it embeds. `routes/cp.php` says who may reach them.
  */
-class ViewerController extends Controller
+class ViewerController
 {
-    public function beforeAction($action): bool
+    public function index(): string
     {
-        if (!parent::beforeAction($action)) {
-            return false;
-        }
-
-        // Craft checks plugin access only for template routes, not for actions reached via `actions/…` or `?action=`.
-        $this->requireCpRequest();
-        $this->requirePermission('accessPlugin-orrery');
-
-        return true;
+        return pageTemplate('orrery/index', templateMode: TemplateMode::Cp);
     }
 
-    public function actionIndex(bool $download = false): Response
+    public function app(Request $request, Viewer $viewer): Response
     {
-        $html = Plugin::getInstance()->viewer->render();
+        $headers = ['Content-Type' => 'text/html; charset=UTF-8'];
 
-        if ($download) {
-            $filename = StringHelper::toKebabCase(Craft::$app->getSystemName()) . '-content-model.html';
-
-            return $this->response->sendContentAsFile($html, $filename, ['mimeType' => 'text/html']);
+        if ($request->boolean('download')) {
+            $filename = Str::slug(Cms::systemName()) . '-content-model.html';
+            $headers['Content-Disposition'] = HeaderUtils::makeDisposition(HeaderUtils::DISPOSITION_ATTACHMENT, $filename);
         }
 
-        $this->response->format = Response::FORMAT_HTML;
-        $this->response->data = $html;
-
-        return $this->response;
+        return new Response($viewer->render(), 200, $headers);
     }
 }

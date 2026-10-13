@@ -2,7 +2,7 @@
 
 namespace davidhellmann\orrery\tests\fixtures\fields;
 
-use craft\fields\Matrix;
+use CraftCms\Cms\Field\Matrix;
 
 /**
  * A plugin's field type built on Matrix, for the fixture project config.

@@ -2,23 +2,25 @@
 
 namespace davidhellmann\orrery\models;
 
-use Craft;
-use craft\base\Model;
+use Closure;
+use CraftCms\Cms\Plugin\PluginSettings;
+
+use function CraftCms\Cms\t;
 
 /**
  * Orrery settings
  */
-class Settings extends Model
+class Settings extends PluginSettings
 {
     /**
      * @var string|string[] Prefix that handles of entry types attached to a section should start with. Several
-     * prefixes go in `config/orrery.php` as an array. Empty skips the check.
+     * prefixes go in `config/craft/orrery.php` as an array. Empty skips the check.
      */
     public string|array $pageHandlePrefix = '';
 
     /**
      * @var string|string[] Prefix that handles of entry types attached to a Matrix field should start with. Several
-     * prefixes go in `config/orrery.php` as an array. Empty skips the check.
+     * prefixes go in `config/craft/orrery.php` as an array. Empty skips the check.
      */
     public string|array $blockHandlePrefix = '';
 
@@ -34,31 +36,36 @@ class Settings extends Model
 
     /**
      * The settings a config file overrides, each with the value the project config stores for it, or its default.
-     * The settings form shows them read-only and posts these values along: Craft saves only the settings a form posts,
-     * so without them saving the form would drop what the project config has.
+     * Craft saves every setting the model holds, and the model holds the config file's values, so before saving, the
+     * plugin puts these back: without them saving the form would write the config file's values into the project
+     * config.
      *
-     * @param array $fileConfig The settings `config/orrery.php` sets.
+     * @param array $fileConfig The settings `config/craft/orrery.php` sets.
      * @param array $stored The settings the project config stores.
      * @return array<string, string|string[]>
      */
     public function storedOverrides(array $fileConfig, array $stored): array
     {
-        $overridden = array_intersect_key((new self())->getAttributes(), $fileConfig);
+        $overridden = array_intersect_key((new self())->validationData(), $fileConfig);
 
         return array_intersect_key($stored, $overridden) + $overridden;
     }
 
-    protected function defineRules(): array
+    public function getRules(): array
     {
-        return [
-            [['pageHandlePrefix', 'blockHandlePrefix'], function(string $attribute) {
-                foreach ((array)$this->$attribute as $prefix) {
-                    if (!is_string($prefix) || mb_strlen($prefix) > 64) {
-                        $this->addError($attribute, Craft::t('orrery', 'Prefixes must be text, up to 64 characters each.'));
-                        return;
-                    }
-                }
-            }],
-        ];
+        return array_merge(parent::getRules(), [
+            'pageHandlePrefix' => [$this->validatePrefixes(...)],
+            'blockHandlePrefix' => [$this->validatePrefixes(...)],
+        ]);
+    }
+
+    private function validatePrefixes(string $attribute, mixed $value, Closure $fail): void
+    {
+        foreach ((array)$value as $prefix) {
+            if (!is_string($prefix) || mb_strlen($prefix) > 64) {
+                $fail(t('Prefixes must be text, up to 64 characters each.', category: 'orrery'));
+                return;
+            }
+        }
     }
 }

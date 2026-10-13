@@ -2,40 +2,49 @@
 
 namespace davidhellmann\orrery\services;
 
-use Craft;
-use craft\helpers\Json;
-use craft\web\View;
+use CraftCms\Cms\Support\Json;
+use CraftCms\Cms\View\TemplateMode;
 use davidhellmann\orrery\Plugin;
-use yii\base\Component;
+
+use function CraftCms\Cms\template;
 
 /**
  * Renders the viewer as one self-contained HTML page, with data, styles and scripts inlined.
  */
-class Viewer extends Component
+class Viewer
 {
     /**
      * Scripts share one scope, so later files can use what earlier ones define.
      */
     private const SCRIPTS = ['model', 'ui', 'graph', 'table', 'layout', 'diff', 'app'];
 
+    /**
+     * The data goes into a `<script>` element, so nothing in it may close the element or start markup.
+     */
+    public const JSON_FLAGS = JSON_UNESCAPED_UNICODE | JSON_HEX_QUOT | JSON_HEX_TAG | JSON_HEX_AMP | JSON_HEX_APOS;
+
+    public function __construct(private ContentModel $contentModel)
+    {
+    }
+
     public function render(): string
     {
         $plugin = Plugin::getInstance();
         $settings = $plugin->getSettings();
 
-        $data = $plugin->contentModel->getData(forViewer: true) + [
+        $data = $this->contentModel->getData(forViewer: true) + [
             'prefixes' => [
                 'page' => $settings->prefixes('pageHandlePrefix'),
                 'block' => $settings->prefixes('blockHandlePrefix'),
             ],
         ];
 
-        return Craft::$app->getView()->renderTemplate('orrery/_viewer.twig', [
+        return template('orrery/_viewer.twig', [
             'title' => $plugin->name,
             'styles' => $this->read('viewer.css'),
-            'data' => Json::htmlEncode($data),
+            'data' => Json::encode($data, self::JSON_FLAGS),
             'script' => $this->script(),
-        ], View::TEMPLATE_MODE_CP);
+        ], TemplateMode::Cp);
     }
 
     private function script(): string
