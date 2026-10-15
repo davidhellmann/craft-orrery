@@ -120,6 +120,7 @@ class ContentModelTest extends TestCase
             'name' => 'News',
             'handle' => 'news',
             'type' => 'channel',
+            'propagationMethod' => 'siteGroup',
             'entryTypes' => ['et-article', 'et-link'],
             'contexts' => ['et-article' => 'News article'],
             'handles' => [],

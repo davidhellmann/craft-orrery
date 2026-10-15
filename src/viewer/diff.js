@@ -43,7 +43,7 @@ registerView((() => {
       ],
     }) },
     { id: 'section', label: KIND.section.plural, pick: 'pick a section', compare: 'Compare two sections', index: 'section', describe: (o, key) => ({
-      props: [['handle', 'Handle', o.handle], ['type', 'Type', o.type]],
+      props: [['handle', 'Handle', o.handle], ['type', 'Type', o.type], ['propagationMethod', 'Propagation', propagationText(o)]],
       groups: [
         { key: 'sites', title: 'Sites', items: o.sites.map(ss => item(keyOf('site', ss.site), [ss.hasUrls ? ss.uriFormat : 'no URLs'])) },
         { key: 'entryTypes', title: 'Entry types', items: o.entryTypes.map(u => byUid.et[u] && item(etKey(byUid.et[u]), [renamedAs(o.as[u], byUid.et[u])])) },

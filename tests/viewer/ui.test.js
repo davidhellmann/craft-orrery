@@ -159,3 +159,9 @@ test('a count agrees with its number', () => {
   assert.deepEqual([0, 1, 2].map(n => count(n, 'field', 'fields')), ['0 fields', '1 field', '2 fields']);
   assert.equal(count(1, 'differs', 'differ'), '1 differs');
 });
+
+test('a section’s details say which sites it saves its entries to', () => {
+  const { nodeOf, detailHTML } = loadViewer();
+
+  assert.match(detailHTML(nodeOf('section:section-news')), /<h3>Propagation<\/h3><p[^>]*>Save entries to other sites in the same site group<\/p>/);
+});

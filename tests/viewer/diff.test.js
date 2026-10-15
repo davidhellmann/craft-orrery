@@ -16,3 +16,14 @@ test('two sites compare property by property', () => {
     ['Primary', 'Yes', 'No', 'changed'],
   ]);
 });
+
+test('two sections compare where they save their entries', () => {
+  const { props } = compare(loadViewer(), 'section:section-news', 'section:section-exhibitions');
+  const propagation = props.find(p => p.label === 'Propagation');
+
+  assert.deepEqual([propagation.x, propagation.y, propagation.status], [
+    'Save entries to other sites in the same site group',
+    'Save entries to all sites enabled for this section',
+    'changed',
+  ]);
+});

@@ -68,6 +68,15 @@ const renamedAs = (as, o) => (isRenamed(as, o) ? `as “${usedName(as, o)}”${u
 const usedNameHTML = (as, o) => `${esc(usedName(as, o))}${renamedMark(as, o)}`;
 const handleNote = (as, o) => (usedHandle(as, o) ? note(`<code>${esc(usedHandle(as, o))}</code>`) : '');
 const sectionEntryTypes = s => `<div class="list">${s.entryTypes.map(u => byUid.et[u]).filter(Boolean).map(e => row(etKey(e), note(esc(usedHandle(s.as[e.uid], e) || e.handle)), usedNameHTML(s.as[e.uid], e))).join('')}</div>`;
+// Which other sites a section saves its entries to, as Craft's section settings put it.
+const PROPAGATION = {
+  none: 'Only save entries to the site they were created in',
+  siteGroup: 'Save entries to other sites in the same site group',
+  language: 'Save entries to other sites with the same language',
+  all: 'Save entries to all sites enabled for this section',
+  custom: 'Let each entry choose which sites it should be saved to',
+};
+const propagationText = s => PROPAGATION[s.propagationMethod] || s.propagationMethod;
 const prefixTag = e => (e.conventionOk === false ? `<span class="tag outline" title="Handle doesn’t start with a prefix set in the plugin settings">no <code>${esc(e.prefix)}</code></span>` : '');
 
 const CLOSE_ICON = '<svg viewBox="0 0 16 16" aria-hidden="true"><path d="M4 4l8 8M12 4l-8 8" stroke="currentColor" stroke-width="1.6" stroke-linecap="round"/></svg>';
@@ -145,6 +154,7 @@ const DETAILS = {
     + `<h3>Sections (${o.sections.length})</h3><div class="list">${o.sections.slice().sort(byName).map(s => row(keyOf('section', s.uid), note(s.type))).join('')}</div>`,
   section: o => {
     let h = `<h3>URLs</h3><div class="list">${o.sites.map(ss => byUid.site[ss.site] ? `<div class="row"><span class="grow">${esc(byUid.site[ss.site].name)}</span>${ss.hasUrls ? `<code>${esc(ss.uriFormat)}</code>` : '<span class="faint">no URLs</span>'}</div>` : '').join('')}</div>`;
+    h += `<h3>Propagation</h3><p class="muted" style="margin:0">${esc(propagationText(o))}</p>`;
     h += `<h3>Entry types</h3>${sectionEntryTypes(o)}`;
     if (o.referencedBy.length) h += `<h3>Pulled in by</h3><div class="list">${o.referencedBy.map(f => row(fieldKey(f), note(`${f.usedIn.length}× used`))).join('')}</div>`;
     if (o.previewTargets.length) h += `<h3>Preview targets</h3><div class="chips">${o.previewTargets.map(p => `<span class="chip">${esc(p)}</span>`).join('')}</div>`;
