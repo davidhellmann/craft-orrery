@@ -165,3 +165,11 @@ test('a section’s details say which sites it saves its entries to', () => {
 
   assert.match(detailHTML(nodeOf('section:section-news')), /<h3>Propagation<\/h3><p[^>]*>Save entries to other sites in the same site group<\/p>/);
 });
+
+test('a section’s URLs say whether its new entries start out enabled on each site', () => {
+  const { nodeOf, detailHTML } = loadViewer();
+  const html = detailHTML(nodeOf('section:section-news'));
+
+  assert.match(html, /English<\/span><code>news\/\{slug\}<\/code><span class="toggle on"[^>]*title="Enabled by default">/);
+  assert.match(html, /Deutsch<\/span><code>aktuelles\/\{slug\}<\/code><span class="toggle"[^>]*title="Disabled by default">/);
+});

@@ -77,6 +77,10 @@ const PROPAGATION = {
   custom: 'Let each entry choose which sites it should be saved to',
 };
 const propagationText = s => PROPAGATION[s.propagationMethod] || s.propagationMethod;
+// Whether a section's new entries start out enabled on a site (`ss`, one of its site settings), as Craft's switch for
+// it shows. `statusText` is the same in words.
+const statusText = ss => (ss.enabledByDefault === false ? 'Disabled by default' : 'Enabled by default');
+const statusToggle = ss => `<span class="toggle${ss.enabledByDefault === false ? '' : ' on'}" role="img" aria-label="${statusText(ss)}" title="${statusText(ss)}"></span>`;
 const prefixTag = e => (e.conventionOk === false ? `<span class="tag outline" title="Handle doesn’t start with a prefix set in the plugin settings">no <code>${esc(e.prefix)}</code></span>` : '');
 
 const CLOSE_ICON = '<svg viewBox="0 0 16 16" aria-hidden="true"><path d="M4 4l8 8M12 4l-8 8" stroke="currentColor" stroke-width="1.6" stroke-linecap="round"/></svg>';
@@ -153,7 +157,7 @@ const DETAILS = {
   site: o => `<h3>Site</h3><div class="list"><div class="row"><span class="grow">Group</span>${chip(keyOf('group', o.group))}</div><div class="row"><span class="grow">Language</span><code>${esc(o.language)}</code></div><div class="row"><span class="grow">Base URL</span><code>${esc(o.baseUrl)}</code></div></div>`
     + `<h3>Sections (${o.sections.length})</h3><div class="list">${o.sections.slice().sort(byName).map(s => row(keyOf('section', s.uid), note(s.type))).join('')}</div>`,
   section: o => {
-    let h = `<h3>URLs</h3><div class="list">${o.sites.map(ss => byUid.site[ss.site] ? `<div class="row"><span class="grow">${esc(byUid.site[ss.site].name)}</span>${ss.hasUrls ? `<code>${esc(ss.uriFormat)}</code>` : '<span class="faint">no URLs</span>'}</div>` : '').join('')}</div>`;
+    let h = `<h3>URLs</h3><div class="list">${o.sites.map(ss => byUid.site[ss.site] ? `<div class="row"><span class="grow">${esc(byUid.site[ss.site].name)}</span>${ss.hasUrls ? `<code>${esc(ss.uriFormat)}</code>` : '<span class="faint">no URLs</span>'}${statusToggle(ss)}</div>` : '').join('')}</div>`;
     h += `<h3>Propagation</h3><p class="muted" style="margin:0">${esc(propagationText(o))}</p>`;
     h += `<h3>Entry types</h3>${sectionEntryTypes(o)}`;
     if (o.referencedBy.length) h += `<h3>Pulled in by</h3><div class="list">${o.referencedBy.map(f => row(fieldKey(f), note(`${f.usedIn.length}× used`))).join('')}</div>`;

@@ -27,3 +27,10 @@ test('two sections compare where they save their entries', () => {
     'changed',
   ]);
 });
+
+test('two sections compare whether their new entries start out enabled on a site', () => {
+  const { groups } = compare(loadViewer(), 'section:section-news', 'section:section-exhibitions');
+  const deutsch = groups.find(g => g.key === 'sites').rows.find(r => r.ref.id === 'site:site-de');
+
+  assert.deepEqual([deutsch.x.tags, deutsch.y.tags], [['aktuelles/{slug}', 'Disabled by default'], ['ausstellungen/{slug}', 'Enabled by default']]);
+});

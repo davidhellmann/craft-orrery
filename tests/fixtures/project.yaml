@@ -78,7 +78,7 @@ sections:
         template: news/_entry
         uriFormat: 'news/{slug}'
       site-de:
-        enabledByDefault: true
+        enabledByDefault: false
         hasUrls: true
         template: news/_entry
         uriFormat: 'aktuelles/{slug}'
