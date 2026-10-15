@@ -48,6 +48,7 @@
             "name": "Exhibitions",
             "handle": "exhibitions",
             "type": "structure",
+            "propagationMethod": "all",
             "entryTypes": [
                 "et-exhibition",
                 "et-article"
@@ -73,6 +74,7 @@
             "name": "Home",
             "handle": "home",
             "type": "single",
+            "propagationMethod": "all",
             "entryTypes": [
                 "et-home"
             ],
@@ -99,6 +101,7 @@
             "name": "News",
             "handle": "news",
             "type": "channel",
+            "propagationMethod": "siteGroup",
             "entryTypes": [
                 "et-article",
                 "et-link"
@@ -128,6 +131,7 @@
             "name": "People",
             "handle": "people",
             "type": "channel",
+            "propagationMethod": "all",
             "entryTypes": [
                 "et-person"
             ],
@@ -147,6 +151,7 @@
             "name": "Products",
             "handle": "products",
             "type": "channel",
+            "propagationMethod": "all",
             "entryTypes": [
                 "et-product"
             ],

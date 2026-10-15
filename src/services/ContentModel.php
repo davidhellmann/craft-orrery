@@ -209,6 +209,7 @@ class ContentModel
                 'name' => $section['name'] ?? '',
                 'handle' => $section['handle'] ?? '',
                 'type' => $section['type'] ?? '',
+                'propagationMethod' => $section['propagationMethod'] ?? 'all',
                 'entryTypes' => array_column($entryTypes, 'uid'),
                 'contexts' => array_column($entryTypes, 'name', 'uid'),
                 'handles' => array_column($entryTypes, 'handle', 'uid'),

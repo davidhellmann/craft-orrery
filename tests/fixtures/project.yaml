@@ -70,7 +70,7 @@ sections:
       - label: 'Primary entry page'
         refresh: true
         urlFormat: '{url}'
-    propagationMethod: all
+    propagationMethod: siteGroup
     siteSettings:
       site-en:
         enabledByDefault: true
