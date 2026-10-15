@@ -90,13 +90,20 @@ test('the fields in a field type built on ContentBlock are used there', () => {
   assert.deepEqual(byUid.field['field-photographer'].usedIn.map(u => [u.ownerKind, u.owner.handle]), [['matrix', 'credits']]);
 });
 
-test('a Block knows the Builders it is in, with its name and group there', () => {
+test('a Block knows the Builders it is in, with its name, handle and group there', () => {
   const { byUid } = loadViewer();
-  const builders = uid => byUid.et[uid].builders.map(b => [b.field.handle, b.context, b.group]);
+  const builders = uid => byUid.et[uid].builders.map(b => [b.field.handle, b.as.label, b.as.handle, b.group]);
 
-  assert.deepEqual(builders('et-quote'), [['pageBuilder', 'Pull quote', 'Text']]);
-  assert.deepEqual(builders('et-text'), [['columns', undefined, undefined], ['pageBuilder', undefined, 'Text']]);
-  assert.deepEqual(builders('et-teaser'), [['columns', undefined, undefined], ['pageBuilder', undefined, undefined]]);
+  assert.deepEqual(builders('et-quote'), [['pageBuilder', 'Pull quote', undefined, 'Text']]);
+  assert.deepEqual(builders('et-text'), [['columns', undefined, undefined, undefined], ['pageBuilder', undefined, undefined, 'Text']]);
+  assert.deepEqual(builders('et-teaser'), [['columns', 'Column teaser', 'block_columnTeaser', undefined], ['pageBuilder', undefined, undefined, undefined]]);
+});
+
+test('a section knows the name and handle it gives each entry type', () => {
+  const { byUid } = loadViewer();
+
+  assert.deepEqual({ ...byUid.section['section-news'].as['et-article'] }, { label: 'News article', handle: undefined });
+  assert.deepEqual({ ...byUid.section['section-exhibitions'].as['et-article'] }, { label: undefined, handle: undefined });
 });
 
 test('a field lists each layout it sits in, including ContentBlocks', () => {

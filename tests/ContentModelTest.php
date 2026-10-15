@@ -122,6 +122,7 @@ class ContentModelTest extends TestCase
             'type' => 'channel',
             'entryTypes' => ['et-article', 'et-link'],
             'contexts' => ['et-article' => 'News article'],
+            'handles' => [],
             'sites' => [
                 ['site' => 'site-en', 'hasUrls' => true, 'uriFormat' => 'news/{slug}'],
                 ['site' => 'site-de', 'hasUrls' => true, 'uriFormat' => 'aktuelles/{slug}'],
@@ -136,6 +137,7 @@ class ContentModelTest extends TestCase
 
         $this->assertSame(['et-exhibition', 'et-article'], $section['entryTypes']);
         $this->assertSame([], $section['contexts']);
+        $this->assertSame([], $section['handles']);
     }
 
     public function testSectionWithoutUrls(): void
@@ -242,6 +244,14 @@ class ContentModelTest extends TestCase
             'min' => 1,
             'max' => 20,
         ], $this->item('fields', 'field-page-builder'));
+    }
+
+    public function testMatrixFieldGivingABlockAHandleOfItsOwn(): void
+    {
+        $this->assertSame([
+            ['entryType' => 'et-text'],
+            ['entryType' => 'et-teaser', 'context' => 'Column teaser', 'handle' => 'block_columnTeaser'],
+        ], $this->item('fields', 'field-columns')['blocks']);
     }
 
     public function testContentBlockFieldWithItsTabs(): void

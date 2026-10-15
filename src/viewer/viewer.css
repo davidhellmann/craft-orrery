@@ -190,11 +190,11 @@ input[type=checkbox] { accent-color: var(--text); }
 .node .glyph.dashed { stroke-dasharray: 2.5 2; }
 .node .glyph.dot { fill: var(--faint); stroke: none; }
 .node text { font: 12.5px var(--font); fill: var(--text); pointer-events: none; }
-.node text.sub { font: 10.5px var(--mono); fill: var(--faint); }
+.node text.sub, .node text.handle { font: 10.5px var(--mono); fill: var(--faint); }
 .node:hover .body { stroke: var(--text); }
 .node.match .body { stroke: var(--text); stroke-width: 2; stroke-dasharray: 4 3; }
 .node.sel .body { fill: var(--text); stroke: var(--text); }
-.node.sel text, .node.sel text.sub { fill: var(--inverse); }
+.node.sel text, .node.sel text.sub, .node.sel text.handle { fill: var(--inverse); }
 .node.sel .glyph { stroke: var(--inverse); }
 .node.sel .glyph.filled, .node.sel .glyph.dot { fill: var(--inverse); }
 .node.hl:not(.sel) .body { stroke: var(--text); }
@@ -268,6 +268,7 @@ table.diff .tag { display: inline-block; margin: 1px 0; text-transform: none; le
 .titem.on { background: var(--text); color: var(--inverse); }
 .titem.on .g { border-color: var(--inverse); }
 .titem.on .g.layout-owner { background-image: linear-gradient(var(--inverse) 0 0); }
+.titem.on .renamed { color: inherit; }
 .titem .n { flex: 1; min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
 .titem .c { font-size: 11px; opacity: .7; }
 .stage { flex: 1; min-width: 0; display: flex; flex-direction: column; }

@@ -2,14 +2,18 @@
 // Columns run from where content lives (left) to what it's made of (right).
 registerView((() => {
   const COLS = ['group', 'site', 'section', 'page', 'matrix', 'block', 'field'];
-  const COL_W = 230, COL_GAP = 110, NODE_H = 30, NODE_GAP = 6, TOP = 70;
+  const COL_W = 230, COL_GAP = 110, NODE_H = 38, NODE_GAP = 6, TOP = 70;
+  // Baselines of a node's name and of its handle underneath.
+  const NAME_Y = 16, HANDLE_Y = 29;
   const NS = 'http://www.w3.org/2000/svg';
   const svgEl = (tag, attrs = {}) => { const e = document.createElementNS(NS, tag); for (const k in attrs) e.setAttribute(k, attrs[k]); return e; };
   const reducedMotion = () => window.matchMedia && matchMedia('(prefers-reduced-motion: reduce)').matches;
 
   // ---- graph: containment edges drive the lineage, relation edges are followed one hop only
+  // A node shows `obj` under `name` and `handle`, the ones it's used under (see `placed`). `uses` are where it's placed.
   const nodes = {}, edges = [];
-  const add = (kind, obj) => { const key = keyOf(kind, obj.uid); nodes[key] = { key, kind, obj, x: 0, y: 0, down: [], up: [], refs: [], refBy: [] }; };
+  const node = (key, kind, obj, handle = '') => ({ key, kind, obj, base: keyOf(kind, obj.uid), handle, uses: [], x: 0, y: 0, down: [], up: [], refs: [], refBy: [] });
+  const add = (kind, obj) => { const key = keyOf(kind, obj.uid); nodes[key] = node(key, kind, obj); };
   model.siteGroups.forEach(g => add('group', g));
   model.sites.forEach(s => add('site', s));
   model.sections.forEach(s => add('section', s));
@@ -23,38 +27,57 @@ registerView((() => {
     edges.push({ a, b, type });
     if (type === 'contain') { nodes[a].down.push(b); nodes[b].up.push(a); } else { nodes[a].refs.push(b); nodes[b].refBy.push(a); }
   };
-  model.sites.forEach(s => link(keyOf('group', s.group), keyOf('site', s.uid)));
-  model.sections.forEach(s => {
-    s.sites.forEach(ss => link(keyOf('site', ss.site), keyOf('section', s.uid)));
-    s.entryTypes.forEach(u => byUid.et[u] && link(keyOf('section', s.uid), etKey(byUid.et[u])));
-  });
-  // A layout that gives a field a handle of its own makes it a field of its own to templates and GraphQL there, so it
-  // gets a node of its own: under the name it gets there, with the pencil. Its key is the field's with "@<handle>", and
-  // its details and access are the field's. A label of its own alone keeps the field's node.
-  const renames = [];
-  const renameKey = (el, f) => `${fieldKey(f)}@${layoutHandle(el, f)}`;
-  function placed(el, f, owner) {
-    if (!layoutHandle(el, f) || !nodes[keyOf(owner.kind, owner.uid)]) return fieldKey(f);
-    const key = renameKey(el, f);
+  // A field layout that gives a field a handle of its own, or a section or Matrix field an entry type, makes it one of
+  // its own to templates and GraphQL there, so it gets a node of its own: its key is the field's or entry type's with
+  // "@<handle>", and its details and access are theirs. A name of its own alone keeps the node. `as` is what the place
+  // `from` (a node) gives it, see `usedName` in ui.js.
+  const renames = [], variants = {};
+  function placed(as, o, from) {
+    const base = keyOf(o.kind, o.uid), handle = usedHandle(as, o);
+    if (!nodes[from]) return base;
+    const key = handle ? `${base}@${handle}` : base;
     if (!nodes[key]) {
-      nodes[key] = { key, kind: f.kind, obj: { ...f, name: layoutName(el, f), handle: layoutHandle(el, f) }, field: f, el, owners: [], x: 0, y: 0, down: [], up: [], refs: [], refBy: [] };
+      nodes[key] = node(key, o.kind, o, handle);
       renames.push(nodes[key]);
+      variants[base] = [...(variants[base] || []), key];
     }
-    if (!nodes[key].owners.includes(owner.name)) nodes[key].owners.push(owner.name);
+    nodes[key].uses.push({ as, from });
     return key;
   }
-  // The field's own key for a node, which is what the rest of the viewer knows.
-  const fieldOf = key => (nodes[key] && nodes[key].field ? fieldKey(nodes[key].field) : key);
-
-  model.entryTypes.forEach(e => layoutFields(e.tabs).forEach(({ el, f }) => link(etKey(e), placed(el, f, e))));
+  model.sites.forEach(s => link(keyOf('group', s.group), keyOf('site', s.uid)));
+  model.sections.forEach(s => {
+    const key = keyOf('section', s.uid);
+    s.sites.forEach(ss => link(keyOf('site', ss.site), key));
+    s.entryTypes.forEach(u => byUid.et[u] && link(key, placed(s.as[u], byUid.et[u], key)));
+  });
+  const linkEntryType = (key, e) => layoutFields(e.tabs).forEach(({ el, f }) => link(key, placed(el, f, key)));
   const linkField = (key, f) => {
-    (f.blocks || []).forEach(b => byUid.et[b.entryType] && link(key, etKey(byUid.et[b.entryType])));
-    layoutFields(f.tabs).forEach(({ el, f: inner }) => link(key, placed(el, inner, f)));
+    (f.blocks || []).forEach(b => byUid.et[b.entryType] && link(key, placed(b.as, byUid.et[b.entryType], key)));
+    layoutFields(f.tabs).forEach(({ el, f: inner }) => link(key, placed(el, inner, key)));
     f.targets.forEach(s => link(key, keyOf('section', s.uid), 'ref'));
   };
+  model.entryTypes.forEach(e => linkEntryType(etKey(e), e));
   model.fields.forEach(f => linkField(fieldKey(f), f));
-  // A renamed field holds what the field holds. Renames inside it add to the list while it runs.
-  for (let i = 0; i < renames.length; i++) linkField(renames[i].key, renames[i].field);
+  // A renamed one holds what it renames. Renames inside it add to the list while it runs.
+  for (let i = 0; i < renames.length; i++) (isField(renames[i].kind) ? linkField : linkEntryType)(renames[i].key, renames[i].obj);
+  // What's only ever placed under a handle of its own has no node under its own handle: nothing holds it there.
+  Object.values(nodes).filter(n => variants[n.key] && !n.uses.length).forEach(n => {
+    delete nodes[n.key];
+    edges.splice(0, edges.length, ...edges.filter(e => e.a !== n.key && e.b !== n.key));
+    n.down.filter(k => nodes[k]).forEach(k => { nodes[k].up = nodes[k].up.filter(x => x !== n.key); nodes[k].uses = nodes[k].uses.filter(u => u.from !== n.key); });
+    n.refs.filter(k => nodes[k]).forEach(k => { nodes[k].refBy = nodes[k].refBy.filter(x => x !== n.key); });
+  });
+  // A node goes by the name it's placed under, if that's the same everywhere, and by its own if not.
+  Object.values(nodes).forEach(n => {
+    const names = [...new Set(n.uses.map(u => usedName(u.as, n.obj)))];
+    n.name = names.length === 1 ? names[0] : n.obj.name;
+    n.handle = n.handle || n.obj.handle || '';
+    n.renamed = n.uses.filter(u => isRenamed(u.as, n.obj));
+  });
+  // The nodes of a key: its own, or else those of what it renames to everywhere.
+  const nodesFor = key => (!key ? [] : nodes[key] ? [key] : variants[key] || []);
+  // The key the rest of the viewer knows for a node: the field's or entry type's it renames.
+  const baseOf = key => (nodes[key] ? nodes[key].base : key);
 
   function walk(start, dir, out) {
     const stack = [start];
@@ -82,7 +105,7 @@ registerView((() => {
     COLS.forEach((kind, ci) => {
       const list = Object.values(nodes).filter(n => n.kind === kind && (!visible || visible.has(n.key)));
       const score = n => { const ps = n.up.filter(p => pos[p]); return ps.length ? ps.reduce((a, p) => a + pos[p].i, 0) / ps.length : Infinity; };
-      list.sort((a, b) => score(a) - score(b) || byName(a.obj, b.obj));
+      list.sort((a, b) => score(a) - score(b) || byName(a, b));
       list.forEach((n, i) => { pos[n.key] = { i: index++, x: ci * (COL_W + COL_GAP), y: TOP + i * (NODE_H + NODE_GAP) }; });
       counts[kind] = list.length;
     });
@@ -101,6 +124,14 @@ registerView((() => {
     const cls = `glyph${kind === 'group' || kind === 'site' ? ' filled' : ''}${kind === 'matrix' || kind === 'block' ? ' dashed' : ''}`;
     return round ? svgEl('circle', { class: cls, cx: 14, cy: y, r: 5 }) : svgEl('rect', { class: cls, x: 9, y: y - 5, width: 10, height: 10, rx: 1.5 });
   }
+  // "Renamed in Article to Introduction (intro). The field is Body (body).", for each name and handle it's placed under.
+  function renamedTip(n) {
+    const where = new Map();
+    n.renamed.forEach(u => { const to = renamedTo(u.as, n.obj); where.set(to, [...new Set([...(where.get(to) || []), nodes[u.from].name])]); });
+    return [...[...where].map(([to, names]) => `Renamed in ${names.join(', ')} to ${to}.`), originalText(n.obj)].join('\n');
+  }
+  // Text cut to fit `room` pixels, at `w` pixels a character.
+  const cut = (text, room, w) => { const n = Math.floor(room / w); return text.length > n ? text.slice(0, n - 1) + '…' : text; };
   function drawNodes() {
     Object.values(nodes).forEach(n => {
       const g = svgEl('g', { class: 'node' });
@@ -108,21 +139,27 @@ registerView((() => {
       g.appendChild(glyphNode(n.kind));
       const subText = isField(n.kind) ? fieldTypeLabel(n.obj)
         : n.obj.conventionOk === false ? `no ${n.obj.prefix}` : n.kind === 'section' ? n.obj.type : '';
-      // Shorten the name so it stops before the label on the right, and before the pencil of a renamed field.
-      const room = Math.floor((COL_W - 46 - subText.length * 6.3 - (n.field ? 16 : 0)) / 7);
-      const name = svgEl('text', { x: 28, y: 19 });
-      name.textContent = n.obj.name.length > room ? n.obj.name.slice(0, room - 1) + '…' : n.obj.name;
+      // The name, and the handle under it. Without a handle, like a site group's, the name sits in the middle.
+      const nameY = n.handle ? NAME_Y : NODE_H / 2 + 4;
+      // Shorten the name so it stops before the label on the right, and before the pencil of a renamed one.
+      const name = svgEl('text', { x: 28, y: nameY });
+      name.textContent = cut(n.name, COL_W - 46 - subText.length * 6.3 - (n.renamed.length ? 16 : 0), 7);
       g.appendChild(name);
-      if (n.field) {
+      if (n.handle) {
+        const handle = svgEl('text', { class: 'handle', x: 28, y: HANDLE_Y });
+        handle.textContent = cut(n.handle, COL_W - 36, 6.3);
+        g.appendChild(handle);
+      }
+      if (n.renamed.length) {
         // The pencil asks for the tooltip like it does in the lists, over a square that's easier to hit than its outline.
-        const pencil = svgEl('g', { class: 'pencil', transform: `translate(${COL_W - 8 - subText.length * 6.3 - 18},${NODE_H / 2 - 6})` });
+        const pencil = svgEl('g', { class: 'pencil', transform: `translate(${COL_W - 8 - subText.length * 6.3 - 18},${nameY - 10})` });
         pencil.append(svgEl('rect', { x: -2, y: -2, width: 16, height: 16, fill: 'transparent' }), svgEl('path', { d: PENCIL_PATH }));
         g.appendChild(pencil);
       }
       const tip = svgEl('title');
-      tip.textContent = n.field ? renamedText(n.el, n.field, `in ${n.owners.join(', ')}`) : n.obj.name;
+      tip.textContent = n.renamed.length ? renamedTip(n) : n.name;
       g.appendChild(tip);
-      if (subText) { const s = svgEl('text', { class: 'sub', x: COL_W - 8, y: 19, 'text-anchor': 'end' }); s.textContent = subText; g.appendChild(s); }
+      if (subText) { const s = svgEl('text', { class: 'sub', x: COL_W - 8, y: nameY, 'text-anchor': 'end' }); s.textContent = subText; g.appendChild(s); }
       n.marks = svgEl('g');
       g.appendChild(n.marks);
       n.g = g;
@@ -134,7 +171,7 @@ registerView((() => {
   // Access marks sit on the node's top edge, right-aligned: a dot for user groups, a diamond for schemas.
   function drawMarks() {
     Object.values(nodes).forEach(n => {
-      const kinds = ACCESS.filter(kind => activeAccess(kind).some(a => rightsOn(a, kind, fieldOf(n.key))));
+      const kinds = ACCESS.filter(kind => activeAccess(kind).some(a => rightsOn(a, kind, baseOf(n.key))));
       n.marks.replaceChildren(...kinds.map((kind, i) => {
         const x = COL_W - 10 - (kinds.length - 1 - i) * 13;
         return kind === 'usergroup'
@@ -280,15 +317,21 @@ registerView((() => {
   // map, like an unused entry type or a global set, what it's made of
   function reach(key) {
     const n = nodeOf(key);
-    if (!KIND[n.kind].layer) return new Set(layoutFields(n.obj.tabs).flatMap(({ el, f }) => [...subtree(nodes[renameKey(el, f)] ? renameKey(el, f) : fieldKey(f))]));
-    return new Set(Object.keys(nodes).filter(k => rightsOn(n.obj, n.kind, fieldOf(k))));
+    if (!KIND[n.kind].layer) {
+      return new Set(layoutFields(n.obj.tabs).flatMap(({ el, f }) => {
+        const own = usedHandle(el, f) && `${fieldKey(f)}@${usedHandle(el, f)}`;
+        return nodesFor(nodes[own] ? own : fieldKey(f)).flatMap(k => [...subtree(k)]);
+      }));
+    }
+    return new Set(Object.keys(nodes).filter(k => rightsOn(n.obj, n.kind, baseOf(k))));
   }
   function highlight() {
-    const base = selected ? (nodes[selected] ? lineage(selected) : reach(selected)) : groupFilter ? subtree(keyOf('group', groupFilter)) : null;
+    const sel = nodesFor(selected);
+    const base = selected ? (sel.length ? new Set(sel.flatMap(k => [...lineage(k)])) : reach(selected)) : groupFilter ? subtree(keyOf('group', groupFilter)) : null;
     svg.classList.toggle('dim', !!base);
     Object.values(nodes).forEach(n => {
       n.g.classList.toggle('hl', !!base && base.has(n.key));
-      n.g.classList.toggle('sel', n.key === selected);
+      n.g.classList.toggle('sel', sel.includes(n.key));
     });
     edges.forEach(e => e.path.classList.toggle('hl', !!base && base.has(e.a) && base.has(e.b)));
     lit = base;
@@ -303,8 +346,9 @@ registerView((() => {
     selected = nodeOf(key) || nodes[key] ? key : null;
     relight();
     panel();
-    if (center && selected) setTimeout(() => focusOn(selected), isolate ? 450 : 0);
-    else if (selected) requestAnimationFrame(() => reveal(selected));
+    const [first] = nodesFor(selected);
+    if (center && first) setTimeout(() => focusOn(first), isolate ? 450 : 0);
+    else if (first) requestAnimationFrame(() => reveal(first));
   }
   // Pans just enough that a node isn't cut off at the edges, like when the details panel opens over it.
   function reveal(key) {
@@ -315,7 +359,7 @@ registerView((() => {
     const dx = right > r.width - pad ? r.width - pad - right : left < pad ? pad - left : 0;
     if (dx) { view.x += dx; setView(); }
   }
-  const panel = () => showDetails(side, fieldOf(selected), 'graph', k => App.go('graph', k, { center: true }));
+  const panel = () => showDetails(side, baseOf(selected), 'graph', k => App.go('graph', k, { center: true }));
   const info = () => `
     <h2>Reading the map</h2>
     <div class="legend">${COLS.map(k => `<span>${glyph(k)}${KIND[k].plural}</span>`).join('')}<span><svg width="22" height="6" aria-hidden="true"><line x1="0" y1="3" x2="22" y2="3" stroke="currentColor" stroke-dasharray="4 3"/></svg>Relation</span></div>
@@ -378,7 +422,7 @@ registerView((() => {
       // the svg captures the pointer, so the event's target is the svg: look up what's under it
       const under = document.elementFromPoint(ev.clientX, ev.clientY);
       const g = /** @type {any} */ (under && under.closest('.node'));
-      if (g && g.__node && g.__node.key === selected) focusOn(selected, ev.shiftKey ? view.k * 0.5 : Math.max(view.k, FOCUS_K) * 2);
+      if (g && g.__node && nodesFor(selected).includes(g.__node.key)) focusOn(g.__node.key, ev.shiftKey ? view.k * 0.5 : Math.max(view.k, FOCUS_K) * 2);
       else zoomTo(view.k * (ev.shiftKey ? 0.5 : 2), ev.clientX - r.left, ev.clientY - r.top);
     });
     let drag = null;
@@ -411,7 +455,8 @@ registerView((() => {
     svg.addEventListener('pointercancel', () => { drag = null; wrap.classList.remove('panning'); });
 
     const search = el.querySelector('input[type=search]');
-    const matches = q => Object.values(nodes).filter(n => matchesSearch(n.obj, q));
+    // A renamed one is found under its own name and handle too.
+    const matches = q => Object.values(nodes).filter(n => matchesSearch(n, q) || matchesSearch(n.obj, q));
     search.addEventListener('input', () => {
       const q = search.value.trim().toLowerCase();
       const hits = new Set(q ? matches(q) : []);
@@ -421,7 +466,7 @@ registerView((() => {
       if (ev.key !== 'Enter') return;
       const q = search.value.trim().toLowerCase();
       if (!q) return;
-      const hit = Object.values(nodes).find(n => n.obj.name.toLowerCase() === q || (n.obj.handle || '').toLowerCase() === q) || matches(q)[0];
+      const hit = Object.values(nodes).find(n => n.name.toLowerCase() === q || n.handle.toLowerCase() === q) || matches(q)[0];
       if (hit) App.go('graph', hit.key, { center: true });
     });
     const group = el.querySelector('select');
@@ -463,7 +508,7 @@ registerView((() => {
     info,
     mount,
     show(key, opts = {}) {
-      if (!fitted) { fitted = true; requestAnimationFrame(() => { fit(); if (key) focusOn(key); }); }
+      if (!fitted) { fitted = true; requestAnimationFrame(() => { fit(); if (nodesFor(key).length) focusOn(nodesFor(key)[0]); }); }
       if (key !== selected) select(key, { center: opts.center || (!!key && opts.fromHash) });
     },
     escape() { if (selected) App.go('graph', null); },

@@ -46,7 +46,7 @@ registerView((() => {
       props: [['handle', 'Handle', o.handle], ['type', 'Type', o.type]],
       groups: [
         { key: 'sites', title: 'Sites', items: o.sites.map(ss => item(keyOf('site', ss.site), [ss.hasUrls ? ss.uriFormat : 'no URLs'])) },
-        { key: 'entryTypes', title: 'Entry types', items: o.entryTypes.map(u => byUid.et[u] && item(etKey(byUid.et[u]), [perUseNote(byUid.et[u], o.contexts[u])])) },
+        { key: 'entryTypes', title: 'Entry types', items: o.entryTypes.map(u => byUid.et[u] && item(etKey(byUid.et[u]), [renamedAs(o.as[u], byUid.et[u])])) },
         { key: 'pulledInBy', title: 'Pulled in by', items: o.referencedBy.map(f => item(fieldKey(f))) },
         { key: 'previewTargets', title: 'Preview targets', items: o.previewTargets.map(p => ({ id: p, name: p, tags: [] })) },
         ...accessGroups(key),
@@ -56,8 +56,8 @@ registerView((() => {
       props: [['handle', 'Handle', o.handle], ['kind', 'Kind', KIND[o.kind].label], ['hasTitleField', 'Title field', yes(o.hasTitleField)], ['tabs', 'Tabs', o.tabs.map(tab => tab.name).join(', ')], ['gql', 'GraphQL type', o.gql]],
       groups: [
         { key: 'livesIn', title: 'Lives in', items: [
-          ...o.sections.map(s => item(keyOf('section', s.uid), [perUseNote(o, s.contexts[o.uid])])),
-          ...o.builders.map(b => item(fieldKey(b.field), [perUseNote(o, b.context), b.group])),
+          ...o.sections.map(s => item(keyOf('section', s.uid), [renamedAs(s.as[o.uid], o)])),
+          ...o.builders.map(b => item(fieldKey(b.field), [renamedAs(b.as, o), b.group])),
         ] },
         { key: 'fields', title: 'Fields', items: fieldItems(o.tabs) },
         ...accessGroups(key),
@@ -69,7 +69,7 @@ registerView((() => {
       if (o.sources) props.push(['sources', 'Sources', o.allSources ? 'All sections' : null], ['maxRelations', 'Max relations', o.max]);
       const groups = [];
       if (o.options) groups.push({ key: 'options', title: 'Options', items: o.options.map(op => ({ id: op.value, name: op.label, tags: [op.value, op.default && 'default'].filter(Boolean) })) });
-      if (o.blocks) groups.push({ key: 'blocks', title: 'Blocks', items: o.blocks.map(b => byUid.et[b.entryType] && item(etKey(byUid.et[b.entryType]), [perUseNote(byUid.et[b.entryType], b.context), b.group])) });
+      if (o.blocks) groups.push({ key: 'blocks', title: 'Blocks', items: o.blocks.map(b => byUid.et[b.entryType] && item(etKey(byUid.et[b.entryType]), [renamedAs(b.as, byUid.et[b.entryType]), b.group])) });
       if (o.targets.length) groups.push({ key: 'pullsFrom', title: 'Pulls from', items: o.targets.map(s => item(keyOf('section', s.uid))) });
       if (o.tabs) groups.push({ key: 'contains', title: 'Contains', items: fieldItems(o.tabs) });
       groups.push({ key: 'usedIn', title: 'Used in', items: o.usedIn.map(u => item(useKey(u), [u.el.label && `“${u.el.label}”`, u.el.required && 'required', u.el.conditional && 'conditional'])) });

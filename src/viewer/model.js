@@ -63,10 +63,16 @@ model.sections.forEach(s => {
   s.groups = [...new Set(s.sites.map(ss => byUid.site[ss.site] && byUid.site[ss.site].group).filter(Boolean))];
   s.hasUrls = s.sites.some(ss => ss.hasUrls);
   s.entryTypes.forEach(uid => byUid.et[uid] && byUid.et[uid].sections.push(s));
+  // A section or Matrix field can give an entry type a name and a handle of its own there, like a field layout gives a
+  // field. `as` holds them in the shape of a field layout element: { label, handle }.
+  s.as = Object.fromEntries(s.entryTypes.map(uid => [uid, { label: s.contexts[uid], handle: s.handles[uid] }]));
 });
 
 model.fields.forEach(f => {
-  (f.blocks || []).forEach(b => byUid.et[b.entryType] && byUid.et[b.entryType].builders.push({ field: f, context: b.context, group: b.group }));
+  (f.blocks || []).forEach(b => {
+    b.as = { label: b.context, handle: b.handle };
+    if (byUid.et[b.entryType]) byUid.et[b.entryType].builders.push({ field: f, as: b.as, group: b.group });
+  });
   if (f.role === 'relation') {
     f.allSources = (f.sources || []).includes('*');
     (f.sources || []).forEach(src => {

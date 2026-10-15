@@ -5,9 +5,10 @@ registerView((() => {
 
   const fieldTypes = [...new Set(model.fields.map(fieldTypeLabel))].sort();
   const renamed = html => (html ? ` <em>${html}</em>` : '');
-  // A layout that renames the field says so. Its new name is left out where it's the layout's own name.
+  // A layout that renames the field, or a section or Builder the entry type, says so. A field's new name is left out
+  // where it's the layout's own name.
   const usedChip = u => chip(useKey(u), renamed(renameNote(u.el, byUid.field[u.el.field], { label: u.el.label !== u.owner.name, handle: false })));
-  const fieldChip = ({ el, f }) => chip(fieldKey(f), '', layoutFieldName(el, f));
+  const fieldChip = ({ el, f }) => chip(fieldKey(f), '', usedNameHTML(el, f));
 
   // The table's two modes, each with the index of the things it lists and its columns.
   const MODES = {
@@ -41,8 +42,8 @@ registerView((() => {
     }
     const key = etKey(o), els = layoutFields(o.tabs);
     const lives = o.kind === 'page'
-      ? o.sections.map(s => chip(keyOf('section', s.uid))).join('')
-      : o.builders.map(b => chip(fieldKey(b.field), perUseName(o, b.context) ? ` <em>${esc(perUseNote(o, b.context))}</em>` : '')).join('');
+      ? o.sections.map(s => chip(keyOf('section', s.uid), renamed(renameNote(s.as[o.uid], o, { handle: false })))).join('')
+      : o.builders.map(b => chip(fieldKey(b.field), renamed(renameNote(b.as, o, { handle: false })))).join('');
     return [key, `<td class="name">${glyph(o.kind)} ${esc(o.name)}${accessMarks(key)}</td><td><code class="faint">${esc(o.handle)}</code> ${prefixTag(o)}</td><td><span class="tag">${KIND[o.kind].label}</span></td><td><div class="chips">${lives || '<span class="faint">—</span>'}</div></td><td class="num">${els.length}</td><td><div class="chips">${els.map(fieldChip).join('')}</div></td>`];
   }
 
