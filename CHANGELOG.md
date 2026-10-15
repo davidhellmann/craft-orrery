@@ -1,5 +1,11 @@
 # Release Notes for Orrery
 
+## 1.0.2 - 2026-10-15
+
+### Added
+- Nodes in the Graph show their handle under their name.
+- Entry types that a section or Matrix field renames are marked with the pencil too, under the name and handle they get there, in every view. In the Graph, one that gets a handle of its own there has a node of its own.
+
 ## 1.0.1 - 2026-10-15
 
 ### Added
