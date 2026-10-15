@@ -1,5 +1,15 @@
 # Release Notes for Orrery
 
+## 1.0.3 - 2026-10-15
+
+### Added
+- Entry types show the colour Craft gives them: on the left edge of their node in the Graph, and in their glyph everywhere else.
+
+### Changed
+- Handles and labels in Graph nodes are smaller.
+- Access marks in the Graph sit inside their node, in the bottom right.
+- A user group’s and a schema’s access marks sit closer together.
+
 ## 1.0.2 - 2026-10-15
 
 ### Added
