@@ -38,6 +38,11 @@ const isLayoutOwner = kind => 'layoutOwners' in KIND[kind];
 
 const fieldTypeLabel = f => f.typeLabel || f.type;
 
+// The colours Craft gives entry types (craft\enums\Color) that the viewer shows, each a token in viewer.css. White, gray
+// and black count as none: the viewer is monochrome already.
+const COLORS = ['red', 'orange', 'amber', 'yellow', 'lime', 'green', 'emerald', 'teal', 'cyan', 'sky', 'blue', 'indigo', 'violet', 'purple', 'fuchsia', 'pink', 'rose'];
+const colorOf = o => (COLORS.includes(o.color) ? o.color : '');
+
 // Handle prefixes from the plugin settings, for Pages and for Blocks; without them every handle passes.
 const PREFIX = model.prefixes;
 const checksHandles = PREFIX.page.length > 0 || PREFIX.block.length > 0;

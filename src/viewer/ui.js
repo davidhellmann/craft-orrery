@@ -1,8 +1,12 @@
 // Shared rendering helpers and the detail renderer used by every view.
 const esc = s => String(s == null ? '' : s).replace(/[&<>"]/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' }[c]));
-// A field layout outside the graph shares one look whatever its kind.
-const glyph = kind => `<span class="g g-${kind}${isLayoutOwner(kind) ? ' layout-owner' : ''}" aria-hidden="true"></span>`;
-const kindLabel = kind => `<span class="kind">${glyph(kind)}${KIND[kind].label}</span>`;
+// A field layout outside the graph shares one look whatever its kind. Given the object, an entry type's glyph takes its
+// colour (the Graph has it on the node's edge instead).
+function glyph(kind, o = null) {
+  const color = o ? colorOf(o) : '';
+  return `<span class="g g-${kind}${isLayoutOwner(kind) ? ' layout-owner' : ''}${color ? ' colored' : ''}"${color ? ` style="--color: var(--${color})"` : ''} aria-hidden="true"></span>`;
+}
+const kindLabel = (kind, o = null) => `<span class="kind">${glyph(kind, o)}${KIND[kind].label}</span>`;
 // Where a URI ends up on a site, or under the site's name if it has no base URL. Craft gives the homepage `__home__`.
 const siteUrl = (site, uri) => `${(site.baseUrl || site.name).replace(/\/$/, '')}/${uri === '__home__' ? '' : uri || ''}`;
 // What the search boxes find: q, already lowercased, anywhere in the name or handle.
@@ -21,16 +25,16 @@ const nameOf = n => `${esc(n.obj.name)}${isLayoutOwner(n.kind) ? ` <span class="
 // `name` (HTML) stands in for the node's own name, like the name a field layout gives a field.
 function chip(key, extra = '', name = '') {
   const n = nodeOf(key);
-  return n ? `<span class="chip link" data-go="${key}">${glyph(n.kind)}${name || nameOf(n)}${accessMarks(key)}${extra}</span>` : '';
+  return n ? `<span class="chip link" data-go="${key}">${glyph(n.kind, n.obj)}${name || nameOf(n)}${accessMarks(key)}${extra}</span>` : '';
 }
 function row(key, note = '', name = '') {
   const n = nodeOf(key);
-  return n ? `<div class="row link" data-go="${key}">${glyph(n.kind)}<span class="grow">${name || nameOf(n)}</span>${accessMarks(key)}${note}</div>` : '';
+  return n ? `<div class="row link" data-go="${key}">${glyph(n.kind, n.obj)}<span class="grow">${name || nameOf(n)}</span>${accessMarks(key)}${note}</div>` : '';
 }
 // A row with a second line underneath, for rights that don't fit next to the name.
 function stackedRow(key, sub, faint = false) {
   const n = nodeOf(key);
-  return n ? `<div class="row link stacked" data-go="${key}">${glyph(n.kind)}<span class="grow"><span class="name">${esc(n.obj.name)}</span><span class="sub${faint ? ' faint' : ''}">${esc(sub)}</span></span>${accessMarks(key)}</div>` : '';
+  return n ? `<div class="row link stacked" data-go="${key}">${glyph(n.kind, n.obj)}<span class="grow"><span class="name">${esc(n.obj.name)}</span><span class="sub${faint ? ' faint' : ''}">${esc(sub)}</span></span>${accessMarks(key)}</div>` : '';
 }
 const note = s => (s ? `<span class="note">${s}</span>` : '');
 // A count with the word that agrees with it: "1 field", "2 fields".
@@ -167,7 +171,7 @@ function detailHTML(n, { title = true } = {}) {
   const o = n.obj;
   let h = '';
   if (title) {
-    h += `<div style="display:flex;gap:8px;align-items:center;margin-bottom:6px;flex-wrap:wrap">${kindLabel(n.kind)}${isField(n.kind) ? typeTag(o) : ''}${prefixTag(o)}${o.public ? '<span class="tag outline">Public</span>' : ''}</div>`;
+    h += `<div style="display:flex;gap:8px;align-items:center;margin-bottom:6px;flex-wrap:wrap">${kindLabel(n.kind, o)}${isField(n.kind) ? typeTag(o) : ''}${prefixTag(o)}${o.public ? '<span class="tag outline">Public</span>' : ''}</div>`;
     h += `<h2>${esc(o.name)}</h2>`;
     if (o.handle) h += `<div class="mono faint" style="margin-top:3px">${esc(o.handle)}${o.gql ? ` · ${esc(o.gql)}` : ''}</div>`;
     if (o.instructions || o.description) h += `<p class="muted" style="margin:8px 0 0">${esc(o.instructions || o.description)}</p>`;

@@ -3,8 +3,9 @@
 registerView((() => {
   const COLS = ['group', 'site', 'section', 'page', 'matrix', 'block', 'field'];
   const COL_W = 230, COL_GAP = 110, NODE_H = 38, NODE_GAP = 6, TOP = 70;
-  // Baselines of a node's name and of its handle underneath.
-  const NAME_Y = 16, HANDLE_Y = 29;
+  // Baselines of a node's name and of its handle underneath, and how wide a character of those and the label on the
+  // right is (8px mono).
+  const NAME_Y = 17, HANDLE_Y = 28.5, MONO_W = 4.8;
   const NS = 'http://www.w3.org/2000/svg';
   const svgEl = (tag, attrs = {}) => { const e = document.createElementNS(NS, tag); for (const k in attrs) e.setAttribute(k, attrs[k]); return e; };
   const reducedMotion = () => window.matchMedia && matchMedia('(prefers-reduced-motion: reduce)').matches;
@@ -132,10 +133,15 @@ registerView((() => {
   }
   // Text cut to fit `room` pixels, at `w` pixels a character.
   const cut = (text, room, w) => { const n = Math.floor(room / w); return text.length > n ? text.slice(0, n - 1) + '…' : text; };
+  // An entry type with a colour in Craft has it on its node's left edge, over the border and cut to its corners: the
+  // outline is 1px wide, so its outer edge is 0.5px out, with a radius of 6.5.
+  const STRIPE_W = 3, R = 6.5, CORNER = 6 - Math.sqrt(R * R - (6 - (STRIPE_W - 0.5)) ** 2);
+  const STRIPE = `M${STRIPE_W - 0.5},${CORNER} A${R},${R} 0 0 0 -0.5,6 V${NODE_H - 6} A${R},${R} 0 0 0 ${STRIPE_W - 0.5},${NODE_H - CORNER} Z`;
   function drawNodes() {
     Object.values(nodes).forEach(n => {
       const g = svgEl('g', { class: 'node' });
       g.appendChild(svgEl('rect', { class: 'body', width: COL_W, height: NODE_H, rx: 6 }));
+      if (colorOf(n.obj)) g.appendChild(svgEl('path', { class: 'stripe', d: STRIPE, style: `fill: var(--${colorOf(n.obj)})` }));
       g.appendChild(glyphNode(n.kind));
       const subText = isField(n.kind) ? fieldTypeLabel(n.obj)
         : n.obj.conventionOk === false ? `no ${n.obj.prefix}` : n.kind === 'section' ? n.obj.type : '';
@@ -143,16 +149,15 @@ registerView((() => {
       const nameY = n.handle ? NAME_Y : NODE_H / 2 + 4;
       // Shorten the name so it stops before the label on the right, and before the pencil of a renamed one.
       const name = svgEl('text', { x: 28, y: nameY });
-      name.textContent = cut(n.name, COL_W - 46 - subText.length * 6.3 - (n.renamed.length ? 16 : 0), 7);
+      name.textContent = cut(n.name, COL_W - 46 - subText.length * MONO_W - (n.renamed.length ? 16 : 0), 7);
       g.appendChild(name);
       if (n.handle) {
-        const handle = svgEl('text', { class: 'handle', x: 28, y: HANDLE_Y });
-        handle.textContent = cut(n.handle, COL_W - 36, 6.3);
-        g.appendChild(handle);
+        n.handleText = svgEl('text', { class: 'handle', x: 28, y: HANDLE_Y });
+        g.appendChild(n.handleText);
       }
       if (n.renamed.length) {
         // The pencil asks for the tooltip like it does in the lists, over a square that's easier to hit than its outline.
-        const pencil = svgEl('g', { class: 'pencil', transform: `translate(${COL_W - 8 - subText.length * 6.3 - 18},${nameY - 10})` });
+        const pencil = svgEl('g', { class: 'pencil', transform: `translate(${COL_W - 8 - subText.length * MONO_W - 18},${nameY - 10})` });
         pencil.append(svgEl('rect', { x: -2, y: -2, width: 16, height: 16, fill: 'transparent' }), svgEl('path', { d: PENCIL_PATH }));
         g.appendChild(pencil);
       }
@@ -168,16 +173,19 @@ registerView((() => {
     });
     edges.forEach(e => { e.path = svgEl('path', { class: 'edge' + (e.type === 'ref' ? ' ref' : '') }); gEdges.appendChild(e.path); });
   }
-  // Access marks sit on the node's top edge, right-aligned: a dot for user groups, a diamond for schemas.
+  // Access marks sit in the node's bottom right, on the handle's line: a dot for user groups, a diamond for schemas.
+  const MARK_GAP = 11;
   function drawMarks() {
     Object.values(nodes).forEach(n => {
       const kinds = ACCESS.filter(kind => activeAccess(kind).some(a => rightsOn(a, kind, baseOf(n.key))));
       n.marks.replaceChildren(...kinds.map((kind, i) => {
-        const x = COL_W - 10 - (kinds.length - 1 - i) * 13;
+        const x = COL_W - 11.5 - (kinds.length - 1 - i) * MARK_GAP, y = HANDLE_Y - 3;
         return kind === 'usergroup'
-          ? svgEl('circle', { class: 'mark-usergroup', cx: x, cy: 0, r: 4.5 })
-          : svgEl('rect', { class: 'mark-schema', x: x - 3.6, y: -3.6, width: 7.2, height: 7.2, rx: 1, transform: `rotate(45 ${x} 0)` });
+          ? svgEl('circle', { class: 'mark-usergroup', cx: x, cy: y, r: 3.5 })
+          : svgEl('rect', { class: 'mark-schema', x: x - 2.8, y: y - 2.8, width: 5.6, height: 5.6, rx: .8, transform: `rotate(45 ${x} ${y})` });
       }));
+      // the handle stops before the marks
+      if (n.handleText) n.handleText.textContent = cut(n.handle, COL_W - 36 - kinds.length * MARK_GAP, MONO_W);
     });
   }
   function edgePath(a, b) {

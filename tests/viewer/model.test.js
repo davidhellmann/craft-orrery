@@ -353,3 +353,11 @@ test('a Builder’s Blocks come by their group, in the order the field has them'
   assert.deepEqual(groups('field-page-builder'), [['Text', ['et-text', 'et-quote']], ['Media', ['et-image', 'et-link']], ['', ['et-teaser']], ['Layout', ['et-columns']]]);
   assert.deepEqual(groups('field-columns'), [['', ['et-text', 'et-teaser']]]);
 });
+
+test('an entry type shows the colour Craft gives it, except white, gray and black', () => {
+  const { byUid, colorOf } = loadViewer();
+
+  assert.equal(colorOf(byUid.et['et-quote']), 'yellow');
+  assert.equal(colorOf(byUid.et['et-image']), '');
+  assert.equal(colorOf(byUid.et['et-text']), '');
+});

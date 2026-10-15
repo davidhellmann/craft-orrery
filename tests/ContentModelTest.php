@@ -154,6 +154,7 @@ class ContentModelTest extends TestCase
             'name' => 'Article',
             'handle' => 'page_article',
             'icon' => 'newspaper',
+            'color' => 'blue',
             'hasTitleField' => true,
             'tabs' => [
                 [
@@ -198,6 +199,11 @@ class ContentModelTest extends TestCase
             'required' => false,
             'conditional' => true,
         ], $this->item('entryTypes', 'et-exhibition')['tabs'][0]['elements'][2]);
+    }
+
+    public function testEntryTypeWithoutAColour(): void
+    {
+        $this->assertArrayNotHasKey('color', $this->item('entryTypes', 'et-text'));
     }
 
     public function testEntryTypeWithoutTitleField(): void

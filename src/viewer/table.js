@@ -38,13 +38,13 @@ registerView((() => {
   function cells(o) {
     if (state.mode === 'fields') {
       const key = fieldKey(o);
-      return [key, `<td class="name">${glyph(o.kind)} ${esc(o.name)}${accessMarks(key)}</td><td><code class="faint">${esc(o.handle)}</code></td><td>${typeTag(o)}</td><td class="num ${o.usedIn.length ? '' : 'zero'}">${o.usedIn.length}</td><td><div class="chips">${o.usedIn.map(usedChip).join('') || '<span class="faint">not used</span>'}</div></td>`];
+      return [key, `<td class="name">${glyph(o.kind, o)} ${esc(o.name)}${accessMarks(key)}</td><td><code class="faint">${esc(o.handle)}</code></td><td>${typeTag(o)}</td><td class="num ${o.usedIn.length ? '' : 'zero'}">${o.usedIn.length}</td><td><div class="chips">${o.usedIn.map(usedChip).join('') || '<span class="faint">not used</span>'}</div></td>`];
     }
     const key = etKey(o), els = layoutFields(o.tabs);
     const lives = o.kind === 'page'
       ? o.sections.map(s => chip(keyOf('section', s.uid), renamed(renameNote(s.as[o.uid], o, { handle: false })))).join('')
       : o.builders.map(b => chip(fieldKey(b.field), renamed(renameNote(b.as, o, { handle: false })))).join('');
-    return [key, `<td class="name">${glyph(o.kind)} ${esc(o.name)}${accessMarks(key)}</td><td><code class="faint">${esc(o.handle)}</code> ${prefixTag(o)}</td><td><span class="tag">${KIND[o.kind].label}</span></td><td><div class="chips">${lives || '<span class="faint">—</span>'}</div></td><td class="num">${els.length}</td><td><div class="chips">${els.map(fieldChip).join('')}</div></td>`];
+    return [key, `<td class="name">${glyph(o.kind, o)} ${esc(o.name)}${accessMarks(key)}</td><td><code class="faint">${esc(o.handle)}</code> ${prefixTag(o)}</td><td><span class="tag">${KIND[o.kind].label}</span></td><td><div class="chips">${lives || '<span class="faint">—</span>'}</div></td><td class="num">${els.length}</td><td><div class="chips">${els.map(fieldChip).join('')}</div></td>`];
   }
 
   function draw() {
