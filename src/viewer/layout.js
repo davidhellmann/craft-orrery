@@ -102,7 +102,7 @@ registerView((() => {
       if (e.kind !== 'CustomField') { h += `<div class="fbox ${w}"><div class="lbl faint">${esc(elementName(e, o))}</div></div>`; return; }
       const f = byUid.field[e.field];
       if (!f) return;
-      h += `<div class="fbox ${w} link" data-go="${fieldKey(f)}"><div class="lbl">${esc(e.label || f.name)}${reqTag(e)}${condTag(e)}</div><div class="h">${esc(e.handle || f.handle)}${e.handle || e.label ? ` · ${esc(f.name)}` : ''}</div>${control(f)}</div>`;
+      h += `<div class="fbox ${w} link" data-go="${fieldKey(f)}"><div class="lbl">${esc(e.label || f.name)}${renamedMark(e, f)}${reqTag(e)}${condTag(e)}</div><div class="h">${esc(e.handle || f.handle)}${e.handle || e.label ? ` · ${esc(f.name)}` : ''}</div>${control(f)}</div>`;
     });
     return h + '</div>';
   }
@@ -182,7 +182,7 @@ registerView((() => {
       if (o.tabs) h += formHTML(o);
       else if (o.blocks) h += `<div class="form"><div class="fbox w100"><div class="lbl">${esc(o.name)}</div><div class="h">${esc(o.handle)}</div>${control(o)}</div></div>`;
       else h += fieldDetail(o) || `<p class="muted">${esc(fieldTypeLabel(o))} field, no settings worth showing.</p>`;
-      return h + `<h3>Placed in ${count(o.usedIn.length, 'layout', 'layouts')}</h3>${o.usedIn.length ? `<div class="list">${o.usedIn.map(u => row(useKey(u), `${note(u.el.label ? `“${esc(u.el.label)}”` : '')}${reqTag(u.el)}${condTag(u.el)}`)).join('')}</div>` : '<p class="muted">Not used anywhere.</p>'}`;
+      return h + `<h3>Placed in ${count(o.usedIn.length, 'layout', 'layouts')}</h3>${o.usedIn.length ? `<div class="list">${o.usedIn.map(u => row(useKey(u), `${note(renameNote(u.el, o))}${reqTag(u.el)}${condTag(u.el)}`)).join('')}</div>` : '<p class="muted">Not used anywhere.</p>'}`;
     }
     return h + detailHTML(n, { title: false });
   }

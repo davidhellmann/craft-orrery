@@ -1,12 +1,13 @@
 // Table view: which field sits where. Flip to entry types to read it the other way round.
 registerView((() => {
   let el, body, side, countEl;
-  const state = { mode: 'fields', q: '', type: '', kind: '', group: '', unused: false, unprefixed: false, sort: 'name', dir: 1, selected: null };
+  const state = { mode: 'fields', q: '', type: '', kind: '', group: '', unused: false, unprefixed: false, sort: 'name', dir: 1, selected: null, row: null, chip: -1 };
 
   const fieldTypes = [...new Set(model.fields.map(fieldTypeLabel))].sort();
-  const labelled = label => (label ? ` <em>${esc(label)}</em>` : '');
-  const usedChip = u => chip(useKey(u), labelled(u.el.label !== u.owner.name && layoutLabel(u.el, byUid.field[u.el.field])));
-  const fieldChip = ({ el, f }) => chip(fieldKey(f), labelled(layoutLabel(el, f)));
+  const renamed = html => (html ? ` <em>${html}</em>` : '');
+  // A layout that renames the field says so. Its new name is left out where it's the layout's own name.
+  const usedChip = u => chip(useKey(u), renamed(renameNote(u.el, byUid.field[u.el.field], { label: u.el.label !== u.owner.name, handle: false })));
+  const fieldChip = ({ el, f }) => chip(fieldKey(f), '', layoutFieldName(el, f));
 
   // The table's two modes, each with the index of the things it lists and its columns.
   const MODES = {
@@ -54,14 +55,27 @@ registerView((() => {
     });
     countEl.textContent = state.mode === 'fields' ? count(list.length, 'field', 'fields') : count(list.length, 'entry type', 'entry types');
     const head = cols.map(c => `<th class="${c.sort ? 'sort' : ''}" data-sort="${c.sort ? c.id : ''}" ${c.num ? 'style="text-align:right"' : ''}>${c.label}<span class="arrow">${c.id === sortCol.id ? (state.dir > 0 ? ' ↑' : ' ↓') : ''}</span></th>`).join('');
-    body.innerHTML = `<table class="t"><colgroup>${cols.map(c => `<col style="width:${c.w || 'auto'}">`).join('')}</colgroup><thead><tr>${head}</tr></thead><tbody>${list.map(o => { const [key, html] = cells(o); return `<tr data-row="${key}" class="${key === state.selected ? 'on' : ''}">${html}</tr>`; }).join('')}</tbody></table>`;
+    body.innerHTML = `<table class="t"><colgroup>${cols.map(c => `<col style="width:${c.w || 'auto'}">`).join('')}</colgroup><thead><tr>${head}</tr></thead><tbody>${list.map(o => { const [key, html] = cells(o); return `<tr data-row="${key}">${html}</tr>`; }).join('')}</tbody></table>`;
+    mark();
     body.querySelectorAll('th[data-sort]').forEach(th => th.dataset.sort && th.addEventListener('click', () => {
       state.dir = state.sort === th.dataset.sort ? -state.dir : th.dataset.sort === 'uses' ? -1 : 1;
       state.sort = th.dataset.sort;
       draw();
     }));
     body.querySelectorAll('tr[data-row]').forEach(tr => tr.addEventListener('click', () => App.go('table', tr.dataset.row)));
-    bindGo(body, k => App.go('table', k));
+    bindGo(body, (k, chipEl) => {
+      const tr = chipEl.closest('tr');
+      App.go('table', k, { row: tr.dataset.row, chip: [...tr.querySelectorAll('[data-go]')].indexOf(chipEl) });
+    });
+  }
+  // Marks the selected row. A chip picked in a row keeps that row marked, and the chip itself too. The chip goes by
+  // its place in the row: a field placed twice in one layout gives two chips to the same entry type.
+  function mark() {
+    const at = state.row || state.selected;
+    body.querySelectorAll('tr[data-row]').forEach(tr => {
+      tr.classList.toggle('on', tr.dataset.row === at);
+      tr.querySelectorAll('[data-go]').forEach((c, i) => c.classList.toggle('on', tr.dataset.row === state.row && i === state.chip));
+    });
   }
   function filters() {
     const f = el.querySelector('[data-filters]');
@@ -131,7 +145,9 @@ registerView((() => {
         if (mode !== state.mode) setMode(mode);
       }
       state.selected = n ? key : null;
-      body.querySelectorAll('tr[data-row]').forEach(tr => tr.classList.toggle('on', tr.dataset.row === state.selected));
+      state.row = (n && opts.row) || null;
+      state.chip = state.row ? opts.chip : -1;
+      mark();
       const on = body.querySelector('tr.on');
       if (on && opts.fromHash) on.scrollIntoView({ block: 'center' });
       panel();

@@ -28,12 +28,33 @@ registerView((() => {
     s.sites.forEach(ss => link(keyOf('site', ss.site), keyOf('section', s.uid)));
     s.entryTypes.forEach(u => byUid.et[u] && link(keyOf('section', s.uid), etKey(byUid.et[u])));
   });
-  model.entryTypes.forEach(e => layoutFields(e.tabs).forEach(({ f }) => link(etKey(e), fieldKey(f))));
-  model.fields.forEach(f => {
-    (f.blocks || []).forEach(b => byUid.et[b.entryType] && link(fieldKey(f), etKey(byUid.et[b.entryType])));
-    layoutFields(f.tabs).forEach(({ f: inner }) => link(fieldKey(f), fieldKey(inner)));
-    f.targets.forEach(s => link(fieldKey(f), keyOf('section', s.uid), 'ref'));
-  });
+  // A layout that gives a field a handle of its own makes it a field of its own to templates and GraphQL there, so it
+  // gets a node of its own: under the name it gets there, with the pencil. Its key is the field's with "@<handle>", and
+  // its details and access are the field's. A label of its own alone keeps the field's node.
+  const renames = [];
+  const renameKey = (el, f) => `${fieldKey(f)}@${layoutHandle(el, f)}`;
+  function placed(el, f, owner) {
+    if (!layoutHandle(el, f) || !nodes[keyOf(owner.kind, owner.uid)]) return fieldKey(f);
+    const key = renameKey(el, f);
+    if (!nodes[key]) {
+      nodes[key] = { key, kind: f.kind, obj: { ...f, name: layoutName(el, f), handle: layoutHandle(el, f) }, field: f, el, owners: [], x: 0, y: 0, down: [], up: [], refs: [], refBy: [] };
+      renames.push(nodes[key]);
+    }
+    if (!nodes[key].owners.includes(owner.name)) nodes[key].owners.push(owner.name);
+    return key;
+  }
+  // The field's own key for a node, which is what the rest of the viewer knows.
+  const fieldOf = key => (nodes[key] && nodes[key].field ? fieldKey(nodes[key].field) : key);
+
+  model.entryTypes.forEach(e => layoutFields(e.tabs).forEach(({ el, f }) => link(etKey(e), placed(el, f, e))));
+  const linkField = (key, f) => {
+    (f.blocks || []).forEach(b => byUid.et[b.entryType] && link(key, etKey(byUid.et[b.entryType])));
+    layoutFields(f.tabs).forEach(({ el, f: inner }) => link(key, placed(el, inner, f)));
+    f.targets.forEach(s => link(key, keyOf('section', s.uid), 'ref'));
+  };
+  model.fields.forEach(f => linkField(fieldKey(f), f));
+  // A renamed field holds what the field holds. Renames inside it add to the list while it runs.
+  for (let i = 0; i < renames.length; i++) linkField(renames[i].key, renames[i].field);
 
   function walk(start, dir, out) {
     const stack = [start];
@@ -87,13 +108,19 @@ registerView((() => {
       g.appendChild(glyphNode(n.kind));
       const subText = isField(n.kind) ? fieldTypeLabel(n.obj)
         : n.obj.conventionOk === false ? `no ${n.obj.prefix}` : n.kind === 'section' ? n.obj.type : '';
-      // Shorten the name so it stops before the label on the right.
-      const room = Math.floor((COL_W - 46 - subText.length * 6.3) / 7);
+      // Shorten the name so it stops before the label on the right, and before the pencil of a renamed field.
+      const room = Math.floor((COL_W - 46 - subText.length * 6.3 - (n.field ? 16 : 0)) / 7);
       const name = svgEl('text', { x: 28, y: 19 });
       name.textContent = n.obj.name.length > room ? n.obj.name.slice(0, room - 1) + '…' : n.obj.name;
       g.appendChild(name);
+      if (n.field) {
+        // The pencil asks for the tooltip like it does in the lists, over a square that's easier to hit than its outline.
+        const pencil = svgEl('g', { class: 'pencil', transform: `translate(${COL_W - 8 - subText.length * 6.3 - 18},${NODE_H / 2 - 6})` });
+        pencil.append(svgEl('rect', { x: -2, y: -2, width: 16, height: 16, fill: 'transparent' }), svgEl('path', { d: PENCIL_PATH }));
+        g.appendChild(pencil);
+      }
       const tip = svgEl('title');
-      tip.textContent = n.obj.name;
+      tip.textContent = n.field ? renamedText(n.el, n.field, `in ${n.owners.join(', ')}`) : n.obj.name;
       g.appendChild(tip);
       if (subText) { const s = svgEl('text', { class: 'sub', x: COL_W - 8, y: 19, 'text-anchor': 'end' }); s.textContent = subText; g.appendChild(s); }
       n.marks = svgEl('g');
@@ -107,7 +134,7 @@ registerView((() => {
   // Access marks sit on the node's top edge, right-aligned: a dot for user groups, a diamond for schemas.
   function drawMarks() {
     Object.values(nodes).forEach(n => {
-      const kinds = ACCESS.filter(kind => activeAccess(kind).some(a => rightsOn(a, kind, n.key)));
+      const kinds = ACCESS.filter(kind => activeAccess(kind).some(a => rightsOn(a, kind, fieldOf(n.key))));
       n.marks.replaceChildren(...kinds.map((kind, i) => {
         const x = COL_W - 10 - (kinds.length - 1 - i) * 13;
         return kind === 'usergroup'
@@ -170,27 +197,54 @@ registerView((() => {
     view.k = k;
     setView();
   }
-  // Eases the scale towards k while the point under (mx, my) stays put.
-  function zoomTo(k, mx, my) {
-    const from = view.k, to = Math.min(2.4, Math.max(0.1, k));
-    if (reducedMotion()) { zoomAt(to, mx, my); return; }
-    const t0 = performance.now(), D = 240;
+  // Runs an eased move of the view, frame by frame. Starting another one, or the user scrolling or dragging, stops it.
+  let moving = 0;
+  const stopMoving = () => { moving++; };
+  function animate(D, frame) {
+    const id = ++moving, t0 = performance.now();
+    if (reducedMotion()) { frame(1); return; }
     const step = now => {
-      const p = Math.min(1, (now - t0) / D), e = 1 - Math.pow(1 - p, 3);
-      zoomAt(from * Math.pow(to / from, e), mx, my);
+      if (id !== moving) return;
+      const p = Math.min(1, (now - t0) / D);
+      frame(1 - Math.pow(1 - p, 3));
       if (p < 1) requestAnimationFrame(step);
     };
     requestAnimationFrame(step);
   }
+  // Eases the scale towards k while the point under (mx, my) stays put.
+  function zoomTo(k, mx, my) {
+    const from = view.k, to = Math.min(2.4, Math.max(0.1, k));
+    animate(240, e => zoomAt(from * Math.pow(to / from, e), mx, my));
+  }
+  // A selected node comes to the middle, zoomed in to at least FOCUS_K so it can be read. Zoomed in further, it stays.
+  const FOCUS_K = 1;
+  // How long an empty spot waits for a second click before a click on it clears the selection.
+  const DOUBLE_CLICK_MS = 300;
+  function focusOn(key, k = Math.max(view.k, FOCUS_K)) {
+    const n = nodes[key];
+    if (!n) return;
+    const r = svg.getBoundingClientRect();
+    const fromK = view.k, toK = Math.min(2.4, Math.max(0.1, k));
+    // what's in the middle of the screen, in map coordinates, and where it goes
+    const from = { x: (r.width / 2 - view.x) / fromK, y: (r.height / 2 - view.y) / fromK };
+    const to = { x: n.x + COL_W / 2, y: n.y + NODE_H / 2 };
+    animate(380, e => {
+      const k = fromK * Math.pow(toK / fromK, e);
+      view = { k, x: r.width / 2 - (from.x + (to.x - from.x) * e) * k, y: r.height / 2 - (from.y + (to.y - from.y) * e) * k };
+      setView();
+    });
+  }
   function centerOn(key) {
     const n = nodes[key];
     if (!n) return;
+    stopMoving();
     const r = svg.getBoundingClientRect();
     view.x = r.width / 2 - (n.x + COL_W / 2) * view.k;
     view.y = r.height / 2 - (n.y + NODE_H / 2) * view.k;
     setView();
   }
   function fit() {
+    stopMoving();
     const r = svg.getBoundingClientRect();
     const vis = Object.values(nodes).filter(n => !visibleSet || visibleSet.has(n.key));
     if (!vis.length || !r.width) return;
@@ -226,8 +280,8 @@ registerView((() => {
   // map, like an unused entry type or a global set, what it's made of
   function reach(key) {
     const n = nodeOf(key);
-    if (!KIND[n.kind].layer) return new Set(layoutFields(n.obj.tabs).flatMap(({ f }) => [...subtree(fieldKey(f))]));
-    return new Set(Object.keys(nodes).filter(k => rightsOn(n.obj, n.kind, k)));
+    if (!KIND[n.kind].layer) return new Set(layoutFields(n.obj.tabs).flatMap(({ el, f }) => [...subtree(nodes[renameKey(el, f)] ? renameKey(el, f) : fieldKey(f))]));
+    return new Set(Object.keys(nodes).filter(k => rightsOn(n.obj, n.kind, fieldOf(k))));
   }
   function highlight() {
     const base = selected ? (nodes[selected] ? lineage(selected) : reach(selected)) : groupFilter ? subtree(keyOf('group', groupFilter)) : null;
@@ -240,12 +294,16 @@ registerView((() => {
     lit = base;
     return base;
   }
-  function select(key, { center = false } = {}) {
-    selected = nodeOf(key) ? key : null;
+  // Lights up what's selected, or else the site group, and lays out only that while isolated.
+  function relight() {
     const base = highlight();
     if (isolate) applyLayout(base);
+  }
+  function select(key, { center = false } = {}) {
+    selected = nodeOf(key) || nodes[key] ? key : null;
+    relight();
     panel();
-    if (center && selected) setTimeout(() => centerOn(selected), isolate ? 450 : 0);
+    if (center && selected) setTimeout(() => focusOn(selected), isolate ? 450 : 0);
     else if (selected) requestAnimationFrame(() => reveal(selected));
   }
   // Pans just enough that a node isn't cut off at the edges, like when the details panel opens over it.
@@ -257,14 +315,14 @@ registerView((() => {
     const dx = right > r.width - pad ? r.width - pad - right : left < pad ? pad - left : 0;
     if (dx) { view.x += dx; setView(); }
   }
-  const panel = () => showDetails(side, selected, 'graph', k => App.go('graph', k));
+  const panel = () => showDetails(side, fieldOf(selected), 'graph', k => App.go('graph', k, { center: true }));
   const info = () => `
     <h2>Reading the map</h2>
     <div class="legend">${COLS.map(k => `<span>${glyph(k)}${KIND[k].plural}</span>`).join('')}<span><svg width="22" height="6" aria-hidden="true"><line x1="0" y1="3" x2="22" y2="3" stroke="currentColor" stroke-dasharray="4 3"/></svg>Relation</span></div>
     <p>Left to right is where content lives: site groups have sites, sites have sections, sections hold pages.</p>
     <p>Pages are made of fields. Builders (matrix fields) hold blocks, and blocks are made of fields again. Dashed lines are relations, a field that pulls entries from another section.</p>
-    <p>Click anything to light up what it’s connected to. <b>Isolate</b> lays out only that part.</p>
-    <p>Double-click to zoom in, with Shift to zoom out. Scroll or drag the background to move around, drag a node to move it and the others make room.</p>
+    <p>Click anything to bring it to the middle and light up what it’s connected to. <b>Isolate</b> lays out only that part.</p>
+    <p>Double-click to zoom in, with Shift to zoom out, on the selected node to zoom in on it. Scroll or drag the background to move around, drag a node to move it and the others make room.</p>
     <h3>Worth a look</h3>
     <div class="list">
       ${checksHandles ? `<div class="row"><span class="grow">Handles without prefix (${[...PREFIX.page, ...PREFIX.block].map(esc).join(' / ')})</span><b>${unprefixedEntryTypes.length}</b></div>` : ''}
@@ -298,7 +356,7 @@ registerView((() => {
     gEdges = el.querySelector('.edges');
     gNodes = el.querySelector('.nodes');
     side = el.querySelector('.panel');
-    bindGo(wrap.querySelector('.info'), k => App.go('graph', k));
+    bindGo(wrap.querySelector('.info'), k => App.go('graph', k, { center: true }));
     drawNodes();
     drawMarks();
     applyLayout(null, false);
@@ -307,14 +365,21 @@ registerView((() => {
     // trackpad scroll pans, pinch / ⌘-scroll zooms
     svg.addEventListener('wheel', ev => {
       ev.preventDefault();
+      stopMoving();
       const r = svg.getBoundingClientRect();
       if (ev.ctrlKey || ev.metaKey) zoomAt(view.k * Math.exp(-ev.deltaY * 0.01), ev.clientX - r.left, ev.clientY - r.top);
       else { view.x -= ev.deltaX; view.y -= ev.deltaY; setView(); }
     }, { passive: false });
-    // double-click zooms in on that spot, shift + double-click zooms out, like a map
+    // double-click zooms in on that spot, shift + double-click zooms out, like a map. On the selected node it zooms
+    // in on the node, and an empty spot keeps the selection: its first click doesn't clear it after all.
     svg.addEventListener('dblclick', ev => {
+      clearTimeout(deselect);
       const r = svg.getBoundingClientRect();
-      zoomTo(view.k * (ev.shiftKey ? 0.5 : 2), ev.clientX - r.left, ev.clientY - r.top);
+      // the svg captures the pointer, so the event's target is the svg: look up what's under it
+      const under = document.elementFromPoint(ev.clientX, ev.clientY);
+      const g = /** @type {any} */ (under && under.closest('.node'));
+      if (g && g.__node && g.__node.key === selected) focusOn(selected, ev.shiftKey ? view.k * 0.5 : Math.max(view.k, FOCUS_K) * 2);
+      else zoomTo(view.k * (ev.shiftKey ? 0.5 : 2), ev.clientX - r.left, ev.clientY - r.top);
     });
     let drag = null;
     svg.addEventListener('pointerdown', ev => {
@@ -330,11 +395,15 @@ registerView((() => {
     svg.addEventListener('pointermove', ev => {
       if (!drag) return;
       const dx = ev.clientX - drag.sx, dy = ev.clientY - drag.sy;
-      if (Math.abs(dx) + Math.abs(dy) > 3) drag.moved = true;
+      if (Math.abs(dx) + Math.abs(dy) > 3 && !drag.moved) { drag.moved = true; stopMoving(); }
       if (drag.node) { drag.node.x = drag.nx + dx / view.k; drag.node.y = drag.ny + dy / view.k; makeRoom(drag.node, drag.home); render(); } else { view.x = drag.vx + dx; view.y = drag.vy + dy; setView(); }
     });
+    // A click on a node selects it. One on an empty spot clears the selection once it's clear it isn't the first click
+    // of a double-click.
+    let deselect = 0;
     const end = () => {
-      if (drag && !drag.moved) App.go('graph', drag.hit ? drag.hit.key : null);
+      if (drag && !drag.moved && drag.hit) App.go('graph', drag.hit.key, { center: true });
+      else if (drag && !drag.moved) { clearTimeout(deselect); deselect = setTimeout(() => App.go('graph', null), DOUBLE_CLICK_MS); }
       drag = null;
       wrap.classList.remove('panning');
     };
@@ -356,7 +425,12 @@ registerView((() => {
       if (hit) App.go('graph', hit.key, { center: true });
     });
     const group = el.querySelector('select');
-    group.addEventListener('change', () => { groupFilter = group.value; App.go('graph', null); });
+    // Another site group clears the selection, which lights up the group. Without a selection to clear, it does so itself.
+    group.addEventListener('change', () => {
+      groupFilter = group.value;
+      if (selected) App.go('graph', null); else relight();
+      if (isolate) setTimeout(fit, 450);
+    });
     const iso = el.querySelector('[data-isolate]');
     iso.addEventListener('click', () => {
       isolate = !isolate;
@@ -389,7 +463,7 @@ registerView((() => {
     info,
     mount,
     show(key, opts = {}) {
-      if (!fitted) { fitted = true; requestAnimationFrame(() => { fit(); if (key) centerOn(key); }); }
+      if (!fitted) { fitted = true; requestAnimationFrame(() => { fit(); if (key) focusOn(key); }); }
       if (key !== selected) select(key, { center: opts.center || (!!key && opts.fromHash) });
     },
     escape() { if (selected) App.go('graph', null); },
