@@ -38,14 +38,14 @@ registerView((() => {
     { id: 'site', label: KIND.site.plural, pick: 'pick a site', compare: 'Compare two sites', index: 'site', describe: (o, key) => ({
       props: [['handle', 'Handle', o.handle], ['group', KIND.group.label, (byUid.group[o.group] || {}).name], ['language', 'Language', o.language], ['baseUrl', 'Base URL', o.baseUrl], ['primary', 'Primary', yes(o.primary)]],
       groups: [
-        { key: 'sections', title: 'Sections', items: o.sections.map(s => { const ss = s.sites.find(x => x.site === o.uid); return item(keyOf('section', s.uid), [s.type, ss && ss.hasUrls ? ss.uriFormat : 'no URLs']); }) },
+        { key: 'sections', title: 'Sections', items: o.sections.map(s => { const ss = s.sites.find(x => x.site === o.uid); return item(keyOf('section', s.uid), [s.type, ss && ss.hasUrls ? ss.uriFormat : 'no URLs', ss && statusText(ss)]); }) },
         ...accessGroups(key),
       ],
     }) },
     { id: 'section', label: KIND.section.plural, pick: 'pick a section', compare: 'Compare two sections', index: 'section', describe: (o, key) => ({
       props: [['handle', 'Handle', o.handle], ['type', 'Type', o.type], ['propagationMethod', 'Propagation', propagationText(o)]],
       groups: [
-        { key: 'sites', title: 'Sites', items: o.sites.map(ss => item(keyOf('site', ss.site), [ss.hasUrls ? ss.uriFormat : 'no URLs'])) },
+        { key: 'sites', title: 'Sites', items: o.sites.map(ss => item(keyOf('site', ss.site), [ss.hasUrls ? ss.uriFormat : 'no URLs', statusText(ss)])) },
         { key: 'entryTypes', title: 'Entry types', items: o.entryTypes.map(u => byUid.et[u] && item(etKey(byUid.et[u]), [renamedAs(o.as[u], byUid.et[u])])) },
         { key: 'pulledInBy', title: 'Pulled in by', items: o.referencedBy.map(f => item(fieldKey(f))) },
         { key: 'previewTargets', title: 'Preview targets', items: o.previewTargets.map(p => ({ id: p, name: p, tags: [] })) },

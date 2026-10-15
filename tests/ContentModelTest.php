@@ -125,8 +125,8 @@ class ContentModelTest extends TestCase
             'contexts' => ['et-article' => 'News article'],
             'handles' => [],
             'sites' => [
-                ['site' => 'site-en', 'hasUrls' => true, 'uriFormat' => 'news/{slug}'],
-                ['site' => 'site-de', 'hasUrls' => true, 'uriFormat' => 'aktuelles/{slug}'],
+                ['site' => 'site-en', 'hasUrls' => true, 'uriFormat' => 'news/{slug}', 'enabledByDefault' => true],
+                ['site' => 'site-de', 'hasUrls' => true, 'uriFormat' => 'aktuelles/{slug}', 'enabledByDefault' => false],
             ],
             'previewTargets' => ['Primary entry page'],
         ], $this->item('sections', 'section-news'));
@@ -144,7 +144,7 @@ class ContentModelTest extends TestCase
     public function testSectionWithoutUrls(): void
     {
         $this->assertSame([
-            ['site' => 'site-en', 'hasUrls' => false, 'uriFormat' => null],
+            ['site' => 'site-en', 'hasUrls' => false, 'uriFormat' => null, 'enabledByDefault' => true],
         ], $this->item('sections', 'section-people')['sites']);
     }
 

@@ -196,6 +196,7 @@ class ContentModel extends Component
                     'site' => $siteUid,
                     'hasUrls' => (bool)($settings['hasUrls'] ?? false),
                     'uriFormat' => $this->nullIfEmpty($settings, 'uriFormat'),
+                    'enabledByDefault' => ($settings['enabledByDefault'] ?? true) !== false,
                 ];
             }
 

@@ -146,8 +146,8 @@ registerView((() => {
   }
   function pageHTML(e) {
     const urls = e.sections.flatMap(s => s.sites.filter(x => byUid.site[x.site]).map(x => (x.hasUrls
-      ? `<span class="url">${esc(siteUrl(byUid.site[x.site], x.uriFormat))}</span>`
-      : `<span class="url none">${esc(byUid.site[x.site].name)} · no URL</span>`)));
+      ? `<span class="url">${statusToggle(x)}${esc(siteUrl(byUid.site[x.site], x.uriFormat))}</span>`
+      : `<span class="url none">${statusToggle(x)}${esc(byUid.site[x.site].name)} · no URL</span>`)));
     const where = e.kind === 'block' ? e.builders.map(b => `<span class="url none">inside ${esc(b.field.name)}${isRenamed(b.as, e) ? ` ${esc(renamedAs(b.as, e))}` : ''}</span>`) : [];
     const zones = e.tabs.map(tab => {
       const hasBuilder = layoutFields([tab]).some(({ f }) => f.blocks);

@@ -235,12 +235,29 @@ table.t td code { overflow-wrap: anywhere; }
 table.t .chips .chip { max-width: 100%; }
 table.t td.num { text-align: right; font-variant-numeric: tabular-nums; width: 1%; white-space: nowrap; }
 table.t td.zero { color: var(--faint); }
+/* A section's sites in its row, as a small table in the table: site, URI format and switch, one line a site. */
+table.t .uris { display: grid; grid-template-columns: auto 1fr auto; padding: 2px 12px; border: 1px solid var(--line); border-radius: 8px; background: var(--surface); }
+table.t .uris > span { display: flex; align-items: center; padding: 5px 12px 5px 0; border-top: 1px solid var(--line); overflow-wrap: anywhere; min-width: 0; }
+table.t .uris > span:nth-child(3n) { padding-right: 0; }
+table.t .uris > span:nth-child(-n+3) { border-top: 0; }
+/* A site's default status for a section's entries, like Craft's switch but light: an outline with the dot to the right
+   and dark when enabled, to the left and faint when not. */
+.toggle { display: inline-block; flex: none; position: relative; width: 20px; height: 12px; border-radius: 6px; border: 1px solid var(--line-strong); background: var(--surface); vertical-align: -1px; cursor: help; }
+.toggle::after { content: ''; position: absolute; top: 2px; left: 2px; width: 6px; height: 6px; border-radius: 50%; background: var(--line-strong); }
+.toggle.on { border-color: var(--muted); }
+.toggle.on::after { left: auto; right: 2px; background: var(--text); }
+/* Wider than the screen, the table scrolls sideways under its first column. */
+table.t:not(.diff) th:first-child, table.t:not(.diff) td:first-child { position: sticky; left: 0; z-index: 1; }
+table.t:not(.diff) th:first-child { z-index: 2; }
+/* The edge of a column, to drag. */
+table.t .rsz { position: absolute; top: 0; right: -4px; width: 8px; height: 100%; cursor: col-resize; z-index: 3; }
+table.t .rsz:hover, table.t .rsz.on { background: linear-gradient(var(--line-strong), var(--line-strong)) center / 2px 100% no-repeat; }
 .tbl-wrap .scroll { flex: 1; }
 
 /* ---------- diff ---------- */
 #view-diff { flex-direction: row; }
 .tbl-head select[data-side] { max-width: 260px; }
-#view-diff .tbl-head > .seg { align-self: flex-start; flex-wrap: wrap; }
+.tbl-head > .seg { align-self: flex-start; flex-wrap: wrap; }
 .ab { display: inline-grid; place-items: center; width: 18px; height: 18px; margin-right: 8px; border-radius: 4px; background: var(--text); color: var(--inverse); font-size: 11px; font-weight: 700; vertical-align: middle; }
 .btn[disabled] { opacity: .4; cursor: default; }
 table.diff tbody tr { cursor: default; }
@@ -315,7 +332,7 @@ table.diff .tag { display: inline-block; margin: 1px 0; text-transform: none; le
 .chrome { background: var(--surface-2); padding: 9px 12px; display: flex; gap: 10px; align-items: center; border-bottom: 1px solid var(--line); }
 .chrome .lights { display: flex; gap: 6px; } .chrome .lights i { width: 10px; height: 10px; border-radius: 50%; border: 1.5px solid var(--line-strong); display: block; }
 .urls { flex: 1; display: flex; gap: 6px; flex-wrap: wrap; }
-.url { background: var(--surface); border: 1px solid var(--line); border-radius: 6px; padding: 2px 10px; font: 12px var(--mono); color: var(--muted); }
+.url { display: inline-flex; align-items: center; gap: 7px; background: var(--surface); border: 1px solid var(--line); border-radius: 6px; padding: 2px 10px; font: 12px var(--mono); color: var(--muted); }
 .url.none { font-family: var(--font); font-style: italic; color: var(--faint); }
 .pagebody { padding: 22px 24px 28px; display: flex; flex-direction: column; gap: 16px; }
 .zone { border: 1.5px dashed var(--line-strong); border-radius: 10px; padding: 16px; position: relative; }

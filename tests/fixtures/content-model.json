@@ -59,12 +59,14 @@
                 {
                     "site": "site-en",
                     "hasUrls": true,
-                    "uriFormat": "exhibitions/{slug}"
+                    "uriFormat": "exhibitions/{slug}",
+                    "enabledByDefault": true
                 },
                 {
                     "site": "site-de",
                     "hasUrls": true,
-                    "uriFormat": "ausstellungen/{slug}"
+                    "uriFormat": "ausstellungen/{slug}",
+                    "enabledByDefault": true
                 }
             ],
             "previewTargets": []
@@ -84,12 +86,14 @@
                 {
                     "site": "site-en",
                     "hasUrls": true,
-                    "uriFormat": "__home__"
+                    "uriFormat": "__home__",
+                    "enabledByDefault": true
                 },
                 {
                     "site": "site-de",
                     "hasUrls": true,
-                    "uriFormat": "__home__"
+                    "uriFormat": "__home__",
+                    "enabledByDefault": true
                 }
             ],
             "previewTargets": [
@@ -114,12 +118,14 @@
                 {
                     "site": "site-en",
                     "hasUrls": true,
-                    "uriFormat": "news/{slug}"
+                    "uriFormat": "news/{slug}",
+                    "enabledByDefault": true
                 },
                 {
                     "site": "site-de",
                     "hasUrls": true,
-                    "uriFormat": "aktuelles/{slug}"
+                    "uriFormat": "aktuelles/{slug}",
+                    "enabledByDefault": false
                 }
             ],
             "previewTargets": [
@@ -141,7 +147,8 @@
                 {
                     "site": "site-en",
                     "hasUrls": false,
-                    "uriFormat": null
+                    "uriFormat": null,
+                    "enabledByDefault": true
                 }
             ],
             "previewTargets": []
@@ -161,7 +168,8 @@
                 {
                     "site": "site-shop",
                     "hasUrls": true,
-                    "uriFormat": "products/{slug}"
+                    "uriFormat": "products/{slug}",
+                    "enabledByDefault": true
                 }
             ],
             "previewTargets": []
