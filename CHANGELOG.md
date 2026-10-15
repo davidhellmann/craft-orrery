@@ -9,6 +9,16 @@
 - Settings overrides go in `config/craft/orrery.php`, where Craft 6 looks for plugin config files.
 - User group permissions are read whether the project config stores them lowercased, as Craft 5 did, or as Craft 6 names them.
 
+## 1.0.5 - 2026-10-15
+
+### Added
+- The Table has a tab for each kind, in this order: site groups, sites, sections, entry types, fields, user groups and GraphQL schemas, each with its own columns and filters. The sections tab has each site’s URI format, and a schema’s tab tells what it reads from what it writes.
+- Wherever a section’s URI formats are shown, a switch like Craft’s shows whether its new entries start out enabled on that site.
+- Table columns can be resized by dragging their edge. A double-click on it resets them.
+
+### Changed
+- A table wider than the screen scrolls sideways, with its first column staying in place.
+
 ## 1.0.4 - 2026-10-15
 
 ### Added
