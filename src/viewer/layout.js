@@ -9,7 +9,7 @@ registerView((() => {
   // `name` (HTML) stands in for the node's own name.
   function item(key, name = '', extra = '') {
     const n = nodeOf(key);
-    return `<div class="titem ${state.current === key ? 'on' : ''}" data-go="${key}">${glyph(n.kind)}<span class="n">${name || esc(n.obj.name)}</span>${accessMarks(key)}${extra}</div>`;
+    return `<div class="titem ${state.current === key ? 'on' : ''}" data-go="${key}">${glyph(n.kind, n.obj)}<span class="n">${name || esc(n.obj.name)}</span>${accessMarks(key)}${extra}</div>`;
   }
   function pagesTree() {
     let h = '';
@@ -139,7 +139,7 @@ registerView((() => {
         if (!e) return;
         const pulls = [...pullsFrom(e)];
         const inner = e.tabs.flatMap(tab => tab.elements).map(x => wfItem(x, byUid.field[x.field], depth)).join('');
-        h += `<div class="blk"><div class="bh"><span class="caret"></span>${glyph('block')}<div><div class="bn">${usedNameHTML(b.as, e)}</div><div class="bs">${count(layoutFields(e.tabs).length, 'field', 'fields')}</div></div><span class="sp"></span>${pulls.map(s => `<span class="chip link" data-go="${keyOf('section', s.uid)}">from ${esc(s.name)}</span>`).join('')}<span class="chip link" data-go="${etKey(e)}">open</span></div><div class="bb"><div class="wf" style="margin-top:12px">${inner}</div></div></div>`;
+        h += `<div class="blk"><div class="bh"><span class="caret"></span>${glyph('block', e)}<div><div class="bn">${usedNameHTML(b.as, e)}</div><div class="bs">${count(layoutFields(e.tabs).length, 'field', 'fields')}</div></div><span class="sp"></span>${pulls.map(s => `<span class="chip link" data-go="${keyOf('section', s.uid)}">from ${esc(s.name)}</span>`).join('')}<span class="chip link" data-go="${etKey(e)}">open</span></div><div class="bb"><div class="wf" style="margin-top:12px">${inner}</div></div></div>`;
       });
     });
     return h + '</div>';
@@ -169,7 +169,7 @@ registerView((() => {
   }
   function canvasHTML(n) {
     const o = n.obj;
-    let h = `<div class="headline"><div class="big">${glyph(n.kind)}</div><div style="min-width:0">${kindLabel(n.kind)}<h2>${esc(o.name)}</h2><div class="mono faint">${esc(o.handle || '')}${o.gql ? ` · ${esc(o.gql)}` : ''}${o.conventionOk === false ? ` ${prefixTag(o)}` : ''}</div></div></div>`;
+    let h = `<div class="headline"><div class="big">${glyph(n.kind, o)}</div><div style="min-width:0">${kindLabel(n.kind, o)}<h2>${esc(o.name)}</h2><div class="mono faint">${esc(o.handle || '')}${o.gql ? ` · ${esc(o.gql)}` : ''}${o.conventionOk === false ? ` ${prefixTag(o)}` : ''}</div></div></div>`;
     if (isEntryType(n.kind)) return h + (state.mode === 'page' ? pageHTML(o) : formHTML(o));
     // Only entry types make up pages, so other field layouts always show as a form.
     if (isLayoutOwner(n.kind)) return h + formHTML(o);

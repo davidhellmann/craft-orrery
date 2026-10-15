@@ -274,7 +274,7 @@ entryTypes:
     showStatusField: true
     titleFormat: null
   et-quote:
-    color: null
+    color: yellow
     fieldLayouts:
       layout-quote:
         tabs:
@@ -345,7 +345,7 @@ entryTypes:
     showStatusField: false
     titleFormat: null
   et-image:
-    color: null
+    color: gray
     fieldLayouts:
       layout-image:
         tabs:
@@ -491,7 +491,7 @@ entryTypes:
     showStatusField: true
     titleFormat: '{body}'
   et-teaser:
-    color: null
+    color: red
     fieldLayouts:
       layout-teaser:
         tabs:

@@ -229,6 +229,7 @@ class ContentModel
                 'name' => $entryType['name'] ?? '',
                 'handle' => $entryType['handle'] ?? '',
                 'icon' => $this->nullIfEmpty($entryType, 'icon'),
+                'color' => $this->nullIfEmpty($entryType, 'color'),
                 'hasTitleField' => ($entryType['hasTitleField'] ?? true) !== false,
                 'tabs' => $this->tabs($entryType['fieldLayouts'] ?? []),
             ]);

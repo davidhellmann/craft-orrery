@@ -190,6 +190,7 @@
             "name": "Image",
             "handle": "block_image",
             "icon": "image",
+            "color": "gray",
             "hasTitleField": false,
             "tabs": [
                 {
@@ -226,6 +227,7 @@
             "name": "Teaser",
             "handle": "block_teaser",
             "icon": "rectangle-list",
+            "color": "red",
             "hasTitleField": false,
             "tabs": [
                 {
@@ -363,6 +365,7 @@
             "name": "Article",
             "handle": "page_article",
             "icon": "newspaper",
+            "color": "blue",
             "hasTitleField": true,
             "tabs": [
                 {
@@ -519,6 +522,7 @@
             "name": "Quote",
             "handle": "quote",
             "icon": "quote-left",
+            "color": "yellow",
             "hasTitleField": false,
             "tabs": [
                 {
