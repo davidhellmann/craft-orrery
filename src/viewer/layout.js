@@ -6,9 +6,10 @@ registerView((() => {
   const nearestWidth = w => [25, 50, 75, 100].reduce((p, c) => (Math.abs(c - w) < Math.abs(p - w) ? c : p), 100);
 
   // ---- tree
-  function item(key, label, extra = '') {
+  // `name` (HTML) stands in for the node's own name.
+  function item(key, name = '', extra = '') {
     const n = nodeOf(key);
-    return `<div class="titem ${state.current === key ? 'on' : ''}" data-go="${key}">${glyph(n.kind)}<span class="n">${esc(label || n.obj.name)}</span>${accessMarks(key)}${extra}</div>`;
+    return `<div class="titem ${state.current === key ? 'on' : ''}" data-go="${key}">${glyph(n.kind)}<span class="n">${name || esc(n.obj.name)}</span>${accessMarks(key)}${extra}</div>`;
   }
   function pagesTree() {
     let h = '';
@@ -22,8 +23,8 @@ registerView((() => {
         h += `<div class="sub-label">${label}</div>`;
         list.forEach(s => {
           const ets = s.entryTypes.map(u => byUid.et[u]).filter(Boolean);
-          if (ets.length === 1) h += item(etKey(ets[0]), s.name, s.hasUrls ? '<span class="c">URL</span>' : '');
-          else h += `<details class="tgroup" ${state.q ? 'open' : ''}><summary style="font-weight:500">${glyph('section')}<span>${esc(s.name)}</span>${accessMarks(keyOf('section', s.uid))}<span class="c">${ets.length}</span></summary><div class="kids">${ets.map(e => item(etKey(e), s.contexts[e.uid])).join('')}</div></details>`;
+          if (ets.length === 1) h += item(etKey(ets[0]), esc(s.name), s.hasUrls ? '<span class="c">URL</span>' : '');
+          else h += `<details class="tgroup" ${state.q ? 'open' : ''}><summary style="font-weight:500">${glyph('section')}<span>${esc(s.name)}</span>${accessMarks(keyOf('section', s.uid))}<span class="c">${ets.length}</span></summary><div class="kids">${ets.map(e => item(etKey(e), usedNameHTML(s.as[e.uid], e))).join('')}</div></details>`;
         });
       });
       h += `</div></details>`;
@@ -40,8 +41,7 @@ registerView((() => {
     groups.forEach((list, f) => {
       h += `<details class="tgroup" ${state.q ? 'open' : ''}><summary>${glyph('matrix')}<span>${esc(f.name)}</span><span class="c">${list.length}</span></summary><div class="kids">${list.map(e => {
         const b = (f.blocks || []).find(x => x.entryType === e.uid);
-        const name = perUseName(e, b && b.context);
-        return item(etKey(e), name, name ? `<span class="c">${esc(e.name)}</span>` : '');
+        return item(etKey(e), b && usedNameHTML(b.as, e));
       }).join('')}</div></details>`;
     });
     return h;
@@ -76,8 +76,7 @@ registerView((() => {
       return `<div class="ctl">${blockGroups(f).map(([g, blocks]) => `${g ? `<span class="grp">${esc(g)}</span>` : ''}${blocks.map(b => {
         const e = byUid.et[b.entryType];
         if (!e) return '';
-        const name = perUseName(e, b.context);
-        return `<span class="blockchip" data-go="${etKey(e)}"><b>${esc(name || e.name)}</b>${name ? esc(e.name) : ''}</span>`;
+        return `<span class="blockchip" data-go="${etKey(e)}"><b>${usedNameHTML(b.as, e)}</b></span>`;
       }).join('')}`).join('')}</div>`;
     }
     if (f.tabs) return `<div class="ctl">${layoutFields(f.tabs).map(({ f: inner }) => chip(fieldKey(inner))).join('')}</div>`;
@@ -140,8 +139,7 @@ registerView((() => {
         if (!e) return;
         const pulls = [...pullsFrom(e)];
         const inner = e.tabs.flatMap(tab => tab.elements).map(x => wfItem(x, byUid.field[x.field], depth)).join('');
-        const name = perUseName(e, b.context);
-        h += `<div class="blk"><div class="bh"><span class="caret"></span>${glyph('block')}<div><div class="bn">${esc(name || e.name)}</div><div class="bs">${name ? `${esc(e.name)} · ` : ''}${count(layoutFields(e.tabs).length, 'field', 'fields')}</div></div><span class="sp"></span>${pulls.map(s => `<span class="chip link" data-go="${keyOf('section', s.uid)}">from ${esc(s.name)}</span>`).join('')}<span class="chip link" data-go="${etKey(e)}">open</span></div><div class="bb"><div class="wf" style="margin-top:12px">${inner}</div></div></div>`;
+        h += `<div class="blk"><div class="bh"><span class="caret"></span>${glyph('block')}<div><div class="bn">${usedNameHTML(b.as, e)}</div><div class="bs">${count(layoutFields(e.tabs).length, 'field', 'fields')}</div></div><span class="sp"></span>${pulls.map(s => `<span class="chip link" data-go="${keyOf('section', s.uid)}">from ${esc(s.name)}</span>`).join('')}<span class="chip link" data-go="${etKey(e)}">open</span></div><div class="bb"><div class="wf" style="margin-top:12px">${inner}</div></div></div>`;
       });
     });
     return h + '</div>';
@@ -150,7 +148,7 @@ registerView((() => {
     const urls = e.sections.flatMap(s => s.sites.filter(x => byUid.site[x.site]).map(x => (x.hasUrls
       ? `<span class="url">${esc(siteUrl(byUid.site[x.site], x.uriFormat))}</span>`
       : `<span class="url none">${esc(byUid.site[x.site].name)} · no URL</span>`)));
-    const where = e.kind === 'block' ? e.builders.map(b => `<span class="url none">inside ${esc(b.field.name)}${perUseName(e, b.context) ? ` ${esc(perUseNote(e, b.context))}` : ''}</span>`) : [];
+    const where = e.kind === 'block' ? e.builders.map(b => `<span class="url none">inside ${esc(b.field.name)}${isRenamed(b.as, e) ? ` ${esc(renamedAs(b.as, e))}` : ''}</span>`) : [];
     const zones = e.tabs.map(tab => {
       const hasBuilder = layoutFields([tab]).some(({ f }) => f.blocks);
       return `<div class="zone"><span class="zl">${esc(tab.name)}${hasBuilder ? ' · content builder' : ''}</span><div class="wf">${tab.elements.map(x => wfItem(x, byUid.field[x.field], 0)).join('')}</div></div>`;

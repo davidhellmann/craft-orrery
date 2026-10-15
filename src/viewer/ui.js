@@ -38,30 +38,32 @@ const count = (n, one, other) => `${n} ${n === 1 ? one : other}`;
 const typeTag = f => `<span class="tag">${esc(fieldTypeLabel(f))}</span>`;
 const reqTag = el => (el && el.required ? '<span class="tag solid">req</span>' : '');
 const condTag = el => (el && el.conditional ? '<span class="tag outline">if</span>' : '');
-// A section or Matrix field can give an entry type a name of its own there. It counts only if it differs, and the
-// note reads "as “Pull quote”". Both are plain text, to escape where they're drawn.
-const perUseName = (e, name) => (name && name !== e.name ? name : '');
-const perUseNote = (e, name) => (perUseName(e, name) ? `as “${name}”` : '');
-// A field layout can rename a field there: give it a label and, since Craft 5, a handle of its own, which templates and
-// GraphQL use there. Each counts only if it differs. Both are plain text.
-const layoutName = (el, f) => (el.label && el.label !== f.name ? el.label : f.name);
-const layoutHandle = (el, f) => (el.handle && el.handle !== f.handle ? el.handle : '');
-const isRenamed = (el, f) => layoutName(el, f) !== f.name || !!layoutHandle(el, f);
-// Craft marks a renamed field with a pencil, and so does the viewer. Its tooltip names the field it is.
+// A field layout can give a field, and a section or Matrix field an entry type, a name and a handle of its own there,
+// which templates and GraphQL use there. `as` is what it gives, shaped like a field layout element: { label, handle }.
+// Each counts only if it differs. Both are plain text.
+const usedName = (as, o) => (as.label && as.label !== o.name ? as.label : o.name);
+const usedHandle = (as, o) => (as.handle && as.handle !== o.handle ? as.handle : '');
+const isRenamed = (as, o) => usedName(as, o) !== o.name || !!usedHandle(as, o);
+// Craft marks a renamed field or entry type with a pencil, and so does the viewer. Its tooltip names what it is.
 const PENCIL_PATH = 'M8.4 1.6l2 2-6.3 6.3-2.7.7.7-2.7z';
 const PENCIL = `<svg viewBox="0 0 12 12" aria-hidden="true"><path d="${PENCIL_PATH}" fill="none" stroke="currentColor" stroke-width="1.2" stroke-linejoin="round"/></svg>`;
-const renamedText = (el, f, where = 'here') => `Renamed ${where} to ${layoutName(el, f)} (${layoutHandle(el, f) || f.handle}). The field is ${f.name} (${f.handle}).`;
-const renamedMark = (el, f) => (isRenamed(el, f) ? `<span class="renamed" title="${esc(renamedText(el, f))}">${PENCIL}</span>` : '');
-// For where a layout is listed under the field: ✎ Listing Image listingImage, without the label or handle when asked.
-function renameNote(el, f, { label = true, handle = true } = {}) {
-  if (!isRenamed(el, f)) return '';
-  const name = label && layoutName(el, f) !== f.name ? ` ${esc(layoutName(el, f))}` : '';
-  return `${renamedMark(el, f)}${name}${handle && layoutHandle(el, f) ? ` <code>${esc(layoutHandle(el, f))}</code>` : ''}`;
+const renamedTo = (as, o) => `${usedName(as, o)} (${usedHandle(as, o) || o.handle})`;
+const originalText = o => `The ${isField(o.kind) ? 'field' : 'entry type'} is ${o.name} (${o.handle}).`;
+const renamedText = (as, o) => `Renamed here to ${renamedTo(as, o)}. ${originalText(o)}`;
+const renamedMark = (as, o) => (isRenamed(as, o) ? `<span class="renamed" title="${esc(renamedText(as, o))}">${PENCIL}</span>` : '');
+// For where it's listed under what it renames: ✎ Listing Image listingImage, without the name or handle when asked.
+function renameNote(as, o, { label = true, handle = true } = {}) {
+  if (!isRenamed(as, o)) return '';
+  const name = label && usedName(as, o) !== o.name ? ` ${esc(usedName(as, o))}` : '';
+  return `${renamedMark(as, o)}${name}${handle && usedHandle(as, o) ? ` <code>${esc(usedHandle(as, o))}</code>` : ''}`;
 }
-// A field as a layout lists it: under the name it gets there, with the pencil. `handleNote` is its handle there.
-const layoutFieldName = (el, f) => `${esc(layoutName(el, f))}${renamedMark(el, f)}`;
-const handleNote = (el, f) => (layoutHandle(el, f) ? note(`<code>${esc(layoutHandle(el, f))}</code>`) : '');
-const sectionEntryTypes = s => `<div class="list">${s.entryTypes.map(u => byUid.et[u]).filter(Boolean).map(e => row(etKey(e), note(esc(perUseNote(e, s.contexts[e.uid]) || e.handle)))).join('')}</div>`;
+// "as “Pull quote” block_quote", for where only text fits.
+const renamedAs = (as, o) => (isRenamed(as, o) ? `as “${usedName(as, o)}”${usedHandle(as, o) ? ` ${usedHandle(as, o)}` : ''}` : '');
+// A field or entry type as it's listed where it's used: under the name it gets there, with the pencil. `handleNote` is
+// its handle there.
+const usedNameHTML = (as, o) => `${esc(usedName(as, o))}${renamedMark(as, o)}`;
+const handleNote = (as, o) => (usedHandle(as, o) ? note(`<code>${esc(usedHandle(as, o))}</code>`) : '');
+const sectionEntryTypes = s => `<div class="list">${s.entryTypes.map(u => byUid.et[u]).filter(Boolean).map(e => row(etKey(e), note(esc(usedHandle(s.as[e.uid], e) || e.handle)), usedNameHTML(s.as[e.uid], e))).join('')}</div>`;
 const prefixTag = e => (e.conventionOk === false ? `<span class="tag outline" title="Handle doesn’t start with a prefix set in the plugin settings">no <code>${esc(e.prefix)}</code></span>` : '');
 
 const CLOSE_ICON = '<svg viewBox="0 0 16 16" aria-hidden="true"><path d="M4 4l8 8M12 4l-8 8" stroke="currentColor" stroke-width="1.6" stroke-linecap="round"/></svg>';
@@ -87,11 +89,11 @@ function fieldDetail(f) {
   if (f.blocks) {
     return `<h3>Blocks (${f.blocks.length})</h3>${blockGroups(f).map(([g, blocks]) => `${g ? `<div class="sub-label" style="padding-left:0">${esc(g)}</div>` : ''}<div class="list">${blocks.map(b => {
       const e = byUid.et[b.entryType];
-      return e ? row(etKey(e), note(esc(perUseNote(e, b.context)))) : '';
+      return e ? row(etKey(e), handleNote(b.as, e), usedNameHTML(b.as, e)) : '';
     }).join('')}</div>`).join('')}`;
   }
   if (f.tabs) {
-    return `<h3>Contains</h3><div class="list">${layoutFields(f.tabs).map(({ el, f: inner }) => row(fieldKey(inner), `${handleNote(el, inner)}${reqTag(el)}`, layoutFieldName(el, inner))).join('')}</div>`;
+    return `<h3>Contains</h3><div class="list">${layoutFields(f.tabs).map(({ el, f: inner }) => row(fieldKey(inner), `${handleNote(el, inner)}${reqTag(el)}`, usedNameHTML(el, inner))).join('')}</div>`;
   }
   return '';
 }
@@ -124,7 +126,7 @@ function accessDetail(n) {
 // The fields of a field layout, with the label each gets there.
 function layoutFieldsHTML(o) {
   const els = layoutFields(o.tabs);
-  return `<h3>Fields (${els.length})</h3><div class="list">${els.map(({ el, f }) => row(fieldKey(f), `${handleNote(el, f)}${reqTag(el)}${typeTag(f)}`, layoutFieldName(el, f))).join('')}</div>`;
+  return `<h3>Fields (${els.length})</h3><div class="list">${els.map(({ el, f }) => row(fieldKey(f), `${handleNote(el, f)}${reqTag(el)}${typeTag(f)}`, usedNameHTML(el, f))).join('')}</div>`;
 }
 
 // What the details say about each kind after its name and access, by the index its objects are in: Pages, Blocks and
@@ -146,8 +148,8 @@ const DETAILS = {
   },
   et: (o, kind) => {
     let h = '';
-    if (o.sections.length) h += `<h3>Lives in</h3><div class="list">${o.sections.map(s => row(keyOf('section', s.uid), note(s.type))).join('')}</div>`;
-    if (o.builders.length) h += `<h3>Available in</h3><div class="list">${o.builders.map(b => row(fieldKey(b.field), note(esc(perUseNote(o, b.context) || b.group || '')))).join('')}</div>`;
+    if (o.sections.length) h += `<h3>Lives in</h3><div class="list">${o.sections.map(s => row(keyOf('section', s.uid), note(renameNote(s.as[o.uid], o) || s.type))).join('')}</div>`;
+    if (o.builders.length) h += `<h3>Available in</h3><div class="list">${o.builders.map(b => row(fieldKey(b.field), note(renameNote(b.as, o) || esc(b.group || '')))).join('')}</div>`;
     if (kind === 'unused') h += '<h3>Lives in</h3><p class="muted" style="margin:0">No section or Matrix field has it.</p>';
     const sites = [...sitesOfEt(o)].map(u => byUid.site[u]).filter(Boolean);
     if (sites.length) h += `<h3>Ends up on</h3><div class="chips">${sites.map(s => chip(keyOf('site', s.uid))).join('')}</div>`;

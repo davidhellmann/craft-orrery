@@ -53,6 +53,7 @@
                 "et-article"
             ],
             "contexts": [],
+            "handles": [],
             "sites": [
                 {
                     "site": "site-en",
@@ -76,6 +77,7 @@
                 "et-home"
             ],
             "contexts": [],
+            "handles": [],
             "sites": [
                 {
                     "site": "site-en",
@@ -104,6 +106,7 @@
             "contexts": {
                 "et-article": "News article"
             },
+            "handles": [],
             "sites": [
                 {
                     "site": "site-en",
@@ -129,6 +132,7 @@
                 "et-person"
             ],
             "contexts": [],
+            "handles": [],
             "sites": [
                 {
                     "site": "site-en",
@@ -147,6 +151,7 @@
                 "et-product"
             ],
             "contexts": [],
+            "handles": [],
             "sites": [
                 {
                     "site": "site-shop",
@@ -592,7 +597,9 @@
                     "entryType": "et-text"
                 },
                 {
-                    "entryType": "et-teaser"
+                    "entryType": "et-teaser",
+                    "context": "Column teaser",
+                    "handle": "block_columnTeaser"
                 }
             ],
             "viewMode": "cards",

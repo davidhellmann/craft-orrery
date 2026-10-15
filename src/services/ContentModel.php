@@ -206,6 +206,7 @@ class ContentModel extends Component
                 'type' => $section['type'] ?? '',
                 'entryTypes' => array_column($entryTypes, 'uid'),
                 'contexts' => array_column($entryTypes, 'name', 'uid'),
+                'handles' => array_column($entryTypes, 'handle', 'uid'),
                 'sites' => $sites,
                 'previewTargets' => array_column($section['previewTargets'] ?? [], 'label'),
             ];
@@ -252,6 +253,7 @@ class ContentModel extends Component
                 $item['blocks'] = array_map(fn(array $usage) => $this->withoutNulls([
                     'entryType' => $usage['uid'],
                     'context' => $usage['name'] ?? null,
+                    'handle' => $usage['handle'] ?? null,
                     'group' => $usage['group'] ?? null,
                 ]), $this->entryTypeUsages($settings['entryTypes'] ?? []));
                 $item['viewMode'] = $settings['viewMode'] ?? null;
@@ -293,7 +295,7 @@ class ContentModel extends Component
     }
 
     /**
-     * Sections and Matrix fields list their entry types as UIDs, or as configs with per-use overrides.
+     * Sections and Matrix fields list their entry types as UIDs, or as configs with per-use overrides: a name, a handle.
      */
     private function entryTypeUsages(array $usages): array
     {

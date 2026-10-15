@@ -97,39 +97,51 @@ test('an empty search finds everything', () => {
   assert.equal(matchesSearch(byUid.et['et-article'], ''), true);
 });
 
-test('a name of its own that a section or Builder gives an entry type counts only if it differs', () => {
-  const { byUid, perUseName } = loadViewer();
+test('a name or handle of its own that a section or Builder gives an entry type counts only if it differs', () => {
+  const { byUid, usedName, usedHandle, isRenamed } = loadViewer();
   const quote = byUid.et['et-quote'];
 
-  assert.equal(perUseName(quote, 'Pull quote'), 'Pull quote');
-  assert.equal(perUseName(quote, 'Quote'), '');
-  assert.equal(perUseName(quote, undefined), '');
+  assert.equal(usedName({ label: 'Pull quote' }, quote), 'Pull quote');
+  assert.equal(usedName({ label: 'Quote' }, quote), 'Quote');
+  assert.equal(usedHandle({ handle: 'pullQuote' }, quote), 'pullQuote');
+  assert.equal(usedHandle({ handle: 'quote' }, quote), '');
+  assert.equal(isRenamed({ label: 'Quote', handle: 'quote' }, quote), false);
+  assert.equal(isRenamed({}, quote), false);
 });
 
-test('an entry type with a name of its own somewhere is noted as that name there', () => {
-  const { byUid, perUseNote } = loadViewer();
-  const quote = byUid.et['et-quote'];
+test('a renamed entry type is noted as its name and handle there, in text', () => {
+  const { byUid, renamedAs } = loadViewer();
+  const teaser = byUid.et['et-teaser'];
 
-  assert.equal(perUseNote(quote, 'Pull quote'), 'as “Pull quote”');
-  assert.equal(perUseNote(quote, 'Quote'), '');
+  assert.equal(renamedAs({ label: 'Column teaser', handle: 'block_columnTeaser' }, teaser), 'as “Column teaser” block_columnTeaser');
+  assert.equal(renamedAs({ label: 'Pull quote' }, byUid.et['et-quote']), 'as “Pull quote”');
+  assert.equal(renamedAs({}, teaser), '');
 });
 
-test('a section lists its entry types under the name it gives them, the others with their handle', () => {
+test('the pencil of a renamed entry type says what it is', () => {
+  const { byUid, renamedText } = loadViewer();
+
+  assert.equal(renamedText({ label: 'Column teaser', handle: 'block_columnTeaser' }, byUid.et['et-teaser']), 'Renamed here to Column teaser (block_columnTeaser). The entry type is Teaser (block_teaser).');
+});
+
+test('a section lists its entry types under the name it gives them, with the pencil, and their handle', () => {
   const { byUid, sectionEntryTypes } = loadViewer();
   const html = sectionEntryTypes(byUid.section['section-news']);
 
-  assert.match(html, /data-go="page:et-article">(?:(?!data-go).)*<span class="note">as “News article”<\/span>/);
+  assert.match(html, rowWithLabel('page:et-article', 'News article'));
+  assert.match(html, /data-go="page:et-link">(?:(?!data-go).)*<span class="note">page_link<\/span>/);
+  assert.doesNotMatch(html, rowWithLabel('page:et-link', 'Link'));
 });
 
-test('a Block’s details name the Builders it is in, under the name it gets there, or its group', () => {
+test('a Block’s details name the Builders it is in, under the name and handle it gets there, or its group', () => {
   const { nodeOf, detailHTML } = loadViewer();
-  const html = detailHTML(nodeOf('block:et-quote'));
 
-  assert.match(html, /data-go="matrix:field-page-builder">(?:(?!data-go).)*<span class="note">as “Pull quote”<\/span>/);
+  assert.match(detailHTML(nodeOf('block:et-quote')), /data-go="matrix:field-page-builder">(?:(?!data-go).)*class="renamed"(?:(?!data-go).)* Pull quote<\/span>/);
+  assert.match(detailHTML(nodeOf('block:et-teaser')), /data-go="matrix:field-columns">(?:(?!data-go).)*class="renamed"(?:(?!data-go).)* Column teaser <code>block_columnTeaser<\/code><\/span>/);
   assert.match(detailHTML(nodeOf('block:et-text')), /data-go="matrix:field-page-builder">(?:(?!data-go).)*<span class="note">Text<\/span>/);
 });
 
-test('a Builder’s details list its Blocks by group, under the name each gets there', () => {
+test('a Builder’s details list its Blocks by group, under the name and handle each gets there', () => {
   const { nodeOf, detailHTML } = loadViewer();
   const html = detailHTML(nodeOf('matrix:field-page-builder'));
   const groups = [...html.matchAll(/<div class="sub-label"[^>]*>([^<]*)<\/div>/g)].map(m => m[1]);
@@ -137,7 +149,8 @@ test('a Builder’s details list its Blocks by group, under the name each gets t
 
   assert.deepEqual(groups, ['Text', 'Media', 'Layout']);
   assert.deepEqual(blocks.slice(0, 6), ['et-text', 'et-quote', 'et-image', 'et-link', 'et-teaser', 'et-columns']);
-  assert.match(html, /data-go="block:et-quote">(?:(?!data-go).)*<span class="note">as “Pull quote”<\/span>/);
+  assert.match(html, rowWithLabel('block:et-quote', 'Pull quote'));
+  assert.match(detailHTML(nodeOf('matrix:field-columns')), /data-go="block:et-teaser">(?:(?!data-go).)*<code>block_columnTeaser<\/code>/);
 });
 
 test('a count agrees with its number', () => {

@@ -876,6 +876,12 @@ fields:
         -
           __assoc__:
             -
+              - handle
+              - block_columnTeaser
+            -
+              - name
+              - 'Column teaser'
+            -
               - uid
               - et-teaser
       includeTableView: false
