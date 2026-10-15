@@ -31,7 +31,7 @@ The Node tests load the scripts the same way. `tests/viewer/load.js` reads the o
 
 ## Links
 
-A link is `#<view>/<kind>:<uid>`, for example `#graph/page:<uid>`. The Diff also takes two keys (`#diff/<key>/<key>`) or one of its types (`#diff/<type>`). People share and bookmark these links, so view ids, kind keys and the Diff's type ids stay as they are, even where the UI says something else: the kind `matrix` is labelled Builder, and `fieldlayout` is labelled Element Type. A new name goes into the label. `tests/viewer/links.test.js` pins the view ids and kind keys. The Diff's type ids live inside its script, so no test pins them.
+A link is `#<view>/<kind>:<uid>`, for example `#graph/page:<uid>`. The Diff also takes two keys (`#diff/<key>/<key>`) or one of its types (`#diff/<type>`). The Graph also takes a field that a field layout gives a handle of its own, which is a node of its own there: `#graph/field:<uid>@<handle>`. Everywhere else it's the field's key. People share and bookmark these links, so view ids, kind keys and the Diff's type ids stay as they are, even where the UI says something else: the kind `matrix` is labelled Builder, and `fieldlayout` is labelled Element Type. A new name goes into the label. `tests/viewer/links.test.js` pins the view ids and kind keys. The Diff's type ids live inside its script, so no test pins them.
 
 ## Before and after
 

@@ -18,13 +18,14 @@ function accessMarks(key) {
 
 // Field layouts that aren't on the graph, like a global set's, say what they are: their glyph has no legend.
 const nameOf = n => `${esc(n.obj.name)}${isLayoutOwner(n.kind) ? ` <span class="faint">· ${KIND[n.kind].label}</span>` : ''}`;
-function chip(key, extra = '') {
+// `name` (HTML) stands in for the node's own name, like the name a field layout gives a field.
+function chip(key, extra = '', name = '') {
   const n = nodeOf(key);
-  return n ? `<span class="chip link" data-go="${key}">${glyph(n.kind)}${nameOf(n)}${accessMarks(key)}${extra}</span>` : '';
+  return n ? `<span class="chip link" data-go="${key}">${glyph(n.kind)}${name || nameOf(n)}${accessMarks(key)}${extra}</span>` : '';
 }
-function row(key, note = '') {
+function row(key, note = '', name = '') {
   const n = nodeOf(key);
-  return n ? `<div class="row link" data-go="${key}">${glyph(n.kind)}<span class="grow">${nameOf(n)}</span>${accessMarks(key)}${note}</div>` : '';
+  return n ? `<div class="row link" data-go="${key}">${glyph(n.kind)}<span class="grow">${name || nameOf(n)}</span>${accessMarks(key)}${note}</div>` : '';
 }
 // A row with a second line underneath, for rights that don't fit next to the name.
 function stackedRow(key, sub, faint = false) {
@@ -41,8 +42,25 @@ const condTag = el => (el && el.conditional ? '<span class="tag outline">if</spa
 // note reads "as “Pull quote”". Both are plain text, to escape where they're drawn.
 const perUseName = (e, name) => (name && name !== e.name ? name : '');
 const perUseNote = (e, name) => (perUseName(e, name) ? `as “${name}”` : '');
-// A field layout can give a field a label of its own. It counts only if it differs, and reads “Intro”. Plain text too.
-const layoutLabel = (el, f) => (el.label && el.label !== f.name ? `“${el.label}”` : '');
+// A field layout can rename a field there: give it a label and, since Craft 5, a handle of its own, which templates and
+// GraphQL use there. Each counts only if it differs. Both are plain text.
+const layoutName = (el, f) => (el.label && el.label !== f.name ? el.label : f.name);
+const layoutHandle = (el, f) => (el.handle && el.handle !== f.handle ? el.handle : '');
+const isRenamed = (el, f) => layoutName(el, f) !== f.name || !!layoutHandle(el, f);
+// Craft marks a renamed field with a pencil, and so does the viewer. Its tooltip names the field it is.
+const PENCIL_PATH = 'M8.4 1.6l2 2-6.3 6.3-2.7.7.7-2.7z';
+const PENCIL = `<svg viewBox="0 0 12 12" aria-hidden="true"><path d="${PENCIL_PATH}" fill="none" stroke="currentColor" stroke-width="1.2" stroke-linejoin="round"/></svg>`;
+const renamedText = (el, f, where = 'here') => `Renamed ${where} to ${layoutName(el, f)} (${layoutHandle(el, f) || f.handle}). The field is ${f.name} (${f.handle}).`;
+const renamedMark = (el, f) => (isRenamed(el, f) ? `<span class="renamed" title="${esc(renamedText(el, f))}">${PENCIL}</span>` : '');
+// For where a layout is listed under the field: ✎ Listing Image listingImage, without the label or handle when asked.
+function renameNote(el, f, { label = true, handle = true } = {}) {
+  if (!isRenamed(el, f)) return '';
+  const name = label && layoutName(el, f) !== f.name ? ` ${esc(layoutName(el, f))}` : '';
+  return `${renamedMark(el, f)}${name}${handle && layoutHandle(el, f) ? ` <code>${esc(layoutHandle(el, f))}</code>` : ''}`;
+}
+// A field as a layout lists it: under the name it gets there, with the pencil. `handleNote` is its handle there.
+const layoutFieldName = (el, f) => `${esc(layoutName(el, f))}${renamedMark(el, f)}`;
+const handleNote = (el, f) => (layoutHandle(el, f) ? note(`<code>${esc(layoutHandle(el, f))}</code>`) : '');
 const sectionEntryTypes = s => `<div class="list">${s.entryTypes.map(u => byUid.et[u]).filter(Boolean).map(e => row(etKey(e), note(esc(perUseNote(e, s.contexts[e.uid]) || e.handle)))).join('')}</div>`;
 const prefixTag = e => (e.conventionOk === false ? `<span class="tag outline" title="Handle doesn’t start with a prefix set in the plugin settings">no <code>${esc(e.prefix)}</code></span>` : '');
 
@@ -55,7 +73,7 @@ const infoCard = html => `<aside class="info floating">${closeButton('Hide info'
 function bindGo(root, go) {
   root.querySelectorAll('[data-go]').forEach(el => el.addEventListener('click', ev => {
     ev.stopPropagation();
-    if (el.dataset.go) go(el.dataset.go);
+    if (el.dataset.go) go(el.dataset.go, el);
   }));
 }
 
@@ -73,7 +91,7 @@ function fieldDetail(f) {
     }).join('')}</div>`).join('')}`;
   }
   if (f.tabs) {
-    return `<h3>Contains</h3><div class="list">${layoutFields(f.tabs).map(({ el, f: inner }) => row(fieldKey(inner), `${note(esc(layoutLabel(el, inner)))}${reqTag(el)}`)).join('')}</div>`;
+    return `<h3>Contains</h3><div class="list">${layoutFields(f.tabs).map(({ el, f: inner }) => row(fieldKey(inner), `${handleNote(el, inner)}${reqTag(el)}`, layoutFieldName(el, inner))).join('')}</div>`;
   }
   return '';
 }
@@ -106,7 +124,7 @@ function accessDetail(n) {
 // The fields of a field layout, with the label each gets there.
 function layoutFieldsHTML(o) {
   const els = layoutFields(o.tabs);
-  return `<h3>Fields (${els.length})</h3><div class="list">${els.map(({ el, f }) => row(fieldKey(f), `${note(esc(layoutLabel(el, f)))}${reqTag(el)}${typeTag(f)}`)).join('')}</div>`;
+  return `<h3>Fields (${els.length})</h3><div class="list">${els.map(({ el, f }) => row(fieldKey(f), `${handleNote(el, f)}${reqTag(el)}${typeTag(f)}`, layoutFieldName(el, f))).join('')}</div>`;
 }
 
 // What the details say about each kind after its name and access, by the index its objects are in: Pages, Blocks and
@@ -138,7 +156,7 @@ const DETAILS = {
     return h + layoutFieldsHTML(o);
   },
   field: o => fieldDetail(o) + `<h3>Used in (${o.usedIn.length})</h3>${o.usedIn.length
-    ? `<div class="list">${o.usedIn.map(u => row(useKey(u), `${note(u.el.handle ? esc(u.el.handle) : u.el.label ? `“${esc(u.el.label)}”` : '')}${reqTag(u.el)}${condTag(u.el)}`)).join('')}</div>`
+    ? `<div class="list">${o.usedIn.map(u => row(useKey(u), `${note(renameNote(u.el, o))}${reqTag(u.el)}${condTag(u.el)}`)).join('')}</div>`
     : '<p class="muted" style="margin:0">Not used in any field layout.</p>'}`,
 };
 

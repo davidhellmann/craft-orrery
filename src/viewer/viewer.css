@@ -6,6 +6,7 @@
   --dot: #d6d6d6; --shadow: 0 10px 30px rgba(0, 0, 0, .12);
   --edge: 10, 10, 10;
   --usergroup: #2563eb; --schema: #d6157f;
+  --select-arrow: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 10 6'%3E%3Cpath d='M1 1l4 4 4-4' fill='none' stroke='%230a0a0a' stroke-width='1.6' stroke-linecap='round' stroke-linejoin='round'/%3E%3C/svg%3E");
   --radius: 8px;
   --font: ui-sans-serif, -apple-system, BlinkMacSystemFont, "Segoe UI", Inter, sans-serif;
   --mono: ui-monospace, SFMono-Regular, Menlo, monospace;
@@ -18,6 +19,7 @@
   --dot: #232323; --shadow: 0 10px 30px rgba(0, 0, 0, .6);
   --edge: 244, 244, 244;
   --usergroup: #5b9dff; --schema: #f262b4;
+  --select-arrow: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 10 6'%3E%3Cpath d='M1 1l4 4 4-4' fill='none' stroke='%23f4f4f4' stroke-width='1.6' stroke-linecap='round' stroke-linejoin='round'/%3E%3C/svg%3E");
   color-scheme: dark;
 }
 
@@ -108,6 +110,14 @@ main { flex: 1; min-height: 0; position: relative; }
 .chip.link { cursor: pointer; }
 .chip.link:hover { border-color: var(--text); color: var(--text); }
 .chip em { font-style: normal; color: var(--faint); }
+.chip.link.on { background: var(--text); border-color: var(--text); color: var(--inverse); }
+.chip.on .g { --text: var(--inverse); }
+.chip.on em { color: inherit; opacity: .7; }
+/* A field a field layout renames, marked with a pencil the way Craft marks it. */
+.renamed { display: inline-flex; flex: none; margin-left: 5px; color: var(--muted); vertical-align: -1px; cursor: help; }
+.renamed svg { width: 11px; height: 11px; }
+.chip > .renamed, em > .renamed:first-child, .note > .renamed:first-child { margin-left: 0; }
+.chip.on .renamed { color: inherit; }
 .tag { font-size: 10.5px; text-transform: uppercase; letter-spacing: .06em; padding: 1px 6px; border-radius: 4px; background: var(--surface-3); color: var(--muted); white-space: nowrap; }
 .tag.solid { background: var(--text); color: var(--inverse); }
 .tag.outline { background: transparent; border: 1px solid var(--line-strong); }
@@ -131,6 +141,11 @@ h3 { font-size: 11.5px; text-transform: uppercase; letter-spacing: .08em; color:
 .seg button.on { background: var(--text); color: var(--inverse); }
 input[type=search], select { background: var(--surface); border: 1px solid var(--line-strong); border-radius: 6px; padding: 5px 9px; outline: none; }
 input[type=search]:focus, select:focus { border-color: var(--text); }
+/* Own chevron instead of the native arrow, which sits flush against the right edge whatever the padding. */
+select {
+  appearance: none; padding-right: 28px; cursor: pointer;
+  background: var(--surface) var(--select-arrow) no-repeat right 10px center / 10px 6px;
+}
 label.check { display: inline-flex; gap: 6px; align-items: center; color: var(--muted); font-size: 13px; white-space: nowrap; cursor: pointer; }
 input[type=checkbox] { accent-color: var(--text); }
 .scroll { overflow: auto; }
@@ -183,7 +198,10 @@ input[type=checkbox] { accent-color: var(--text); }
 .node.sel .glyph { stroke: var(--inverse); }
 .node.sel .glyph.filled, .node.sel .glyph.dot { fill: var(--inverse); }
 .node.hl:not(.sel) .body { stroke: var(--text); }
-.dim .node:not(.hl) { opacity: .12; }
+.node .pencil { cursor: help; }
+.node .pencil path { fill: none; stroke: var(--muted); stroke-width: 1.2; stroke-linejoin: round; }
+.node.sel .pencil path { stroke: var(--inverse); }
+.dim .node:not(.hl) { opacity: .25; }
 .edge { fill: none; stroke: rgba(var(--edge), .08); stroke-width: 1; pointer-events: none; }
 .edge.ref { stroke-dasharray: 4 4; }
 .dim .edge { stroke: rgba(var(--edge), .025); }

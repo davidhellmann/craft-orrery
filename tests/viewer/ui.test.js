@@ -3,8 +3,8 @@ const { test } = require('node:test');
 const assert = require('node:assert/strict');
 const { loadViewer } = require('./load');
 
-// The row that leads to a key, with the label a field gets there.
-const rowWithLabel = (key, label) => new RegExp(`data-go="${key}">(?:(?!data-go).)*“${label}”`);
+// The row that leads to a key, with the label a field gets there and the pencil that marks it renamed.
+const rowWithLabel = (key, label) => new RegExp(`data-go="${key}">(?=(?:(?!data-go).)*class="renamed")(?:(?!data-go).)*> ?${label}<`);
 
 test('a page’s address is the site’s base URL with the URI', () => {
   const { byUid, siteUrl } = loadViewer();
@@ -42,6 +42,15 @@ test('the users’ field layout has details of its own', () => {
   assert.match(html, /Element Type<\/span>/);
   assert.match(html, /<h2>Users<\/h2>/);
   assert.match(html, rowWithLabel('field:field-notes', 'Bio'));
+});
+
+test('a field a layout renames is listed under its name there, with the handle it gets there', () => {
+  const { nodeOf, detailHTML } = loadViewer();
+  const html = detailHTML(nodeOf('page:et-article'));
+
+  assert.match(html, rowWithLabel('field:field-body', 'Introduction'));
+  assert.match(html, /data-go="field:field-body">(?:(?!data-go).)*<code>intro<\/code>/);
+  assert.doesNotMatch(html, rowWithLabel('field:field-page-builder', 'Page builder'));
 });
 
 test('a field’s details list every field layout it sits in, with the label it gets there', () => {
