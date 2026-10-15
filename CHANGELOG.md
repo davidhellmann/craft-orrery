@@ -1,5 +1,10 @@
 # Release Notes for Orrery
 
+## 1.0.4 - 2026-10-15
+
+### Added
+- A section’s details and the Diff say which sites the section saves its entries to (its propagation method).
+
 ## 1.0.3 - 2026-10-15
 
 ### Added
