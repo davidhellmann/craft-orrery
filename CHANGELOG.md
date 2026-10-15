@@ -9,6 +9,12 @@
 - Settings overrides go in `config/craft/orrery.php`, where Craft 6 looks for plugin config files.
 - User group permissions are read whether the project config stores them lowercased, as Craft 5 did, or as Craft 6 names them.
 
+## 1.0.2 - 2026-10-15
+
+### Added
+- Nodes in the Graph show their handle under their name.
+- Entry types that a section or Matrix field renames are marked with the pencil too, under the name and handle they get there, in every view. In the Graph, one that gets a handle of its own there has a node of its own.
+
 ## 1.0.1 - 2026-10-15
 
 ### Added
