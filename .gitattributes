@@ -8,12 +8,13 @@ CODING_STANDARDS.md export-ignore
 docs/ export-ignore
 README.md export-ignore
 composer.lock export-ignore
-ecs.php export-ignore
 package-lock.json export-ignore
 package.json export-ignore
 phpstan.neon export-ignore
 phpunit.xml.dist export-ignore
-resources/ export-ignore
+pint.json export-ignore
+# The README's pictures. The rest of resources/ is what Craft loads: the icons, and the control panel section's page.
+resources/*.png export-ignore
 src/viewer/page.d.ts export-ignore
 tests/ export-ignore
 tsconfig.json export-ignore

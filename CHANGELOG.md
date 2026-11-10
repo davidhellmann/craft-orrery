@@ -1,5 +1,10 @@
 # Release Notes for Orrery
 
+## 2.0.0-beta.2 - 2026-11-10
+
+### Fixed
+- The control panel section opens and Orrery’s icon shows when Orrery is installed with Composer. The files for both were missing from the package.
+
 ## 2.0.0-beta.1 - 2026-11-10
 
 ### Changed
