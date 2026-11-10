@@ -36,6 +36,11 @@ window.Cp.booting((cp) => {
                     el.style.height = `${Math.max(400, window.innerHeight - top - window.scrollY - below)}px`;
                 };
 
+                // The control panel goes on laying itself out after this page is mounted: the buttons land beside
+                // the title, styles arrive. Whatever moves the frame resizes something around it, so fit again then.
+                // Fitting to the same space sets the same height, which is where this stops.
+                const surroundings = new ResizeObserver(fit);
+
                 // The viewer keeps its place in its own hash. Mirror it in the control panel's URL, so a reload or a
                 // shared link comes back to the same place.
                 const sync = () => {
@@ -51,8 +56,14 @@ window.Cp.booting((cp) => {
                 onMounted(() => {
                     fit();
                     window.addEventListener('resize', fit);
+                    for (let el = frame.value.parentElement; el; el = el.parentElement) {
+                        surroundings.observe(el);
+                    }
                 });
-                onBeforeUnmount(() => window.removeEventListener('resize', fit));
+                onBeforeUnmount(() => {
+                    window.removeEventListener('resize', fit);
+                    surroundings.disconnect();
+                });
 
                 // The address the frame starts on. It mustn't follow `newTabUrl`, or every step in the viewer would
                 // load the frame again.
