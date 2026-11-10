@@ -1,22 +1,23 @@
 {% extends '_layouts/cp' %}
-{% import '_includes/forms' as forms %}
 
 {% set title = 'Content Model'|t('orrery') %}
 {% set appUrl = cpUrl('orrery/app') %}
 
 {% block actionButton %}
-    {{ forms.button({
-        label: 'Fullscreen'|t('orrery'),
-        icon: 'expand',
-        attributes: {id: 'orrery-fullscreen'},
-    }) }}
-    <a class="btn" id="orrery-new-tab" href="{{ appUrl }}" target="_blank" rel="noopener">
+    <button type="button" class="btn" id="orrery-fullscreen">
+        <div class="inline-flex">
+            <div class="cp-icon">{{ iconSvg('expand') }}</div>
+            <div class="label">{{ 'Fullscreen'|t('orrery') }}</div>
+        </div>
+    </button>
+    {# The viewer is a page of its own, not a control panel screen, so Craft mustn't open these two in its shell. #}
+    <a class="btn" id="orrery-new-tab" href="{{ appUrl }}" target="_blank" rel="noopener" data-inertia="false">
         <div class="inline-flex">
             <div class="cp-icon">{{ iconSvg('arrow-up-right-from-square') }}</div>
             <div class="label">{{ 'Open in new tab'|t('orrery') }}</div>
         </div>
     </a>
-    <a class="btn" href="{{ cpUrl('orrery/app', {download: 1}) }}">
+    <a class="btn" href="{{ cpUrl('orrery/app', {download: 1}) }}" download>
         <div class="inline-flex">
             <div class="cp-icon">{{ iconSvg('download') }}</div>
             <div class="label">{{ 'Download'|t('orrery') }}</div>
@@ -24,7 +25,7 @@
     </a>
 {% endblock %}
 
-{% block main %}
+{% block content %}
     <iframe id="orrery-frame" class="orrery-frame" title="{{ title }}" data-src="{{ appUrl }}"></iframe>
 {% endblock %}
 

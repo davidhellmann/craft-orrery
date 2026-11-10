@@ -7,12 +7,13 @@ use CraftCms\Cms\Support\Facades\Elements;
 use CraftCms\Cms\Support\Facades\UserPermissions;
 use CraftCms\Cms\User\Elements\User as UserElement;
 use CraftCms\Cms\User\Models\User;
+use Inertia\Testing\AssertableInertia;
 
 use function CraftCms\Cms\cp_url;
 
 /**
  * The control panel section and the viewer page it embeds are for users who may use the control panel and
- * *Access Orrery*: Craft registers a plugin's control panel routes without checking either.
+ * *Access Orrery*. Craft checks the first for a plugin's control panel routes, and Orrery's routes check the second.
  */
 class CpRoutesTest extends TestCase
 {
@@ -38,7 +39,9 @@ class CpRoutesTest extends TestCase
     {
         $this->actingAs($this->user(['accessCp', 'accessPlugin-orrery']));
 
-        $this->get(cp_url('orrery'))->assertOk()->assertSee('id="orrery-frame"', escape: false);
+        // Craft draws a Twig control panel page inside its own shell, and hands it the page's content as a prop.
+        $section = AssertableInertia::fromTestResponse($this->get(cp_url('orrery'))->assertOk());
+        $section->where('content', fn(string $content) => str_contains($content, 'id="orrery-frame"'));
         $this->get(cp_url('orrery/app'))
             ->assertOk()
             ->assertHeader('Content-Type', 'text/html; charset=UTF-8')

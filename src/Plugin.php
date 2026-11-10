@@ -2,14 +2,14 @@
 
 namespace davidhellmann\orrery;
 
-use CraftCms\Cms\Form\Controls\Text;
-use CraftCms\Cms\Form\Enums\ControlMode;
-use CraftCms\Cms\Form\Form;
-use CraftCms\Cms\Form\FormContext;
-use CraftCms\Cms\Form\Nodes\Field;
-use CraftCms\Cms\Form\Nodes\MarkdownContent;
 use CraftCms\Cms\Plugin\Plugin as BasePlugin;
 use CraftCms\Cms\ProjectConfig\ProjectConfig;
+use CraftCms\Cms\Ui\Controls\Text;
+use CraftCms\Cms\Ui\Enums\ControlMode;
+use CraftCms\Cms\Ui\Nodes\Field;
+use CraftCms\Cms\Ui\Nodes\MarkdownContent;
+use CraftCms\Cms\Ui\Ui;
+use CraftCms\Cms\Ui\UiContext;
 use davidhellmann\orrery\console\ExportCommand;
 use davidhellmann\orrery\models\Settings;
 
@@ -38,9 +38,9 @@ class Plugin extends BasePlugin
         return new Settings();
     }
 
-    public function settingsForm(FormContext $context = new FormContext()): Form
+    public function settingsUi(UiContext $context = new UiContext()): Ui
     {
-        return Form::make([
+        return Ui::make([
             MarkdownContent::make('orrery-intro', t('If your entry type handles follow a naming convention, Orrery can point out the ones that don’t. They get flagged in the viewer; nothing in your project is renamed or changed.', category: 'orrery'))
                 ->displayInPane(false),
             $this->prefixField(

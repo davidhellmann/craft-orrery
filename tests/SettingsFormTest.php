@@ -2,9 +2,9 @@
 
 namespace davidhellmann\orrery\tests;
 
-use CraftCms\Cms\Form\Enums\ControlMode;
-use CraftCms\Cms\Form\Nodes\Field;
 use CraftCms\Cms\ProjectConfig\ProjectConfig;
+use CraftCms\Cms\Ui\Enums\ControlMode;
+use CraftCms\Cms\Ui\Nodes\Field;
 use CraftCms\Cms\User\Models\User;
 use davidhellmann\orrery\Plugin;
 
@@ -36,7 +36,7 @@ class SettingsFormTest extends TestCase
     {
         config()->set('craft.orrery', ['pageHandlePrefix' => ['page_', 'single_']]);
 
-        $fields = array_values(array_filter(Plugin::getInstance()->settingsForm()->nodes(), fn($node) => $node instanceof Field));
+        $fields = array_values(array_filter(Plugin::getInstance()->settingsUi()->nodes(), fn($node) => $node instanceof Field));
         [$page, $block] = array_map(fn(Field $field) => $field->getControl(), $fields);
 
         $this->assertSame([ControlMode::Disabled, 'page_, single_'], [$page->getMode(), $page->getValue()]);
