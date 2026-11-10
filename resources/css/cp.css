@@ -1,6 +1,8 @@
 /* The frame the control panel section shows the viewer in. */
 .orrery-frame {
     display: block;
+    /* The script sizes the frame to the space the page has left, border included. */
+    box-sizing: border-box;
     width: 100%;
     height: 70vh;
     border: 1px solid var(--c-color-border-quiet);
