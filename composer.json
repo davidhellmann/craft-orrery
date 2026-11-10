@@ -67,7 +67,8 @@
             "php": "8.5"
         },
         "allow-plugins": {
-            "craftcms/plugin-installer": true
+            "craftcms/plugin-installer": true,
+            "php-http/discovery": true
         }
     },
     "minimum-stability": "alpha",
