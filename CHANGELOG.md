@@ -9,6 +9,11 @@
 - Settings overrides go in `config/craft/orrery.php`, where Craft 6 looks for plugin config files.
 - User group permissions are read whether the project config stores them lowercased, as Craft 5 did, or as Craft 6 names them.
 
+## 1.0.6 - 2026-11-10
+
+### Fixed
+- Every view’s bars and lists start at the same distance from the viewer’s edge, so the content no longer shifts sideways when you switch between Graph, Table, Layout and Diff.
+
 ## 1.0.5 - 2026-10-15
 
 ### Added
