@@ -1,0 +1,14 @@
+/* The frame the control panel section shows the viewer in. */
+.orrery-frame {
+    display: block;
+    width: 100%;
+    height: 70vh;
+    border: 1px solid var(--c-color-border-quiet);
+    border-radius: var(--c-radius-lg);
+    background: var(--c-surface-white);
+}
+
+.orrery-frame:fullscreen {
+    border: 0;
+    border-radius: 0;
+}

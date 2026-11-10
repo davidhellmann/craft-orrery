@@ -33,6 +33,18 @@ class Plugin extends BasePlugin
         ExportCommand::class,
     ];
 
+    /**
+     * The control panel section's page and its styles. Craft copies them to the project's `public/vendor` folder,
+     * and loads them on every control panel page.
+     */
+    protected array $scripts = [
+        __DIR__ . '/../resources/js/cp.js' => 'js/cp.js',
+    ];
+
+    protected array $styles = [
+        __DIR__ . '/../resources/css/cp.css' => 'css/cp.css',
+    ];
+
     protected static function createSettings(): Settings
     {
         return new Settings();

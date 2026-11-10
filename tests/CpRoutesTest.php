@@ -39,9 +39,12 @@ class CpRoutesTest extends TestCase
     {
         $this->actingAs($this->user(['accessCp', 'accessPlugin-orrery']));
 
-        // Craft draws a Twig control panel page inside its own shell, and hands it the page's content as a prop.
         $section = AssertableInertia::fromTestResponse($this->get(cp_url('orrery'))->assertOk());
-        $section->where('content', fn(string $content) => str_contains($content, 'id="orrery-frame"'));
+        $section->component('orrery/Index', shouldExist: false)
+            ->where('title', 'Content Model')
+            ->where('appUrl', cp_url('orrery/app'))
+            ->where('downloadUrl', cp_url('orrery/app', ['download' => 1]))
+            ->where('labels', ['fullscreen' => 'Fullscreen', 'newTab' => 'Open in new tab', 'download' => 'Download']);
         $this->get(cp_url('orrery/app'))
             ->assertOk()
             ->assertHeader('Content-Type', 'text/html; charset=UTF-8')
