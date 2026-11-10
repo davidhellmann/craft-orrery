@@ -4,25 +4,16 @@
 {% set appUrl = cpUrl('orrery/app') %}
 
 {% block actionButton %}
-    <button type="button" class="btn" id="orrery-fullscreen">
-        <div class="inline-flex">
-            <div class="cp-icon">{{ iconSvg('expand') }}</div>
-            <div class="label">{{ 'Fullscreen'|t('orrery') }}</div>
-        </div>
-    </button>
+    <craft-button id="orrery-fullscreen" type="button" icon="expand">
+        {{- 'Fullscreen'|t('orrery') -}}
+    </craft-button>
     {# The viewer is a page of its own, not a control panel screen, so Craft mustn't open these two in its shell. #}
-    <a class="btn" id="orrery-new-tab" href="{{ appUrl }}" target="_blank" rel="noopener" data-inertia="false">
-        <div class="inline-flex">
-            <div class="cp-icon">{{ iconSvg('arrow-up-right-from-square') }}</div>
-            <div class="label">{{ 'Open in new tab'|t('orrery') }}</div>
-        </div>
-    </a>
-    <a class="btn" href="{{ cpUrl('orrery/app', {download: 1}) }}" download>
-        <div class="inline-flex">
-            <div class="cp-icon">{{ iconSvg('download') }}</div>
-            <div class="label">{{ 'Download'|t('orrery') }}</div>
-        </div>
-    </a>
+    <craft-button id="orrery-new-tab" href="{{ appUrl }}" target="_blank" rel="noopener" icon="arrow-up-right-from-square" data-inertia="false">
+        {{- 'Open in new tab'|t('orrery') -}}
+    </craft-button>
+    <craft-button href="{{ cpUrl('orrery/app', {download: 1}) }}" icon="download" download data-inertia="false">
+        {{- 'Download'|t('orrery') -}}
+    </craft-button>
 {% endblock %}
 
 {% block content %}
