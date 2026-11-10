@@ -1,5 +1,10 @@
 # Release Notes for Orrery
 
+## 1.0.6 - 2026-11-10
+
+### Fixed
+- Every view’s bars and lists start at the same distance from the viewer’s edge, so the content no longer shifts sideways when you switch between Graph, Table, Layout and Diff.
+
 ## 1.0.5 - 2026-10-15
 
 ### Added
