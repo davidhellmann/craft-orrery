@@ -1,12 +1,13 @@
 # Release Notes for Orrery
 
-## 2.0.0-alpha.1 - Unreleased
+## 2.0.0-beta.1 - 2026-11-10
 
 ### Changed
-- Orrery now requires Craft CMS 6 and PHP 8.5. Orrery 1.x stays the version for Craft CMS 5.
+- Orrery now requires Craft CMS 6 (6.0.0-beta.1 or later) and PHP 8.5. Orrery 1.x stays the version for Craft CMS 5.
 - Orrery runs on Craft 6 directly, without the Yii 2 adapter.
 - The export command is now `php artisan orrery:export`.
 - Settings overrides go in `config/craft/orrery.php`, where Craft 6 looks for plugin config files.
+- The control panel section is a Craft 6 page of its own, with Craft’s buttons beside its title.
 - User group permissions are read whether the project config stores them lowercased, as Craft 5 did, or as Craft 6 names them.
 
 ## 1.0.6 - 2026-11-10
